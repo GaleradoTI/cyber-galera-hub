@@ -14,16 +14,413 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          description: string | null
+          entity: string
+          entity_id: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          description?: string | null
+          entity: string
+          entity_id?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          description?: string | null
+          entity?: string
+          entity_id?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"] | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      channels: {
+        Row: {
+          created_at: string
+          description: string
+          display_order: number
+          icon_name: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          display_order?: number
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          display_order?: number
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          event_date: string
+          event_time: string | null
+          id: string
+          location_or_link: string | null
+          modality: Database["public"]["Enums"]["event_modality"]
+          name: string
+          status: Database["public"]["Enums"]["content_status"]
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          event_date: string
+          event_time?: string | null
+          id?: string
+          location_or_link?: string | null
+          modality: Database["public"]["Enums"]["event_modality"]
+          name: string
+          status?: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          event_date?: string
+          event_time?: string | null
+          id?: string
+          location_or_link?: string | null
+          modality?: Database["public"]["Enums"]["event_modality"]
+          name?: string
+          status?: Database["public"]["Enums"]["content_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          answer: string
+          category: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          category?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          apply_url: string | null
+          company: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          location: string | null
+          modality: Database["public"]["Enums"]["work_modality"]
+          seniority: Database["public"]["Enums"]["seniority_level"]
+          short_description: string | null
+          status: Database["public"]["Enums"]["content_status"]
+          technologies: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          apply_url?: string | null
+          company: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          location?: string | null
+          modality: Database["public"]["Enums"]["work_modality"]
+          seniority: Database["public"]["Enums"]["seniority_level"]
+          short_description?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
+          technologies?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          apply_url?: string | null
+          company?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          location?: string | null
+          modality?: Database["public"]["Enums"]["work_modality"]
+          seniority?: Database["public"]["Enums"]["seniority_level"]
+          short_description?: string | null
+          status?: Database["public"]["Enums"]["content_status"]
+          technologies?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lgpd_consents: {
+        Row: {
+          accepted_at: string
+          consent_origin: string
+          consent_status: boolean
+          id: string
+          ip_address: string | null
+          privacy_policy_version: string
+          terms_version: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          consent_origin?: string
+          consent_status?: boolean
+          id?: string
+          ip_address?: string | null
+          privacy_policy_version: string
+          terms_version: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          consent_origin?: string
+          consent_status?: boolean
+          id?: string
+          ip_address?: string | null
+          privacy_policy_version?: string
+          terms_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          is_blocked: boolean
+          newsletter_opt_in: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          is_blocked?: boolean
+          newsletter_opt_in?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          is_blocked?: boolean
+          newsletter_opt_in?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      public_site_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      saved_jobs: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_jobs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_event_interests: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_event_interests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin_or_super: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "SUPER_ADMIN" | "ADMIN" | "MEMBRO"
+      content_status: "rascunho" | "publicado" | "pausado" | "encerrado"
+      event_modality: "online" | "presencial" | "hibrido"
+      seniority_level:
+        | "estagio"
+        | "junior"
+        | "pleno"
+        | "senior"
+        | "especialista"
+      work_modality: "remoto" | "hibrido" | "presencial"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +547,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["SUPER_ADMIN", "ADMIN", "MEMBRO"],
+      content_status: ["rascunho", "publicado", "pausado", "encerrado"],
+      event_modality: ["online", "presencial", "hibrido"],
+      seniority_level: ["estagio", "junior", "pleno", "senior", "especialista"],
+      work_modality: ["remoto", "hibrido", "presencial"],
+    },
   },
 } as const
