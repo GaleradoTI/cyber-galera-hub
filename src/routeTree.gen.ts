@@ -21,6 +21,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 
 const VagasRoute = VagasRouteImport.update({
   id: '/vagas',
@@ -82,12 +83,17 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -96,12 +102,12 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
-  '/dashboard': typeof DashboardRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -110,13 +116,14 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -125,6 +132,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,12 +149,12 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cadastro'
     | '/canais'
-    | '/dashboard'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -155,6 +163,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard'
   id:
     | '__root__'
     | '/'
@@ -169,13 +178,14 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CadastroRoute: typeof CadastroRoute
   CanaisRoute: typeof CanaisRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
@@ -272,14 +282,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
+
+interface DashboardRouteChildren {
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CadastroRoute: CadastroRoute,
   CanaisRoute: CanaisRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
