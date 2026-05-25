@@ -21,6 +21,10 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
+import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
+import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
 
 const VagasRoute = VagasRouteImport.update({
   id: '/vagas',
@@ -82,12 +86,32 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardUsuariosRoute = DashboardUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardLogsRoute = DashboardLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -96,12 +120,15 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
+  '/dashboard/usuarios': typeof DashboardUsuariosRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
-  '/dashboard': typeof DashboardRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -110,13 +137,17 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
+  '/dashboard/usuarios': typeof DashboardUsuariosRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -125,6 +156,10 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/logs': typeof DashboardLogsRoute
+  '/dashboard/usuarios': typeof DashboardUsuariosRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,12 +176,15 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/configuracoes'
+    | '/dashboard/logs'
+    | '/dashboard/usuarios'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/cadastro'
     | '/canais'
-    | '/dashboard'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -155,6 +193,10 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/configuracoes'
+    | '/dashboard/logs'
+    | '/dashboard/usuarios'
+    | '/dashboard'
   id:
     | '__root__'
     | '/'
@@ -169,13 +211,17 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/configuracoes'
+    | '/dashboard/logs'
+    | '/dashboard/usuarios'
+    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CadastroRoute: typeof CadastroRoute
   CanaisRoute: typeof CanaisRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
@@ -272,14 +318,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/usuarios': {
+      id: '/dashboard/usuarios'
+      path: '/usuarios'
+      fullPath: '/dashboard/usuarios'
+      preLoaderRoute: typeof DashboardUsuariosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/logs': {
+      id: '/dashboard/logs'
+      path: '/logs'
+      fullPath: '/dashboard/logs'
+      preLoaderRoute: typeof DashboardLogsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/configuracoes': {
+      id: '/dashboard/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/dashboard/configuracoes'
+      preLoaderRoute: typeof DashboardConfiguracoesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
+
+interface DashboardRouteChildren {
+  DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
+  DashboardLogsRoute: typeof DashboardLogsRoute
+  DashboardUsuariosRoute: typeof DashboardUsuariosRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
+  DashboardLogsRoute: DashboardLogsRoute,
+  DashboardUsuariosRoute: DashboardUsuariosRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CadastroRoute: CadastroRoute,
   CanaisRoute: CanaisRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
