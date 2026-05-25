@@ -1,0 +1,115 @@
+import { useState } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
+import { Logo } from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
+import { NAV_LINKS } from "@/lib/site-config";
+import { useAuth, signOut } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
+
+export function Navbar() {
+  const [open, setOpen] = useState(false);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isAuthenticated, loading } = useAuth();
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+        <Logo />
+
+        <nav className="hidden lg:flex items-center gap-1">
+          {NAV_LINKS.map((link) => {
+            const active = pathname === link.to;
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={cn(
+                  "relative px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                  active
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {link.label}
+                {active && (
+                  <span className="absolute left-1/2 -bottom-0.5 h-0.5 w-6 -translate-x-1/2 bg-gradient-neon rounded-full" />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="hidden lg:flex items-center gap-2">
+          {loading ? null : isAuthenticated ? (
+            <>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => signOut()}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/login">Entrar</Link>
+              </Button>
+              <Button asChild variant="neon" size="sm">
+                <Link to="/cadastro">Cadastrar</Link>
+              </Button>
+            </>
+          )}
+        </div>
+
+        <button
+          className="lg:hidden text-foreground"
+          onClick={() => setOpen(!open)}
+          aria-label="Menu"
+        >
+          {open ? <X /> : <Menu />}
+        </button>
+      </div>
+
+      {open && (
+        <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
+          <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setOpen(false)}
+                className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="flex gap-2 pt-3 border-t border-border/40 mt-2">
+              {isAuthenticated ? (
+                <>
+                  <Button asChild variant="outline" size="sm" className="flex-1">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => signOut()}>
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button asChild variant="outline" size="sm" className="flex-1">
+                    <Link to="/login">Entrar</Link>
+                  </Button>
+                  <Button asChild variant="neon" size="sm" className="flex-1">
+                    <Link to="/cadastro">Cadastrar</Link>
+                  </Button>
+                </>
+              )}
+            </div>
+          </nav>
+        </div>
+      )}
+    </header>
+  );
+}
