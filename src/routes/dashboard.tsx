@@ -52,7 +52,11 @@ function DashboardPage() {
 
   const isAdmin = roles.includes("ADMIN") || roles.includes("SUPER_ADMIN");
   const isSuperAdmin = roles.includes("SUPER_ADMIN");
-  const primaryRole = roles.includes("SUPER_ADMIN") ? "SUPER_ADMIN" : roles.includes("ADMIN") ? "ADMIN" : roles.includes("MODERADOR") ? "MODERADOR" : "MEMBRO";
+  const primaryRole: string = roles.includes("SUPER_ADMIN")
+    ? "SUPER_ADMIN"
+    : roles.includes("ADMIN")
+      ? "ADMIN"
+      : "MEMBRO";
   const roleMeta = ROLE_META[primaryRole] ?? ROLE_META.MEMBRO;
   const RoleIcon = roleMeta.icon;
 
