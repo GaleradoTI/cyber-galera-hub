@@ -1,12 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown } from "lucide-react";
+import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles, RoleBadge } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/usuarios")({ component: UsuariosPage });
@@ -19,6 +22,9 @@ function UsuariosPage() {
   const qc = useQueryClient();
   const { isAdmin, isSuperAdmin } = useDashboardRoles();
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<ProfileRow | null>(null);
+  const [editName, setEditName] = useState("");
+  const [confirm, setConfirm] = useState<ProfileRow | null>(null);
 
   useEffect(() => {
     if (!isAdmin) navigate({ to: "/dashboard" });
@@ -66,9 +72,11 @@ function UsuariosPage() {
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
     qc.invalidateQueries({ queryKey: ["admin-roles"] });
+    qc.invalidateQueries({ queryKey: ["roles"] });
+    qc.invalidateQueries({ queryKey: ["profile"] });
   };
 
-  const toggleBlock = async (p: ProfileRow) => {
+  const doToggleBlock = async (p: ProfileRow) => {
     const target = primaryOf(p.user_id);
     if (!isSuperAdmin && (target === "ADMIN" || target === "SUPER_ADMIN")) {
       toast.error("Apenas SUPER ADMIN pode bloquear administradores.");
@@ -77,6 +85,16 @@ function UsuariosPage() {
     const { error } = await supabase.from("profiles").update({ is_blocked: !p.is_blocked }).eq("user_id", p.user_id);
     if (error) return toast.error(error.message);
     toast.success(`${p.is_blocked ? "Reativado" : "Bloqueado"}: ${p.email}`);
+    setConfirm(null);
+    refresh();
+  };
+
+  const saveProfile = async () => {
+    if (!editing) return;
+    const { error } = await supabase.from("profiles").update({ display_name: editName }).eq("user_id", editing.user_id);
+    if (error) return toast.error(error.message);
+    toast.success("Perfil atualizado");
+    setEditing(null);
     refresh();
   };
 
@@ -146,6 +164,9 @@ function UsuariosPage() {
                     )}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
+                    <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setEditName(p.display_name ?? ""); }}>
+                      <Pencil className="h-3 w-3 mr-1" /> Editar
+                    </Button>
                     {isSuperAdmin && role === "MEMBRO" && (
                       <Button size="sm" variant="outline" onClick={() => promoteToAdmin(p)}>
                         <ArrowUp className="h-3 w-3 mr-1" /> Tornar ADMIN
@@ -156,7 +177,7 @@ function UsuariosPage() {
                         <ArrowDown className="h-3 w-3 mr-1" /> Rebaixar
                       </Button>
                     )}
-                    <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => toggleBlock(p)}>
+                    <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => setConfirm(p)}>
                       {p.is_blocked ? "Reativar" : "Bloquear"}
                     </Button>
                   </TableCell>
@@ -175,6 +196,39 @@ function UsuariosPage() {
         <p className="flex items-center gap-2"><ShieldCheck className="h-3 w-3 text-primary" /> ADMIN: gerencia (ativa/bloqueia) somente MEMBROS.</p>
         <p className="flex items-center gap-2"><UserIcon className="h-3 w-3" /> A promoção do primeiro SUPER ADMIN é feita via SQL editor por segurança.</p>
       </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar perfil</DialogTitle>
+            <DialogDescription>{editing?.email}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Nome de exibição</Label>
+            <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button onClick={saveProfile}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!confirm} onOpenChange={(o) => !o && setConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirm?.is_blocked ? "Reativar usuário?" : "Bloquear usuário?"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirm?.is_blocked ? "O usuário voltará a acessar normalmente." : "O usuário não conseguirá mais acessar a comunidade até ser reativado."}<br />
+              <span className="font-mono text-xs">{confirm?.email}</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => confirm && doToggleBlock(confirm)}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardShell>
   );
 }
