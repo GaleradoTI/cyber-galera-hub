@@ -73,6 +73,11 @@ function LoginPage() {
               Cadastre-se
             </Link>
           </p>
+          <div className="mt-4 pt-4 border-t border-border/40">
+            <Button asChild variant="neon-outline" className="w-full">
+              <Link to="/">Ir para a área pública</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </PublicLayout>
