@@ -1,12 +1,12 @@
 import { Calendar, MapPin } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
-export function EventCard({ event }: { event: any }) {
+export function EventCard({ event, onClick }: { event: any; onClick?: () => void }) {
   const date = event.event_date
     ? new Date(event.event_date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
     : null;
-  return (
-    <Link to="/eventos" className="glass rounded-xl p-5 hover-glow-cyan block group">
+  const inner = (
+    <>
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="font-bold text-base group-hover:text-gradient-neon transition">{event.name}</h3>
@@ -38,6 +38,11 @@ export function EventCard({ event }: { event: any }) {
       {event.description && (
         <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{event.description}</p>
       )}
-    </Link>
+    </>
   );
+  const cls = "glass rounded-xl p-5 hover-glow-cyan block group text-left w-full";
+  if (onClick) {
+    return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+  }
+  return <Link to="/eventos" className={cls}>{inner}</Link>;
 }
