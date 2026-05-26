@@ -27,12 +27,12 @@ const empty: Partial<Evt> = { name: "", description: "", event_date: new Date().
 function EventosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin, user } = useDashboardRoles();
+  const { isAdmin, user, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Evt> | null>(null);
   const [viewing, setViewing] = useState<Evt | null>(null);
   const [removing, setRemoving] = useState<Evt | null>(null);
 
-  useEffect(() => { if (!isAdmin) navigate({ to: "/dashboard" }); }, [isAdmin, navigate]);
+  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events"],
