@@ -9,8 +9,8 @@ export const Route = createFileRoute("/dashboard/logs")({ component: LogsPage })
 
 function LogsPage() {
   const navigate = useNavigate();
-  const { isAdmin } = useDashboardRoles();
-  useEffect(() => { if (!isAdmin) navigate({ to: "/dashboard" }); }, [isAdmin, navigate]);
+  const { isAdmin, rolesReady } = useDashboardRoles();
+  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["audit-logs"],
