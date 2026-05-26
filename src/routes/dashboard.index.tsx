@@ -37,15 +37,15 @@ function DashboardIndex() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-5 mt-8">
-        <Link to="/dashboard/vagas" className="glass rounded-xl p-6 hover-glow-magenta">
+        <Link to={isAdmin ? "/dashboard/vagas" : "/dashboard/minhas-vagas"} className="glass rounded-xl p-6 hover-glow-magenta">
           <Briefcase className="h-6 w-6 text-secondary" />
-          <h3 className="font-bold mt-3">Explorar vagas</h3>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie e veja todas as vagas no dashboard.</p>
+          <h3 className="font-bold mt-3">{isAdmin ? "Gerenciar vagas" : "Vagas salvas"}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{isAdmin ? "Criar, editar e publicar vagas." : "Veja as vagas que você salvou."}</p>
         </Link>
-        <Link to="/dashboard/eventos" className="glass rounded-xl p-6 hover-glow-cyan">
+        <Link to={isAdmin ? "/dashboard/eventos" : "/dashboard/meus-eventos"} className="glass rounded-xl p-6 hover-glow-cyan">
           <Calendar className="h-6 w-6 text-primary" />
-          <h3 className="font-bold mt-3">Próximos eventos</h3>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie e veja todos os eventos no dashboard.</p>
+          <h3 className="font-bold mt-3">{isAdmin ? "Gerenciar eventos" : "Meus eventos"}</h3>
+          <p className="text-sm text-muted-foreground mt-1">{isAdmin ? "Agenda, lives e workshops." : "Eventos em que você tem interesse."}</p>
         </Link>
       </div>
 

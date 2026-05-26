@@ -260,9 +260,12 @@ export type Database = {
           email: string
           id: string
           is_blocked: boolean
+          looking_for_job: boolean
           newsletter_opt_in: boolean
+          social_links: Json
           updated_at: string
           user_id: string
+          work_area: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -272,9 +275,12 @@ export type Database = {
           email: string
           id?: string
           is_blocked?: boolean
+          looking_for_job?: boolean
           newsletter_opt_in?: boolean
+          social_links?: Json
           updated_at?: string
           user_id: string
+          work_area?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -284,9 +290,12 @@ export type Database = {
           email?: string
           id?: string
           is_blocked?: boolean
+          looking_for_job?: boolean
           newsletter_opt_in?: boolean
+          social_links?: Json
           updated_at?: string
           user_id?: string
+          work_area?: string | null
         }
         Relationships: []
       }

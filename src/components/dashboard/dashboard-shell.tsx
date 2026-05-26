@@ -17,6 +17,7 @@ import {
   User as UserIcon,
   Menu,
   ChevronLeft,
+  Heart,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -80,6 +81,9 @@ export function DashboardShell({ children, title, description }: { children: Rea
 
   const items = [
     { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
+    { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
+    { to: "/dashboard/minhas-vagas", label: "Vagas Salvas", icon: Heart, show: !isAdmin },
+    { to: "/dashboard/meus-eventos", label: "Meus Eventos", icon: Calendar, show: !isAdmin },
     { to: "/dashboard/usuarios", label: "Usuários", icon: Users, show: isAdmin },
     { to: "/dashboard/vagas", label: "Vagas", icon: Briefcase, show: isAdmin },
     { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAdmin },
