@@ -57,13 +57,17 @@ function DashboardIndex() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <AdminLink to="/dashboard/usuarios" icon={Users} title="Usuários" desc={isSuperAdmin ? "Gerencie ADMIN e MEMBRO." : "Gerencie membros (ativar/bloquear)."} accent={isSuperAdmin} />
+            <AdminLink to="/dashboard/vagas" icon={Briefcase} title="Vagas" desc="Criar, editar e publicar vagas." />
+            <AdminLink to="/dashboard/eventos" icon={Calendar} title="Eventos" desc="Agenda, lives e workshops." />
             <AdminLink to="/dashboard/configuracoes" icon={Settings} title="Configurações do Site" desc="Hero, contatos, redes e textos públicos." accent />
             <AdminLink to="/dashboard/logs" icon={FileText} title="Logs de Auditoria" desc="Histórico de ações administrativas." />
-            <AdminCard icon={Briefcase} title="Vagas" desc="Em breve: criar e editar vagas." />
-            <AdminCard icon={Calendar} title="Eventos" desc="Em breve: agenda e workshops." />
-            <AdminCard icon={MessageCircle} title="Canais" desc="Em breve: links oficiais." />
-            <AdminCard icon={HelpCircle} title="FAQ" desc="Em breve: perguntas frequentes." />
-            {isSuperAdmin && <AdminCard icon={Crown} title="Papéis avançados" desc="Promoção via SQL editor." superAdmin />}
+            {isSuperAdmin && (
+              <div className="glass rounded-xl p-5 border border-secondary/40">
+                <Crown className="h-5 w-5 text-secondary" />
+                <h4 className="font-bold mt-3 text-sm">Papéis avançados</h4>
+                <p className="text-xs text-muted-foreground mt-1">Promoção de SUPER ADMIN via SQL editor por segurança.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -88,16 +92,5 @@ function AdminLink({ to, icon: Icon, title, desc, accent }: { to: string; icon: 
       <h4 className="font-bold mt-3 text-sm">{title}</h4>
       <p className="text-xs text-muted-foreground mt-1">{desc}</p>
     </Link>
-  );
-}
-
-function AdminCard({ icon: Icon, title, desc, superAdmin = false }: { icon: any; title: string; desc: string; superAdmin?: boolean }) {
-  return (
-    <div className={`glass rounded-xl p-5 border ${superAdmin ? "border-secondary/40" : "border-primary/30"} opacity-70`}>
-      <Icon className={`h-5 w-5 ${superAdmin ? "text-secondary" : "text-primary"}`} />
-      <h4 className="font-bold mt-3 text-sm">{title}</h4>
-      <p className="text-xs text-muted-foreground mt-1">{desc}</p>
-      <div className="text-[10px] font-bold tracking-[0.2em] mt-3 text-muted-foreground">EM BREVE</div>
-    </div>
   );
 }
