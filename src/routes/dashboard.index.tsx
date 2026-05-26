@@ -37,15 +37,15 @@ function DashboardIndex() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-5 mt-8">
-        <Link to="/vagas" className="glass rounded-xl p-6 hover-glow-magenta">
+        <Link to="/dashboard/vagas" className="glass rounded-xl p-6 hover-glow-magenta">
           <Briefcase className="h-6 w-6 text-secondary" />
           <h3 className="font-bold mt-3">Explorar vagas</h3>
-          <p className="text-sm text-muted-foreground mt-1">Veja todas as oportunidades publicadas.</p>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie e veja todas as vagas no dashboard.</p>
         </Link>
-        <Link to="/eventos" className="glass rounded-xl p-6 hover-glow-cyan">
+        <Link to="/dashboard/eventos" className="glass rounded-xl p-6 hover-glow-cyan">
           <Calendar className="h-6 w-6 text-primary" />
           <h3 className="font-bold mt-3">Próximos eventos</h3>
-          <p className="text-sm text-muted-foreground mt-1">Participe dos encontros da comunidade.</p>
+          <p className="text-sm text-muted-foreground mt-1">Gerencie e veja todos os eventos no dashboard.</p>
         </Link>
       </div>
 
