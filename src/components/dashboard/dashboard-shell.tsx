@@ -21,7 +21,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
 const ROLE_META: Record<string, { label: string; icon: any; className: string }> = {
@@ -98,7 +97,17 @@ export function DashboardShell({ children, title, description }: { children: Rea
       >
         <div className="h-full flex flex-col p-3">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/40">
-            {open ? <Logo /> : <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-secondary" />}
+            {open ? (
+              <div className="flex items-center gap-2">
+                <div className="h-9 w-9 rounded-lg bg-gradient-neon flex items-center justify-center font-black text-background text-sm">{"</>"}</div>
+                <div className="leading-none">
+                  <div className="font-black tracking-tight text-sm">GALERA</div>
+                  <div className="text-[9px] font-bold tracking-[0.3em] text-gradient-neon">DASHBOARD</div>
+                </div>
+              </div>
+            ) : (
+              <div className="h-8 w-8 rounded-md bg-gradient-neon" />
+            )}
             <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"}>
               {open ? <ChevronLeft className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
