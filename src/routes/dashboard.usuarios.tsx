@@ -20,15 +20,15 @@ type RoleRow = { user_id: string; role: string };
 function UsuariosPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin, isSuperAdmin } = useDashboardRoles();
+  const { isAdmin, isSuperAdmin, rolesReady } = useDashboardRoles();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editName, setEditName] = useState("");
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
 
   useEffect(() => {
-    if (!isAdmin) navigate({ to: "/dashboard" });
-  }, [isAdmin, navigate]);
+    if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
+  }, [rolesReady, isAdmin, navigate]);
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
