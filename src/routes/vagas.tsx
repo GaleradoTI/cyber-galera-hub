@@ -5,6 +5,7 @@ import { PublicLayout } from "@/components/public/public-layout";
 import { JobCard } from "@/components/public/job-card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
+import { JobDetailDialog } from "@/components/public/job-detail-dialog";
 
 export const Route = createFileRoute("/vagas")({
   head: () => ({
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/vagas")({
 
 function VagasPage() {
   const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<any | null>(null);
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["jobs-all"],
     queryFn: async () => {
@@ -53,9 +55,10 @@ function VagasPage() {
           <p className="text-muted-foreground mt-10">Nenhuma vaga encontrada.</p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
-            {filtered.map((j: any) => <JobCard key={j.id} job={j} />)}
+            {filtered.map((j: any) => <JobCard key={j.id} job={j} onClick={() => setSelected(j)} />)}
           </div>
         )}
+        <JobDetailDialog job={selected} open={!!selected} onOpenChange={(v) => !v && setSelected(null)} />
       </section>
     </PublicLayout>
   );
