@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -15,12 +15,14 @@ import {
   ShieldCheck,
   Sparkles,
   User as UserIcon,
+  Menu,
+  ChevronLeft,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/public/navbar";
-import { Footer } from "@/components/public/footer";
+import { Logo } from "@/components/brand/logo";
+import { cn } from "@/lib/utils";
 
 const ROLE_META: Record<string, { label: string; icon: any; className: string }> = {
   SUPER_ADMIN: { label: "SUPER ADMIN", icon: Crown, className: "border-secondary text-secondary shadow-[0_0_20px_hsl(var(--secondary)/0.4)]" },
@@ -71,6 +73,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
   const { loading, isAuthenticated } = useAuth();
   const { isAdmin, isSuperAdmin, primary, profile, user } = useDashboardRoles();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [open, setOpen] = useState(true);
 
   if (!loading && !isAuthenticated) {
     navigate({ to: "/login" });
@@ -78,77 +81,86 @@ export function DashboardShell({ children, title, description }: { children: Rea
 
   const items = [
     { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
-    { to: "/vagas", label: "Vagas", icon: Briefcase, show: true },
-    { to: "/eventos", label: "Eventos", icon: Calendar, show: true },
-    { to: "/canais", label: "Canais", icon: MessageCircle, show: true },
-    { to: "/faq", label: "FAQ", icon: HelpCircle, show: true },
     { to: "/dashboard/usuarios", label: "Usuários", icon: Users, show: isAdmin },
+    { to: "/dashboard/vagas", label: "Vagas", icon: Briefcase, show: isAdmin },
+    { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAdmin },
     { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
     { to: "/dashboard/logs", label: "Logs de Auditoria", icon: FileText, show: isAdmin },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex-1 container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-[260px_1fr] gap-6">
-          <aside className="lg:sticky lg:top-24 self-start">
-            <div className="glass rounded-xl p-4 border border-primary/20">
-              <div className="flex items-center gap-3 pb-4 border-b border-border/40">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-black text-background">
-                  {(profile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-bold truncate">{profile?.display_name ?? "Membro"}</div>
-                  <div className="text-[10px] text-muted-foreground truncate">{user?.email}</div>
-                </div>
+    <div className="min-h-screen flex w-full bg-background">
+      <aside
+        className={cn(
+          "shrink-0 border-r border-border/40 bg-background/95 backdrop-blur transition-[width] duration-300 sticky top-0 h-screen overflow-hidden",
+          open ? "w-[260px]" : "w-[68px]",
+        )}
+      >
+        <div className="h-full flex flex-col p-3">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/40">
+            {open ? <Logo /> : <div className="w-8 h-8 rounded bg-gradient-to-br from-primary to-secondary" />}
+            <Button variant="ghost" size="icon" onClick={() => setOpen((v) => !v)} aria-label={open ? "Fechar menu" : "Abrir menu"}>
+              {open ? <ChevronLeft className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </Button>
+          </div>
+          {open && (
+            <div className="flex items-center gap-3 pb-3 mb-2 border-b border-border/40">
+              <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-black text-background">
+                {(profile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
               </div>
-              <div className="pt-3 pb-2">
-                <RoleBadge role={primary} />
+              <div className="min-w-0">
+                <div className="text-sm font-bold truncate">{profile?.display_name ?? "Membro"}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{user?.email}</div>
+                <div className="mt-1"><RoleBadge role={primary} /></div>
               </div>
-              <nav className="space-y-1 mt-2">
-                {items.filter((i) => i.show).map((i) => {
-                  const active = pathname === i.to;
-                  const Icon = i.icon;
-                  return (
-                    <Link
-                      key={i.to}
-                      to={i.to}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition ${
-                        active
-                          ? "bg-primary/15 text-primary border border-primary/30"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{i.label}</span>
-                      {(i.to === "/dashboard/configuracoes" || i.to === "/dashboard/usuarios") && isSuperAdmin && (
-                        <span className="ml-auto text-[9px] font-bold tracking-[0.15em] text-secondary">SUPER</span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start mt-3 text-muted-foreground"
-                onClick={() => signOut().then(() => navigate({ to: "/" }))}
-              >
-                <LogOut className="h-4 w-4 mr-2" /> Sair
-              </Button>
             </div>
-          </aside>
-          <section className="min-w-0">
-            <header className="mb-6">
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gradient-neon">{title}</h1>
-              {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
-            </header>
-            {children}
-          </section>
+          )}
+          <nav className="space-y-1 flex-1 overflow-y-auto">
+            {items.filter((i) => i.show).map((i) => {
+              const active = pathname === i.to;
+              const Icon = i.icon;
+              return (
+                <Link
+                  key={i.to}
+                  to={i.to}
+                  title={i.label}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition",
+                    active
+                      ? "bg-primary/15 text-primary border border-primary/30"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                    !open && "justify-center px-2",
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {open && <span className="truncate">{i.label}</span>}
+                  {open && (i.to === "/dashboard/configuracoes" || i.to === "/dashboard/usuarios") && isSuperAdmin && (
+                    <span className="ml-auto text-[9px] font-bold tracking-[0.15em] text-secondary">SUPER</span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn("mt-3 text-muted-foreground", open ? "justify-start" : "justify-center px-0")}
+            onClick={() => signOut().then(() => navigate({ to: "/login" }))}
+          >
+            <LogOut className="h-4 w-4" />
+            {open && <span className="ml-2">Sair</span>}
+          </Button>
         </div>
-      </div>
-      <Footer />
+      </aside>
+      <main className="flex-1 min-w-0">
+        <div className="container max-w-6xl mx-auto px-4 md:px-8 py-8">
+          <header className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gradient-neon">{title}</h1>
+            {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+          </header>
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
