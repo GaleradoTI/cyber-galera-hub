@@ -17,9 +17,9 @@ type Setting = { id: string; setting_key: string; setting_value: any; descriptio
 function SettingsPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin } = useDashboardRoles();
+  const { isAdmin, rolesReady } = useDashboardRoles();
 
-  useEffect(() => { if (!isAdmin) navigate({ to: "/dashboard" }); }, [isAdmin, navigate]);
+  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
   const { data: settings = [], isLoading } = useQuery({
     queryKey: ["site-settings"],
