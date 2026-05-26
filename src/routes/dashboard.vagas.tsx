@@ -28,7 +28,7 @@ const empty: Partial<Job> = { title: "", company: "", description: "", short_des
 function VagasAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin, user } = useDashboardRoles();
+  const { isAdmin, user, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Job> | null>(null);
   const [viewing, setViewing] = useState<Job | null>(null);
   const [removing, setRemoving] = useState<Job | null>(null);
@@ -38,7 +38,7 @@ function VagasAdminPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  useEffect(() => { if (!isAdmin) navigate({ to: "/dashboard" }); }, [isAdmin, navigate]);
+  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["admin-jobs"],
