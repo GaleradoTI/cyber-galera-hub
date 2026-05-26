@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil } from "lucide-react";
+import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { resetUserPassword } from "@/lib/admin-users.functions";
 import { DashboardShell, useDashboardRoles, RoleBadge } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +27,9 @@ function UsuariosPage() {
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editName, setEditName] = useState("");
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
+  const [resetting, setResetting] = useState<ProfileRow | null>(null);
+  const [customPwd, setCustomPwd] = useState("");
+  const resetPwdFn = useServerFn(resetUserPassword);
 
   useEffect(() => {
     if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
@@ -114,6 +119,18 @@ function UsuariosPage() {
     refresh();
   };
 
+  const doResetPassword = async () => {
+    if (!resetting) return;
+    try {
+      const res = await resetPwdFn({ data: { targetUserId: resetting.user_id, newPassword: customPwd || undefined } });
+      toast.success(`Senha resetada. Nova senha: ${res.password}`);
+      setResetting(null);
+      setCustomPwd("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao resetar");
+    }
+  };
+
   return (
     <DashboardShell title="Usuários" description={isSuperAdmin ? "Gerencie todos os usuários, papéis e status." : "Gerencie membros (ativar/bloquear)."}>
       <div className="flex items-center gap-2 mb-4">
@@ -180,6 +197,11 @@ function UsuariosPage() {
                     <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => setConfirm(p)}>
                       {p.is_blocked ? "Reativar" : "Bloquear"}
                     </Button>
+                    {canActOnTarget && role !== "SUPER_ADMIN" && (
+                      <Button size="sm" variant="outline" onClick={() => { setResetting(p); setCustomPwd(""); }}>
+                        <KeyRound className="h-3 w-3 mr-1" /> Resetar senha
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               );
@@ -229,6 +251,26 @@ function UsuariosPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!resetting} onOpenChange={(o) => { if (!o) { setResetting(null); setCustomPwd(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resetar senha</DialogTitle>
+            <DialogDescription>
+              {resetting?.email}<br />
+              Deixe em branco para usar a senha padrão definida em Configurações &rarr; password_policy.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Nova senha (opcional)</Label>
+            <Input type="text" value={customPwd} onChange={(e) => setCustomPwd(e.target.value)} placeholder="Mínimo 8 caracteres" />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setResetting(null); setCustomPwd(""); }}>Cancelar</Button>
+            <Button onClick={doResetPassword}>Resetar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }
