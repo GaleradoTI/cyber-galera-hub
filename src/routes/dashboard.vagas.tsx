@@ -1,0 +1,199 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/dashboard/vagas")({ component: VagasAdminPage });
+
+type Job = {
+  id: string; title: string; company: string; description: string; short_description: string | null;
+  seniority: string; modality: string; location: string | null; apply_url: string | null;
+  technologies: string[]; status: string; created_at: string;
+};
+
+const empty: Partial<Job> = { title: "", company: "", description: "", short_description: "", seniority: "pleno", modality: "remoto", location: "", apply_url: "", technologies: [], status: "rascunho" };
+
+function VagasAdminPage() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { isAdmin, user } = useDashboardRoles();
+  const [editing, setEditing] = useState<Partial<Job> | null>(null);
+  const [viewing, setViewing] = useState<Job | null>(null);
+  const [removing, setRemoving] = useState<Job | null>(null);
+
+  useEffect(() => { if (!isAdmin) navigate({ to: "/dashboard" }); }, [isAdmin, navigate]);
+
+  const { data: jobs = [], isLoading } = useQuery({
+    queryKey: ["admin-jobs"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("jobs").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as Job[];
+    },
+  });
+
+  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-jobs"] });
+
+  const save = async () => {
+    if (!editing) return;
+    const payload: any = {
+      title: editing.title, company: editing.company, description: editing.description,
+      short_description: editing.short_description || null, seniority: editing.seniority,
+      modality: editing.modality, location: editing.location || null, apply_url: editing.apply_url || null,
+      technologies: editing.technologies ?? [], status: editing.status,
+    };
+    if (!payload.title || !payload.company || !payload.description) return toast.error("Preencha título, empresa e descrição.");
+    const { error } = editing.id
+      ? await supabase.from("jobs").update(payload).eq("id", editing.id)
+      : await supabase.from("jobs").insert({ ...payload, created_by: user?.id });
+    if (error) return toast.error(error.message);
+    toast.success("Vaga salva");
+    setEditing(null);
+    refresh();
+  };
+
+  const remove = async () => {
+    if (!removing) return;
+    const { error } = await supabase.from("jobs").delete().eq("id", removing.id);
+    if (error) return toast.error(error.message);
+    toast.success("Vaga removida");
+    setRemoving(null);
+    refresh();
+  };
+
+  return (
+    <DashboardShell title="Vagas" description="Crie, edite, visualize e remova vagas tech.">
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Nova vaga</Button>
+      </div>
+      <div className="glass rounded-xl border border-primary/20 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Título</TableHead>
+              <TableHead>Empresa</TableHead>
+              <TableHead>Modalidade</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading && <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>}
+            {!isLoading && jobs.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhuma vaga.</TableCell></TableRow>}
+            {jobs.map((j) => (
+              <TableRow key={j.id}>
+                <TableCell className="font-medium">{j.title}</TableCell>
+                <TableCell>{j.company}</TableCell>
+                <TableCell><Badge variant="outline">{j.modality}</Badge></TableCell>
+                <TableCell><Badge variant={j.status === "publicado" ? "default" : "secondary"}>{j.status}</Badge></TableCell>
+                <TableCell className="text-right space-x-1">
+                  <Button size="sm" variant="ghost" onClick={() => setViewing(j)}><Eye className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(j)}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => setRemoving(j)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing?.id ? "Editar vaga" : "Nova vaga"}</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2"><Label>Título *</Label><Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></div>
+              <div><Label>Empresa *</Label><Input value={editing.company ?? ""} onChange={(e) => setEditing({ ...editing, company: e.target.value })} /></div>
+              <div><Label>Local</Label><Input value={editing.location ?? ""} onChange={(e) => setEditing({ ...editing, location: e.target.value })} /></div>
+              <div>
+                <Label>Senioridade</Label>
+                <Select value={editing.seniority} onValueChange={(v) => setEditing({ ...editing, seniority: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="estagio">Estágio</SelectItem>
+                    <SelectItem value="junior">Júnior</SelectItem>
+                    <SelectItem value="pleno">Pleno</SelectItem>
+                    <SelectItem value="senior">Sênior</SelectItem>
+                    <SelectItem value="especialista">Especialista</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Modalidade</Label>
+                <Select value={editing.modality} onValueChange={(v) => setEditing({ ...editing, modality: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="remoto">Remoto</SelectItem>
+                    <SelectItem value="presencial">Presencial</SelectItem>
+                    <SelectItem value="hibrido">Híbrido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="sm:col-span-2"><Label>URL de candidatura</Label><Input value={editing.apply_url ?? ""} onChange={(e) => setEditing({ ...editing, apply_url: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Tecnologias (separadas por vírgula)</Label><Input value={(editing.technologies ?? []).join(", ")} onChange={(e) => setEditing({ ...editing, technologies: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} /></div>
+              <div className="sm:col-span-2"><Label>Resumo</Label><Textarea rows={2} value={editing.short_description ?? ""} onChange={(e) => setEditing({ ...editing, short_description: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Descrição completa *</Label><Textarea rows={6} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+              <div>
+                <Label>Status</Label>
+                <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rascunho">Rascunho</SelectItem>
+                    <SelectItem value="publicado">Publicado</SelectItem>
+                    <SelectItem value="arquivado">Arquivado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
+            <Button onClick={save}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{viewing?.title}</DialogTitle>
+            <DialogDescription>{viewing?.company} • {viewing?.modality} • {viewing?.location ?? "—"}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <div className="flex flex-wrap gap-1">{viewing?.technologies?.map((t) => <Badge key={t} variant="outline">{t}</Badge>)}</div>
+            {viewing?.short_description && <p className="text-muted-foreground">{viewing.short_description}</p>}
+            <p className="whitespace-pre-wrap">{viewing?.description}</p>
+            {viewing?.apply_url && <a className="text-primary underline" href={viewing.apply_url} target="_blank" rel="noreferrer">Link de candidatura</a>}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!removing} onOpenChange={(o) => !o && setRemoving(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover vaga?</AlertDialogTitle>
+            <AlertDialogDescription>"{removing?.title}" será removida permanentemente.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={remove}>Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </DashboardShell>
+  );
+}

@@ -22,8 +22,10 @@ import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
 import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
+import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
 
 const VagasRoute = VagasRouteImport.update({
@@ -91,6 +93,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardVagasRoute = DashboardVagasRouteImport.update({
+  id: '/vagas',
+  path: '/vagas',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardUsuariosRoute = DashboardUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
@@ -99,6 +106,11 @@ const DashboardUsuariosRoute = DashboardUsuariosRouteImport.update({
 const DashboardLogsRoute = DashboardLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEventosRoute = DashboardEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
@@ -121,8 +133,10 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
+  '/dashboard/vagas': typeof DashboardVagasRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -138,8 +152,10 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
+  '/dashboard/vagas': typeof DashboardVagasRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -157,8 +173,10 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
+  '/dashboard/vagas': typeof DashboardVagasRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -177,8 +195,10 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/configuracoes'
+    | '/dashboard/eventos'
     | '/dashboard/logs'
     | '/dashboard/usuarios'
+    | '/dashboard/vagas'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -194,8 +214,10 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/configuracoes'
+    | '/dashboard/eventos'
     | '/dashboard/logs'
     | '/dashboard/usuarios'
+    | '/dashboard/vagas'
     | '/dashboard'
   id:
     | '__root__'
@@ -212,8 +234,10 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/configuracoes'
+    | '/dashboard/eventos'
     | '/dashboard/logs'
     | '/dashboard/usuarios'
+    | '/dashboard/vagas'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -325,6 +349,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/vagas': {
+      id: '/dashboard/vagas'
+      path: '/vagas'
+      fullPath: '/dashboard/vagas'
+      preLoaderRoute: typeof DashboardVagasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/usuarios': {
       id: '/dashboard/usuarios'
       path: '/usuarios'
@@ -339,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLogsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/eventos': {
+      id: '/dashboard/eventos'
+      path: '/eventos'
+      fullPath: '/dashboard/eventos'
+      preLoaderRoute: typeof DashboardEventosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/configuracoes': {
       id: '/dashboard/configuracoes'
       path: '/configuracoes'
@@ -351,15 +389,19 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
+  DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardUsuariosRoute: typeof DashboardUsuariosRoute
+  DashboardVagasRoute: typeof DashboardVagasRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
+  DashboardEventosRoute: DashboardEventosRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardUsuariosRoute: DashboardUsuariosRoute,
+  DashboardVagasRoute: DashboardVagasRoute,
   DashboardIndexRoute: DashboardIndexRoute,
 }
 
