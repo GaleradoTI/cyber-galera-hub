@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/integrations/supabase/client";
 import { SITE_CONFIG } from "@/lib/site-config";
+import { PasswordChecklist, validatePassword } from "@/lib/password-policy";
 
 export const Route = createFileRoute("/cadastro")({
   head: () => ({
@@ -34,7 +35,8 @@ function SignupPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.password.length < 8) return toast.error("Senha deve ter no mínimo 8 caracteres");
+    const { ok, missing } = validatePassword(form.password);
+    if (!ok) return toast.error(`Senha fraca: falta ${missing.join(", ").toLowerCase()}`);
     if (form.password !== form.confirm) return toast.error("As senhas não coincidem");
     if (!form.acceptTerms) return toast.error("Você precisa aceitar os Termos e a Política de Privacidade");
 
@@ -88,8 +90,9 @@ function SignupPage() {
               <Input id="email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Senha (mín. 8)</Label>
+              <Label htmlFor="password">Senha</Label>
               <PasswordInput id="password" minLength={8} required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+              <PasswordChecklist value={form.password} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="confirm">Confirmar senha</Label>
