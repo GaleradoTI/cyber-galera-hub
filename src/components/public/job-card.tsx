@@ -1,9 +1,9 @@
 import { Briefcase, MapPin } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
-export function JobCard({ job }: { job: any }) {
-  return (
-    <Link to="/vagas" className="glass rounded-xl p-5 hover-glow-magenta block group">
+export function JobCard({ job, onClick }: { job: any; onClick?: () => void }) {
+  const inner = (
+    <>
       <div className="flex items-start justify-between gap-2">
         <div>
           <h3 className="font-bold text-base group-hover:text-gradient-neon transition">{job.title}</h3>
@@ -25,6 +25,13 @@ export function JobCard({ job }: { job: any }) {
           <span key={t} className="text-[10px] px-2 py-0.5 rounded bg-accent/40 text-muted-foreground">{t}</span>
         ))}
       </div>
-    </Link>
+    </>
+  );
+  const cls = "glass rounded-xl p-5 hover-glow-magenta block group text-left w-full";
+  if (onClick) {
+    return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+  }
+  return (
+    <Link to="/vagas" className={cls}>{inner}</Link>
   );
 }
