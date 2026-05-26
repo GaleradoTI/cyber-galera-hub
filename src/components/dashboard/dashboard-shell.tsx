@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -34,7 +34,7 @@ export type DashRoles = string[];
 
 export function useDashboardRoles() {
   const { user } = useAuth();
-  const { data: roles = [] } = useQuery({
+  const { data: roles = [], isLoading: rolesLoading, isFetched: rolesFetched } = useQuery({
     queryKey: ["roles", user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
@@ -53,7 +53,7 @@ export function useDashboardRoles() {
   const isSuperAdmin = roles.includes("SUPER_ADMIN");
   const isAdmin = isSuperAdmin || roles.includes("ADMIN");
   const primary = isSuperAdmin ? "SUPER_ADMIN" : roles.includes("ADMIN") ? "ADMIN" : roles.includes("MODERADOR") ? "MODERADOR" : "MEMBRO";
-  return { user, roles, isAdmin, isSuperAdmin, primary, profile };
+  return { user, roles, isAdmin, isSuperAdmin, primary, profile, rolesLoading, rolesReady: !!user?.id && rolesFetched };
 }
 
 export function RoleBadge({ role }: { role: string }) {
@@ -74,9 +74,9 @@ export function DashboardShell({ children, title, description }: { children: Rea
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(true);
 
-  if (!loading && !isAuthenticated) {
-    navigate({ to: "/login" });
-  }
+  useEffect(() => {
+    if (!loading && !isAuthenticated) navigate({ to: "/login" });
+  }, [loading, isAuthenticated, navigate]);
 
   const items = [
     { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
