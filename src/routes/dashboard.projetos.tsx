@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users as UsersIcon, Crown } from "lucide-react";
+import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -16,7 +16,8 @@ import { Badge } from "@/components/ui/badge";
 export const Route = createFileRoute("/dashboard/projetos")({ component: ProjetosAdminPage });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string; created_at: string };
-type Member = { id: string; project_id: string; user_id: string; role_in_project: string };
+type Squad = { id: string; project_id: string; name: string; description: string | null };
+type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; email: string };
 
 const slugify = (s: string) =>
@@ -27,7 +28,9 @@ function ProjetosAdminPage() {
   const qc = useQueryClient();
   const { isAdmin, isSuperAdmin, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Project> | null>(null);
-  const [managing, setManaging] = useState<Project | null>(null);
+  const [managingProject, setManagingProject] = useState<Project | null>(null);
+  const [editingSquad, setEditingSquad] = useState<Partial<Squad> | null>(null);
+  const [managingSquad, setManagingSquad] = useState<Squad | null>(null);
   const [newMemberId, setNewMemberId] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("MEMBRO");
 
@@ -42,6 +45,15 @@ function ProjetosAdminPage() {
     },
   });
 
+  const { data: allSquads = [] } = useQuery({
+    queryKey: ["all-squads"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("squads").select("*").order("created_at");
+      if (error) throw error;
+      return (data ?? []) as Squad[];
+    },
+  });
+
   const { data: profiles = [] } = useQuery({
     queryKey: ["admin-profiles-light"],
     queryFn: async () => {
@@ -51,26 +63,33 @@ function ProjetosAdminPage() {
     },
   });
 
-  const { data: members = [] } = useQuery({
-    queryKey: ["project-members", managing?.id],
-    enabled: !!managing?.id,
+  const { data: squadMembers = [] } = useQuery({
+    queryKey: ["squad-members", managingSquad?.id],
+    enabled: !!managingSquad?.id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("project_members").select("*").eq("project_id", managing!.id);
+      const { data, error } = await supabase.from("squad_members").select("*").eq("squad_id", managingSquad!.id);
       if (error) throw error;
-      return (data ?? []) as Member[];
+      return (data ?? []) as SquadMember[];
     },
   });
 
-  const profileById = useMemo(() => {
-    const m = new Map<string, Profile>();
-    profiles.forEach((p) => m.set(p.user_id, p));
+  const profileById = useMemo(() => new Map(profiles.map((p) => [p.user_id, p])), [profiles]);
+  const squadsByProject = useMemo(() => {
+    const m = new Map<string, Squad[]>();
+    allSquads.forEach((s) => {
+      const arr = m.get(s.project_id) ?? [];
+      arr.push(s);
+      m.set(s.project_id, arr);
+    });
     return m;
-  }, [profiles]);
+  }, [allSquads]);
 
-  const refresh = () => {
+  const refreshAll = () => {
     qc.invalidateQueries({ queryKey: ["admin-projects"] });
-    qc.invalidateQueries({ queryKey: ["project-members"] });
+    qc.invalidateQueries({ queryKey: ["all-squads"] });
+    qc.invalidateQueries({ queryKey: ["squad-members"] });
     qc.invalidateQueries({ queryKey: ["my-projects"] });
+    qc.invalidateQueries({ queryKey: ["my-squads"] });
   };
 
   const saveProject = async () => {
@@ -82,55 +101,76 @@ function ProjetosAdminPage() {
       cover_url: editing.cover_url ?? null,
       status: editing.status ?? "ativo",
     };
-    if (editing.id) {
-      const { error } = await supabase.from("projects").update(payload).eq("id", editing.id);
-      if (error) return toast.error(error.message);
-    } else {
-      const { error } = await supabase.from("projects").insert(payload);
-      if (error) return toast.error(error.message);
-    }
+    const { error } = editing.id
+      ? await supabase.from("projects").update(payload).eq("id", editing.id)
+      : await supabase.from("projects").insert(payload);
+    if (error) return toast.error(error.message);
     toast.success("Projeto salvo");
     setEditing(null);
-    refresh();
+    refreshAll();
   };
 
   const removeProject = async (p: Project) => {
-    if (!confirm(`Excluir projeto "${p.name}"?`)) return;
+    if (!confirm(`Excluir projeto "${p.name}" e todos seus squads?`)) return;
     const { error } = await supabase.from("projects").delete().eq("id", p.id);
     if (error) return toast.error(error.message);
     toast.success("Projeto removido");
-    refresh();
+    refreshAll();
+  };
+
+  const saveSquad = async () => {
+    if (!editingSquad?.name || !editingSquad.project_id) return toast.error("Nome obrigatório");
+    const payload = {
+      project_id: editingSquad.project_id,
+      name: editingSquad.name,
+      description: editingSquad.description ?? null,
+    };
+    const { error } = editingSquad.id
+      ? await supabase.from("squads").update({ name: payload.name, description: payload.description }).eq("id", editingSquad.id)
+      : await supabase.from("squads").insert(payload);
+    if (error) return toast.error(error.message);
+    toast.success("Squad salvo");
+    setEditingSquad(null);
+    refreshAll();
+  };
+
+  const removeSquad = async (s: Squad) => {
+    if (!confirm(`Excluir squad "${s.name}"?`)) return;
+    const { error } = await supabase.from("squads").delete().eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success("Squad removido");
+    refreshAll();
   };
 
   const addMember = async () => {
-    if (!managing || !newMemberId) return;
+    if (!managingSquad || !newMemberId) return;
     if (!isSuperAdmin) return toast.error("Apenas SUPER ADMIN adiciona membros.");
-    const { error } = await supabase.from("project_members").insert({
-      project_id: managing.id, user_id: newMemberId, role_in_project: newMemberRole,
+    const { error } = await supabase.from("squad_members").insert({
+      squad_id: managingSquad.id, user_id: newMemberId, role_in_squad: newMemberRole,
     });
     if (error) return toast.error(error.message);
     setNewMemberId("");
     setNewMemberRole("MEMBRO");
-    qc.invalidateQueries({ queryKey: ["project-members", managing.id] });
+    qc.invalidateQueries({ queryKey: ["squad-members", managingSquad.id] });
   };
 
-  const removeMember = async (m: Member) => {
+  const removeMember = async (m: SquadMember) => {
     if (!isSuperAdmin) return toast.error("Apenas SUPER ADMIN remove membros.");
-    const { error } = await supabase.from("project_members").delete().eq("id", m.id);
+    const { error } = await supabase.from("squad_members").delete().eq("id", m.id);
     if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["project-members", managing!.id] });
+    qc.invalidateQueries({ queryKey: ["squad-members", managingSquad!.id] });
   };
 
-  const toggleLeader = async (m: Member) => {
+  const toggleLeader = async (m: SquadMember) => {
     if (!isSuperAdmin) return toast.error("Apenas SUPER ADMIN altera líderes.");
-    const next = m.role_in_project === "LIDER" ? "MEMBRO" : "LIDER";
-    const { error } = await supabase.from("project_members").update({ role_in_project: next }).eq("id", m.id);
+    const next = m.role_in_squad === "LIDER" ? "MEMBRO" : "LIDER";
+    const { error } = await supabase.from("squad_members").update({ role_in_squad: next }).eq("id", m.id);
     if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["project-members", managing!.id] });
+    qc.invalidateQueries({ queryKey: ["squad-members", managingSquad!.id] });
   };
 
   return (
-    <DashboardShell title="Projetos / Squads" description="Crie projetos e atribua membros e líderes.">
+    <DashboardShell title="Projetos / Squads" description="Cada projeto pode ter vários squads. Squads têm líderes e membros.">
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">{projects.length} projeto(s)</p>
         <Button onClick={() => setEditing({ name: "", slug: "", description: "", status: "ativo" })}>
@@ -138,44 +178,76 @@ function ProjetosAdminPage() {
         </Button>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
-        {projects.map((p) => (
-          <div key={p.id} className="glass rounded-xl p-5 border border-primary/20">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-bold">{p.name}</h3>
-                <p className="text-xs text-muted-foreground">/{p.slug}</p>
+      {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+
+      <div className="space-y-4">
+        {projects.map((p) => {
+          const squads = squadsByProject.get(p.id) ?? [];
+          return (
+            <div key={p.id} className="glass rounded-xl p-5 border border-primary/20">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-lg">{p.name}</h3>
+                    <Badge variant="outline" className="text-[10px]">{p.status}</Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">/{p.slug}</p>
+                  {p.description && <p className="text-sm text-muted-foreground mt-2">{p.description}</p>}
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3 w-3" /></Button>
+                  {isSuperAdmin && (
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeProject(p)}><Trash2 className="h-3 w-3" /></Button>
+                  )}
+                </div>
               </div>
-              <Badge variant="outline" className="text-[10px]">{p.status}</Badge>
+
+              <div className="mt-4 pt-3 border-t border-border/40">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground/70 flex items-center gap-1">
+                    <Layers className="h-3 w-3" /> SQUADS ({squads.length})
+                  </div>
+                  {isSuperAdmin && (
+                    <Button size="sm" variant="outline" onClick={() => setEditingSquad({ project_id: p.id, name: "", description: "" })}>
+                      <Plus className="h-3 w-3 mr-1" /> Novo squad
+                    </Button>
+                  )}
+                </div>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {squads.map((s) => (
+                    <div key={s.id} className="rounded-md border border-border/40 p-3 bg-muted/10">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm truncate">{s.name}</div>
+                          {s.description && <p className="text-xs text-muted-foreground line-clamp-2">{s.description}</p>}
+                        </div>
+                        {isSuperAdmin && (
+                          <div className="flex gap-1 shrink-0">
+                            <Button size="sm" variant="ghost" onClick={() => setEditingSquad(s)}><Pencil className="h-3 w-3" /></Button>
+                            <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeSquad(s)}><Trash2 className="h-3 w-3" /></Button>
+                          </div>
+                        )}
+                      </div>
+                      <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => setManagingSquad(s)}>
+                        <UsersIcon className="h-3 w-3 mr-1" /> Membros
+                      </Button>
+                    </div>
+                  ))}
+                  {squads.length === 0 && <p className="text-xs text-muted-foreground col-span-2">Nenhum squad neste projeto ainda.</p>}
+                </div>
+              </div>
             </div>
-            {p.description && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{p.description}</p>}
-            <div className="flex gap-2 mt-4">
-              <Button size="sm" variant="outline" onClick={() => setManaging(p)}>
-                <UsersIcon className="h-3 w-3 mr-1" /> Membros
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setEditing(p)}>
-                <Pencil className="h-3 w-3 mr-1" /> Editar
-              </Button>
-              {isSuperAdmin && (
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeProject(p)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {!isLoading && projects.length === 0 && (
-          <p className="text-sm text-muted-foreground col-span-2">Nenhum projeto criado ainda.</p>
+          <p className="text-sm text-muted-foreground">Nenhum projeto criado ainda.</p>
         )}
       </div>
 
-      {/* Edit dialog */}
+      {/* Project edit dialog */}
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editing?.id ? "Editar projeto" : "Novo projeto"}</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>{editing?.id ? "Editar projeto" : "Novo projeto"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div><Label>Nome</Label><Input value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing!, name: e.target.value, slug: editing?.slug || slugify(e.target.value) })} /></div>
             <div><Label>Slug</Label><Input value={editing?.slug ?? ""} onChange={(e) => setEditing({ ...editing!, slug: slugify(e.target.value) })} /></div>
@@ -200,13 +272,28 @@ function ProjetosAdminPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Members dialog */}
-      <Dialog open={!!managing} onOpenChange={(o) => !o && setManaging(null)}>
+      {/* Squad edit dialog */}
+      <Dialog open={!!editingSquad} onOpenChange={(o) => !o && setEditingSquad(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{editingSquad?.id ? "Editar squad" : "Novo squad"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div><Label>Nome do squad</Label><Input value={editingSquad?.name ?? ""} onChange={(e) => setEditingSquad({ ...editingSquad!, name: e.target.value })} /></div>
+            <div><Label>Descrição</Label><Textarea rows={3} value={editingSquad?.description ?? ""} onChange={(e) => setEditingSquad({ ...editingSquad!, description: e.target.value })} /></div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingSquad(null)}>Cancelar</Button>
+            <Button onClick={saveSquad}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Squad members dialog */}
+      <Dialog open={!!managingSquad} onOpenChange={(o) => !o && setManagingSquad(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Membros — {managing?.name}</DialogTitle>
+            <DialogTitle>Membros — {managingSquad?.name}</DialogTitle>
             <DialogDescription>
-              {isSuperAdmin ? "Como SUPER ADMIN você pode adicionar/remover membros e definir líderes." : "Apenas SUPER ADMIN pode gerenciar membros."}
+              {isSuperAdmin ? "SUPER ADMIN gerencia membros e líderes do squad. Pode haver vários líderes." : "Apenas SUPER ADMIN pode gerenciar membros."}
             </DialogDescription>
           </DialogHeader>
 
@@ -218,7 +305,7 @@ function ProjetosAdminPage() {
                   <SelectTrigger><SelectValue placeholder="Selecione…" /></SelectTrigger>
                   <SelectContent className="max-h-64">
                     {profiles
-                      .filter((p) => !members.some((m) => m.user_id === p.user_id))
+                      .filter((p) => !squadMembers.some((m) => m.user_id === p.user_id))
                       .map((p) => (
                         <SelectItem key={p.user_id} value={p.user_id}>{p.display_name} — {p.email}</SelectItem>
                       ))}
@@ -240,19 +327,19 @@ function ProjetosAdminPage() {
           )}
 
           <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
-            {members.map((m) => {
+            {squadMembers.map((m) => {
               const p = profileById.get(m.user_id);
               return (
                 <div key={m.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted/30">
                   <div className="flex items-center gap-2">
-                    {m.role_in_project === "LIDER" && <Crown className="h-3 w-3 text-secondary" />}
+                    {m.role_in_squad === "LIDER" && <Crown className="h-3 w-3 text-secondary" />}
                     <span className="text-sm">{p?.display_name ?? m.user_id}</span>
                     <span className="text-xs text-muted-foreground">{p?.email}</span>
                   </div>
                   {isSuperAdmin && (
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => toggleLeader(m)}>
-                        {m.role_in_project === "LIDER" ? "Remover líder" : "Tornar líder"}
+                        {m.role_in_squad === "LIDER" ? "Remover líder" : "Tornar líder"}
                       </Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeMember(m)}>
                         <Trash2 className="h-3 w-3" />
@@ -262,7 +349,7 @@ function ProjetosAdminPage() {
                 </div>
               );
             })}
-            {members.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum membro ainda.</p>}
+            {squadMembers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum membro ainda.</p>}
           </div>
         </DialogContent>
       </Dialog>
