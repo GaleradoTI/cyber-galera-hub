@@ -32,6 +32,7 @@ import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meu
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
+import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.candidatos'
 
 const VagasRoute = VagasRouteImport.update({
   id: '/vagas',
@@ -148,6 +149,11 @@ const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardCandidatosRoute = DashboardCandidatosRouteImport.update({
+  id: '/candidatos',
+  path: '/candidatos',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/candidatos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/candidatos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/dashboard/candidatos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -479,10 +491,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConfiguracoesRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/candidatos': {
+      id: '/dashboard/candidatos'
+      path: '/candidatos'
+      fullPath: '/dashboard/candidatos'
+      preLoaderRoute: typeof DashboardCandidatosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
 interface DashboardRouteChildren {
+  DashboardCandidatosRoute: typeof DashboardCandidatosRoute
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
   DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
@@ -497,6 +517,7 @@ interface DashboardRouteChildren {
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardCandidatosRoute: DashboardCandidatosRoute,
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
   DashboardEventosRoute: DashboardEventosRoute,
   DashboardLogsRoute: DashboardLogsRoute,
