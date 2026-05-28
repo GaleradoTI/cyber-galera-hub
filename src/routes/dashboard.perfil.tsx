@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export const Route = createFileRoute("/dashboard/perfil")({ component: PerfilPage });
 
@@ -20,6 +21,7 @@ const profileSchema = z.object({
   work_area: z.string().trim().max(80).optional().nullable(),
   looking_for_job: z.boolean(),
   tech_tags: z.array(z.string().trim().min(1).max(40)).max(20),
+  avatar_url: z.string().trim().max(500).optional().nullable(),
   social_links: z.object({
     linkedin: z.string().trim().max(200).optional(),
     github: z.string().trim().max(200).optional(),
@@ -38,6 +40,7 @@ function PerfilPage() {
     work_area: "",
     looking_for_job: false,
     tech_tags: [] as string[],
+    avatar_url: "" as string | null,
     social_links: { linkedin: "", github: "", instagram: "", twitter: "", website: "" } as Record<string, string>,
   });
   const [saving, setSaving] = useState(false);
@@ -62,6 +65,7 @@ function PerfilPage() {
       work_area: profile.work_area ?? "",
       looking_for_job: !!profile.looking_for_job,
       tech_tags: (profile.tech_tags ?? []) as string[],
+      avatar_url: profile.avatar_url ?? "",
       social_links: {
         linkedin: "", github: "", instagram: "", twitter: "", website: "",
         ...((profile.social_links ?? {}) as Record<string, string>),
@@ -81,6 +85,7 @@ function PerfilPage() {
         work_area: parsed.data.work_area ?? null,
         looking_for_job: parsed.data.looking_for_job,
         tech_tags: parsed.data.tech_tags,
+        avatar_url: parsed.data.avatar_url ?? null,
         social_links: parsed.data.social_links,
       })
       .eq("user_id", user!.id);
@@ -118,6 +123,16 @@ function PerfilPage() {
         <div className="grid gap-5">
           <section className="glass rounded-xl p-5 border border-primary/20">
             <h2 className="font-bold text-sm mb-4">Dados básicos</h2>
+            <div className="mb-5">
+              <ImageUploader
+                bucket="avatars"
+                folder={user!.id}
+                value={form.avatar_url}
+                onChange={(url) => setForm({ ...form, avatar_url: url })}
+                label="Foto de perfil"
+                aspect="square"
+              />
+            </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label>Nome</Label>
