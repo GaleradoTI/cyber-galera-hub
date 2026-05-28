@@ -28,7 +28,7 @@ const empty: Partial<Job> = { title: "", company: "", description: "", short_des
 function VagasAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin, user, rolesReady } = useDashboardRoles();
+  const { isAdmin, isRecruiter, user, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Job> | null>(null);
   const [viewing, setViewing] = useState<Job | null>(null);
   const [removing, setRemoving] = useState<Job | null>(null);
@@ -38,12 +38,17 @@ function VagasAdminPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
+  useEffect(() => {
+    if (rolesReady && !isAdmin && !isRecruiter) navigate({ to: "/dashboard" });
+  }, [rolesReady, isAdmin, isRecruiter, navigate]);
 
   const { data: jobs = [], isLoading } = useQuery({
-    queryKey: ["admin-jobs"],
+    queryKey: ["admin-jobs", isAdmin ? "all" : user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
-      const { data, error } = await supabase.from("jobs").select("*").order("created_at", { ascending: false });
+      let q = supabase.from("jobs").select("*").order("created_at", { ascending: false });
+      if (!isAdmin) q = q.eq("created_by", user!.id);
+      const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Job[];
     },
