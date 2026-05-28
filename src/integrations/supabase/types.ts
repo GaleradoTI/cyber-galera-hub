@@ -89,6 +89,33 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           category: string | null
@@ -316,6 +343,103 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "project_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "project_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -325,6 +449,7 @@ export type Database = {
           email: string
           id: string
           is_blocked: boolean
+          is_verified_recruiter: boolean
           looking_for_job: boolean
           newsletter_opt_in: boolean
           social_links: Json
@@ -341,6 +466,7 @@ export type Database = {
           email: string
           id?: string
           is_blocked?: boolean
+          is_verified_recruiter?: boolean
           looking_for_job?: boolean
           newsletter_opt_in?: boolean
           social_links?: Json
@@ -357,6 +483,7 @@ export type Database = {
           email?: string
           id?: string
           is_blocked?: boolean
+          is_verified_recruiter?: boolean
           looking_for_job?: boolean
           newsletter_opt_in?: boolean
           social_links?: Json
@@ -409,9 +536,11 @@ export type Database = {
           created_by: string | null
           description: string | null
           id: string
+          is_public: boolean
           name: string
           slug: string
           status: string
+          tech_stack: string[]
           updated_at: string
         }
         Insert: {
@@ -420,9 +549,11 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          is_public?: boolean
           name: string
           slug: string
           status?: string
+          tech_stack?: string[]
           updated_at?: string
         }
         Update: {
@@ -431,9 +562,11 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           id?: string
+          is_public?: boolean
           name?: string
           slug?: string
           status?: string
+          tech_stack?: string[]
           updated_at?: string
         }
         Relationships: []
