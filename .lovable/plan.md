@@ -1,139 +1,92 @@
-## Visão geral
+# Plano de implementação
 
-Adicionar o papel **RECRUTADOR**, sistema de **cargos customizados** (tags), módulo de **Projetos/Squads** com líderes e membros, reorganizar a **sidebar** por perfil, e habilitar edição de perfil para o recrutador. Também listo sugestões de features novas no final.
-
----
-
-## 1. Banco de dados (migração)
-
-### 1.1 Novo papel `RECRUTADOR`
-- Adicionar valor `RECRUTADOR` ao enum `app_role`.
-- Atualizar `is_admin_or_super` permanece igual; criar helper `is_recruiter_or_admin(uid)` para policies de vagas.
-- Permitir que `RECRUTADOR` faça **INSERT/UPDATE/DELETE** apenas nas próprias vagas (`jobs.created_by = auth.uid()`).
-- Permitir que `RECRUTADOR` veja perfis de membros com `looking_for_job = true` (policy adicional em `profiles`).
-
-### 1.2 Cargos customizados (badges)
-Tabela `member_badges` para títulos como "Líder de Projeto", "Embaixador", etc., gerenciada apenas pelo SUPER_ADMIN.
-
-```text
-member_badges
-- id, user_id, label (text), color (text), created_by, created_at
-```
-
-### 1.3 Módulo de Projetos / Squads
-```text
-projects
-- id, name, slug, description, cover_url, status, created_by, created_at, updated_at
-
-project_members
-- id, project_id, user_id, role_in_project ('LIDER' | 'MEMBRO'),
-  created_at  (unique project_id+user_id)
-```
-
-Policies:
-- **SELECT**: membro do projeto OU admin/super.
-- **INSERT/DELETE de project_members**: apenas SUPER_ADMIN.
-- **UPDATE de projects**: líderes (`role_in_project='LIDER'`) e admins.
-- **INSERT de projects**: admin/super.
-
-### 1.4 Grants padrão (authenticated + service_role) em todas as tabelas novas.
+Escopo grande — vou entregar em **3 ondas** para manter qualidade e revisar entre cada uma.
 
 ---
 
-## 2. Backend (server functions)
+## Onda 1 — Fundação (migração + uploads + edição de cargos)
 
-- `src/lib/projects.functions.ts`: list/get/create/update/delete projects, add/remove members, mudar role no projeto (super admin).
-- `src/lib/badges.functions.ts`: list/create/delete badges (super admin).
-- `src/lib/recruiter.functions.ts`: listar candidatos disponíveis (com `looking_for_job=true`), filtros por área.
+### 1.1 Migração SQL (banco)
+- **`member_badges`**: já tem CRUD; só falta UI de edição (sem migração).
+- **`notifications`** (nova): `user_id`, `type`, `title`, `body`, `link`, `read_at`. RLS: dono lê/atualiza; admin/sistema insere via server fn.
+- **`direct_messages`** (nova): `sender_id`, `recipient_id`, `content`, `read_at`. RLS: só remetente/destinatário leem.
+- **`post_comments`** (nova): `post_id`, `user_id`, `content`. RLS: membros do projeto.
+- **`post_reactions`** (nova): `post_id`, `user_id`, `emoji`. Unique (post,user,emoji). RLS: membros do projeto.
+- **`profiles`**: adicionar `is_verified_recruiter boolean default false` (só super_admin altera via policy específica).
+- **`projects`**: adicionar `is_public boolean default false`, `tech_stack text[]`.
+- **Storage buckets**: `avatars` (público), `project-covers` (público) + RLS por dono.
 
----
+### 1.2 Edição de cargos (`/dashboard/cargos`)
+- Botão de editar em cada badge: label, cor.
+- Filtro por usuário, busca por label.
 
-## 3. Sidebar reorganizada por perfil
-
-Estrutura final (`dashboard-shell.tsx`):
-
-```text
-TODOS
-  Visão Geral
-  Meu Perfil
-  Meus Projetos                  (se for membro de algum projeto)
-
-MEMBRO
-  Vagas Salvas
-  Meus Eventos
-
-RECRUTADOR
-  Minhas Vagas
-  Candidatos
-  Meus Eventos
-
-ADMIN / SUPER_ADMIN
-  Usuários
-  Vagas (todas)
-  Eventos
-  Projetos
-  Configurações do Site
-  Logs
-
-SUPER_ADMIN extra
-  Cargos (Badges)
-```
-
-Agrupar com cabeçalhos sutis e ícones (sem quebrar o visual atual).
+### 1.3 Uploads
+- Avatar do perfil (`/dashboard/perfil`): troca de URL colada para uploader.
+- Capa do projeto (`/dashboard/projetos`): idem.
+- Componente reutilizável `ImageUploader` em `src/components/ui/image-uploader.tsx`.
 
 ---
 
-## 4. Telas novas
+## Onda 2 — Engajamento (notificações + mural + badges em usuários)
 
-| Rota | Descrição |
-|---|---|
-| `/dashboard/projetos` | Admin: listar, criar, editar projetos + atribuir membros/líderes (super). |
-| `/dashboard/meus-projetos` | Qualquer usuário membro de projeto: vê os projetos. Se for líder, edita nome/descrição/capa. |
-| `/dashboard/candidatos` | Recrutador: lista membros com "em busca", filtros por área, link para contato (e-mail). |
-| `/dashboard/minhas-vagas-postadas` | Recrutador: CRUD das próprias vagas (reaproveita o componente de vagas com filtro). |
-| `/dashboard/cargos` | Super admin: cria/remove badges atribuídas aos membros. |
+### 2.1 Notificações
+- Sino no header do dashboard (`dashboard-shell.tsx`) com badge de não lidas.
+- Dropdown lista as 10 mais recentes, marca como lida ao clicar, link para o item.
+- Server fn `createNotification` chamada nos eventos: nova candidatura recebida, virou líder de squad, novo post no seu squad, nova DM.
+- Polling a cada 30s (sem realtime para manter simples).
 
-Adicionar exibição de **badges** no perfil público e na tela de Usuários.
+### 2.2 Mural — comentários e reações
+- Em `dashboard.meus-projetos.tsx`: expandir cada post.
+- Reações: 👍 ❤️ 🚀 🎉 — clica para toggle.
+- Comentários: input simples, lista cronológica, autor pode deletar o próprio.
+
+### 2.3 Badges na lista de usuários
+- `/dashboard/usuarios`: mostrar badges ao lado do nome.
+- Super admin: botão "+ Cargo" abre popover para atribuir/remover.
+- Filtro por badge no topo da tabela.
 
 ---
 
-## 5. Página pública
+## Onda 3 — Recrutador & público (DMs + verificado + página pública + home renovado)
 
-- Exibir badges junto ao nome do membro onde aplicável.
-- Card de "Squads/Projetos" opcional no /sobre (apenas projetos com `status=publico`).
+### 3.1 Mensagens diretas
+- Nova rota `/dashboard/mensagens` (lista de conversas + thread).
+- Botão "Enviar mensagem" em `/dashboard/candidatos` (recrutador → candidato).
+- Inbox simples, sem typing/realtime; refresh em foco + polling 20s.
 
----
+### 3.2 Recrutador verificado
+- Super admin marca `is_verified_recruiter` na tela de usuários (botão dedicado).
+- Badge "Recrutador verificado" visível em vagas e DMs.
+- Filtro "só recrutadores verificados" na visão pública (futuro).
 
-## 6. Features sugeridas (para você escolher depois)
+### 3.3 Página pública do projeto
+- Rota nova `/projetos/$slug` (público se `is_public=true`).
+- Mostra: nome, descrição, capa, squads e líderes (nome + avatar), tech_stack.
+- Server fn pública (admin client) que retorna só campos seguros.
+- Link de "Página pública" no card do projeto admin quando `is_public=true`.
+- Toggle "Tornar pública" no edit de projeto.
 
-1. **Mensagens diretas** entre recrutador ↔ candidato (in-app).
-2. **Histórico de candidaturas**: rastrear "candidatei-me" em uma vaga.
-3. **Notificações** (sino no header) — nova vaga na área, novo evento, etc.
-4. **Tags de tecnologias no perfil** (React, Go, etc.) para filtro do recrutador.
-5. **Convites para projetos**: super admin envia convite; usuário aceita.
-6. **Estatísticas do projeto**: contagem de membros, eventos do squad.
-7. **Mural do projeto**: posts internos visíveis só para o squad.
-8. **Recrutador verificado**: badge de empresa aprovada pelo admin.
-9. **Exportação CSV** de candidatos para o recrutador.
-10. **Calendário unificado** de eventos por projeto.
+### 3.4 Dashboard Home renovado (`/dashboard`)
+- **Membro**: cards "Vagas casadas com suas tech tags", "Minhas candidaturas em andamento", "Próximos eventos".
+- **Recrutador**: funil (Enviadas / Em análise / Contratado / Rejeitada) das suas vagas, total candidatos novos na semana.
+- **Admin/Super**: KPIs (usuários ativos, vagas publicadas, eventos próximos, projetos ativos).
 
 ---
 
 ## Detalhes técnicos
 
-- Enum update via `ALTER TYPE app_role ADD VALUE 'RECRUTADOR'` (precisa estar fora de transação — usar migration dedicada).
-- Manter `is_admin_or_super` para não quebrar policies existentes.
-- Toda mutação sensível (criar projeto, mudar líderes, criar badge) passa por server function com `requireSupabaseAuth` + checagem de role server-side.
-- `dashboard-shell.tsx` ganha agrupamento por seção, mantendo collapse.
-- Atualizar `handle_new_user` se quiser permitir cadastro como recrutador no signup (proponho deixar como upgrade manual pelo super admin para evitar abuso).
+- Tudo em React + TanStack Router + Supabase JS (padrão do projeto).
+- Mutações sensíveis (criar notificação cruzada, marcar verificado, página pública) via `createServerFn` com `requireSupabaseAuth` e checagem de role server-side.
+- RLS sempre via funções `is_admin_or_super`, `has_role`, `is_project_member`, `is_squad_leader` já existentes; criar `is_message_participant` se necessário.
+- Storage: paths `{user_id}/{filename}` para isolar via RLS.
+- Sem realtime — polling leve para manter custo zero.
 
 ---
 
 ## Ordem de execução
 
-1. Migração SQL (enum + tabelas + policies + grants).
-2. Server functions.
-3. Sidebar reorganizada.
-4. Telas: Projetos (admin) → Meus Projetos → Candidatos → Cargos → Minhas Vagas (recrutador).
-5. Badges no perfil/usuários.
-6. QA visual + smoke test em cada perfil.
+1. **Onda 1** (migração + edição cargos + uploads) — confirmo com você antes de seguir
+2. **Onda 2** (notificações + mural + badges em usuários)
+3. **Onda 3** (DMs + verificado + página pública + home renovado)
+
+Posso começar pela Onda 1 agora?
