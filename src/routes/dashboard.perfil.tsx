@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter } from "lucide-react";
+import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -19,6 +19,7 @@ const profileSchema = z.object({
   bio: z.string().trim().max(500).optional().nullable(),
   work_area: z.string().trim().max(80).optional().nullable(),
   looking_for_job: z.boolean(),
+  tech_tags: z.array(z.string().trim().min(1).max(40)).max(20),
   social_links: z.object({
     linkedin: z.string().trim().max(200).optional(),
     github: z.string().trim().max(200).optional(),
@@ -36,10 +37,12 @@ function PerfilPage() {
     bio: "",
     work_area: "",
     looking_for_job: false,
+    tech_tags: [] as string[],
     social_links: { linkedin: "", github: "", instagram: "", twitter: "", website: "" } as Record<string, string>,
   });
   const [saving, setSaving] = useState(false);
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
+  const [tagInput, setTagInput] = useState("");
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -58,6 +61,7 @@ function PerfilPage() {
       bio: profile.bio ?? "",
       work_area: profile.work_area ?? "",
       looking_for_job: !!profile.looking_for_job,
+      tech_tags: (profile.tech_tags ?? []) as string[],
       social_links: {
         linkedin: "", github: "", instagram: "", twitter: "", website: "",
         ...((profile.social_links ?? {}) as Record<string, string>),
@@ -76,6 +80,7 @@ function PerfilPage() {
         bio: parsed.data.bio ?? null,
         work_area: parsed.data.work_area ?? null,
         looking_for_job: parsed.data.looking_for_job,
+        tech_tags: parsed.data.tech_tags,
         social_links: parsed.data.social_links,
       })
       .eq("user_id", user!.id);
@@ -137,6 +142,39 @@ function PerfilPage() {
                 <Switch checked={form.looking_for_job} onCheckedChange={(v) => setForm({ ...form, looking_for_job: v })} />
                 <Label className="!mt-0">Estou em busca de oportunidade</Label>
               </div>
+            </div>
+          </section>
+
+          <section className="glass rounded-xl p-5 border border-primary/20">
+            <h2 className="font-bold text-sm mb-4 flex items-center gap-2"><Tag className="h-3 w-3" /> Tecnologias</h2>
+            <p className="text-xs text-muted-foreground mb-3">Adicione tags como React, Go, Python — recrutadores podem filtrar por elas.</p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Digite e pressione Enter"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const t = tagInput.trim();
+                    if (t && !form.tech_tags.includes(t) && form.tech_tags.length < 20) {
+                      setForm({ ...form, tech_tags: [...form.tech_tags, t] });
+                    }
+                    setTagInput("");
+                  }
+                }}
+              />
+            </div>
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {form.tech_tags.map((t) => (
+                <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-primary/15 text-primary border border-primary/30">
+                  {t}
+                  <button type="button" onClick={() => setForm({ ...form, tech_tags: form.tech_tags.filter((x) => x !== t) })}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+              {form.tech_tags.length === 0 && <p className="text-xs text-muted-foreground">Nenhuma tag ainda.</p>}
             </div>
           </section>
 
