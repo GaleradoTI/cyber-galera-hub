@@ -22,6 +22,7 @@ import {
   UserSearch,
   Award,
   Building2,
+  ClipboardList,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -105,6 +106,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
       heading: "MEMBRO",
       items: [
         { to: "/dashboard/minhas-vagas", label: "Vagas Salvas", icon: Heart, show: !isAdmin && !isRecruiter },
+        { to: "/dashboard/candidaturas", label: "Minhas Candidaturas", icon: ClipboardList, show: !isAdmin && !isRecruiter },
         { to: "/dashboard/meus-eventos", label: "Meus Eventos", icon: Calendar, show: !isAdmin },
       ],
     },
