@@ -23,11 +23,13 @@ import {
   Award,
   Building2,
   ClipboardList,
+  MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NotificationsBell } from "@/components/dashboard/notifications-bell";
 
 const ROLE_META: Record<string, { label: string; icon: any; className: string }> = {
   SUPER_ADMIN: { label: "SUPER ADMIN", icon: Crown, className: "border-secondary text-secondary shadow-[0_0_20px_hsl(var(--secondary)/0.4)]" },
@@ -100,6 +102,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
         { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
         { to: "/dashboard/meus-projetos", label: "Meus Projetos", icon: FolderKanban, show: true },
+        { to: "/dashboard/mensagens", label: "Mensagens", icon: MessageSquare, show: true },
       ],
     },
     {
@@ -222,9 +225,14 @@ export function DashboardShell({ children, title, description }: { children: Rea
       </aside>
       <main className="flex-1 min-w-0">
         <div className="container max-w-6xl mx-auto px-4 md:px-8 py-8">
-          <header className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gradient-neon">{title}</h1>
-            {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+          <header className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gradient-neon">{title}</h1>
+              {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+            </div>
+            <div className="shrink-0">
+              <NotificationsBell />
+            </div>
           </header>
           {children}
         </div>
