@@ -32,6 +32,7 @@ import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meu
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
+import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
 import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.candidatos'
 
 const VagasRoute = VagasRouteImport.update({
@@ -149,6 +150,11 @@ const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardCargosRoute = DashboardCargosRouteImport.update({
+  id: '/cargos',
+  path: '/cargos',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardCandidatosRoute = DashboardCandidatosRouteImport.update({
   id: '/candidatos',
   path: '/candidatos',
@@ -169,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
+  '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
+  '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
+  '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/candidatos'
+    | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/candidatos'
+    | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/candidatos'
+    | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConfiguracoesRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/cargos': {
+      id: '/dashboard/cargos'
+      path: '/cargos'
+      fullPath: '/dashboard/cargos'
+      preLoaderRoute: typeof DashboardCargosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/candidatos': {
       id: '/dashboard/candidatos'
       path: '/candidatos'
@@ -503,6 +522,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardCandidatosRoute: typeof DashboardCandidatosRoute
+  DashboardCargosRoute: typeof DashboardCargosRoute
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
   DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
@@ -518,6 +538,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCandidatosRoute: DashboardCandidatosRoute,
+  DashboardCargosRoute: DashboardCargosRoute,
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
   DashboardEventosRoute: DashboardEventosRoute,
   DashboardLogsRoute: DashboardLogsRoute,
