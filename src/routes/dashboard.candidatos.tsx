@@ -18,6 +18,7 @@ type Candidate = {
   work_area: string | null;
   looking_for_job: boolean;
   social_links: Record<string, string> | null;
+  tech_tags: string[] | null;
 };
 
 function CandidatosPage() {
@@ -34,7 +35,7 @@ function CandidatosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("user_id,display_name,email,bio,work_area,looking_for_job,social_links")
+        .select("user_id,display_name,email,bio,work_area,looking_for_job,social_links,tech_tags")
         .eq("looking_for_job", true)
         .order("display_name");
       if (error) throw error;
@@ -50,7 +51,8 @@ function CandidatosPage() {
         c.display_name?.toLowerCase().includes(q) ||
         c.email?.toLowerCase().includes(q) ||
         c.work_area?.toLowerCase().includes(q) ||
-        c.bio?.toLowerCase().includes(q),
+        c.bio?.toLowerCase().includes(q) ||
+        (c.tech_tags ?? []).some((t) => t.toLowerCase().includes(q)),
     );
   }, [candidates, search]);
 
@@ -82,6 +84,14 @@ function CandidatosPage() {
               <Badge variant="outline" className="border-primary/40 text-primary text-[10px]">EM BUSCA</Badge>
             </div>
             {c.bio && <p className="text-sm text-muted-foreground mt-3 line-clamp-3">{c.bio}</p>}
+
+            {(c.tech_tags ?? []).length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-3">
+                {c.tech_tags!.map((t) => (
+                  <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">{t}</span>
+                ))}
+              </div>
+            )}
 
             <div className="flex flex-wrap gap-2 mt-4">
               <Button asChild size="sm">

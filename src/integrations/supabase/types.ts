@@ -167,6 +167,44 @@ export type Database = {
         }
         Relationships: []
       }
+      job_applications: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          message: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          message?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           apply_url: string | null
@@ -290,6 +328,7 @@ export type Database = {
           looking_for_job: boolean
           newsletter_opt_in: boolean
           social_links: Json
+          tech_tags: string[]
           updated_at: string
           user_id: string
           work_area: string | null
@@ -305,6 +344,7 @@ export type Database = {
           looking_for_job?: boolean
           newsletter_opt_in?: boolean
           social_links?: Json
+          tech_tags?: string[]
           updated_at?: string
           user_id: string
           work_area?: string | null
@@ -320,37 +360,41 @@ export type Database = {
           looking_for_job?: boolean
           newsletter_opt_in?: boolean
           social_links?: Json
+          tech_tags?: string[]
           updated_at?: string
           user_id?: string
           work_area?: string | null
         }
         Relationships: []
       }
-      project_members: {
+      project_posts: {
         Row: {
+          content: string
           created_at: string
           id: string
           project_id: string
-          role_in_project: string
+          updated_at: string
           user_id: string
         }
         Insert: {
+          content: string
           created_at?: string
           id?: string
           project_id: string
-          role_in_project?: string
+          updated_at?: string
           user_id: string
         }
         Update: {
+          content?: string
           created_at?: string
           id?: string
           project_id?: string
-          role_in_project?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "project_members_project_id_fkey"
+            foreignKeyName: "project_posts_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
@@ -450,6 +494,73 @@ export type Database = {
           },
         ]
       }
+      squad_members: {
+        Row: {
+          created_at: string
+          id: string
+          role_in_squad: string
+          squad_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role_in_squad?: string
+          squad_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role_in_squad?: string
+          squad_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_members_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squads: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squads_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_event_interests: {
         Row: {
           created_at: string
@@ -522,6 +633,14 @@ export type Database = {
         Returns: boolean
       }
       is_recruiter: { Args: { _user_id: string }; Returns: boolean }
+      is_squad_leader: {
+        Args: { _squad_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_squad_member: {
+        Args: { _squad_id: string; _user_id: string }
+        Returns: boolean
+      }
       promote_user_to_super_admin: { Args: { _email: string }; Returns: string }
     }
     Enums: {
