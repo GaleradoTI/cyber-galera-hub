@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, Layers, Globe, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, Layers, Globe, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -206,6 +206,11 @@ function ProjetosAdminPage() {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">/{p.slug}</p>
+                  {p.is_public && (
+                    <a href={`/projetos/${p.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] text-secondary hover:underline mt-1">
+                      Ver página pública <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
                   {p.description && <p className="text-sm text-muted-foreground mt-2">{p.description}</p>}
                   {p.tech_stack && p.tech_stack.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
