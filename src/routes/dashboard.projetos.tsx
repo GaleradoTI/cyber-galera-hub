@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, Layers } from "lucide-react";
+import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, Layers, Globe, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -12,10 +12,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export const Route = createFileRoute("/dashboard/projetos")({ component: ProjetosAdminPage });
 
-type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string; created_at: string };
+type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string; created_at: string; is_public: boolean; tech_stack: string[] };
 type Squad = { id: string; project_id: string; name: string; description: string | null };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; email: string };
@@ -28,6 +30,7 @@ function ProjetosAdminPage() {
   const qc = useQueryClient();
   const { isAdmin, isSuperAdmin, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Project> | null>(null);
+  const [techInput, setTechInput] = useState("");
   const [managingProject, setManagingProject] = useState<Project | null>(null);
   const [editingSquad, setEditingSquad] = useState<Partial<Squad> | null>(null);
   const [managingSquad, setManagingSquad] = useState<Squad | null>(null);
@@ -100,6 +103,8 @@ function ProjetosAdminPage() {
       description: editing.description ?? null,
       cover_url: editing.cover_url ?? null,
       status: editing.status ?? "ativo",
+      is_public: !!editing.is_public,
+      tech_stack: editing.tech_stack ?? [],
     };
     const { error } = editing.id
       ? await supabase.from("projects").update(payload).eq("id", editing.id)
@@ -107,6 +112,7 @@ function ProjetosAdminPage() {
     if (error) return toast.error(error.message);
     toast.success("Projeto salvo");
     setEditing(null);
+    setTechInput("");
     refreshAll();
   };
 
@@ -185,14 +191,29 @@ function ProjetosAdminPage() {
           const squads = squadsByProject.get(p.id) ?? [];
           return (
             <div key={p.id} className="glass rounded-xl p-5 border border-primary/20">
+              {p.cover_url && (
+                <img src={p.cover_url} alt="" className="w-full h-32 object-cover rounded-md mb-3 border border-border/40" />
+              )}
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-bold text-lg">{p.name}</h3>
                     <Badge variant="outline" className="text-[10px]">{p.status}</Badge>
+                    {p.is_public && (
+                      <Badge variant="outline" className="text-[10px] border-secondary text-secondary">
+                        <Globe className="h-3 w-3 mr-1" /> público
+                      </Badge>
+                    )}
                   </div>
                   <p className="text-xs text-muted-foreground">/{p.slug}</p>
                   {p.description && <p className="text-sm text-muted-foreground mt-2">{p.description}</p>}
+                  {p.tech_stack && p.tech_stack.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {p.tech_stack.map((t) => (
+                        <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{t}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3 w-3" /></Button>
@@ -248,11 +269,47 @@ function ProjetosAdminPage() {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{editing?.id ? "Editar projeto" : "Novo projeto"}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
             <div><Label>Nome</Label><Input value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing!, name: e.target.value, slug: editing?.slug || slugify(e.target.value) })} /></div>
             <div><Label>Slug</Label><Input value={editing?.slug ?? ""} onChange={(e) => setEditing({ ...editing!, slug: slugify(e.target.value) })} /></div>
             <div><Label>Descrição</Label><Textarea rows={3} value={editing?.description ?? ""} onChange={(e) => setEditing({ ...editing!, description: e.target.value })} /></div>
-            <div><Label>URL da capa</Label><Input value={editing?.cover_url ?? ""} onChange={(e) => setEditing({ ...editing!, cover_url: e.target.value })} /></div>
+            <ImageUploader
+              bucket="project-covers"
+              folder={editing?.id ?? "novo"}
+              value={editing?.cover_url ?? null}
+              onChange={(url) => setEditing({ ...editing!, cover_url: url })}
+              label="Capa do projeto"
+              aspect="video"
+            />
+            <div>
+              <Label>Tech stack</Label>
+              <Input
+                placeholder="Digite e pressione Enter"
+                value={techInput}
+                onChange={(e) => setTechInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const t = techInput.trim();
+                    const cur = editing?.tech_stack ?? [];
+                    if (t && !cur.includes(t) && cur.length < 20) {
+                      setEditing({ ...editing!, tech_stack: [...cur, t] });
+                    }
+                    setTechInput("");
+                  }
+                }}
+              />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {(editing?.tech_stack ?? []).map((t) => (
+                  <span key={t} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">
+                    {t}
+                    <button type="button" onClick={() => setEditing({ ...editing!, tech_stack: (editing?.tech_stack ?? []).filter((x) => x !== t) })}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
             <div>
               <Label>Status</Label>
               <Select value={editing?.status ?? "ativo"} onValueChange={(v) => setEditing({ ...editing!, status: v })}>
@@ -263,6 +320,13 @@ function ProjetosAdminPage() {
                   <SelectItem value="arquivado">Arquivado</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-3 p-3 rounded-md border border-border/40 bg-muted/20">
+              <Switch checked={!!editing?.is_public} onCheckedChange={(v) => setEditing({ ...editing!, is_public: v })} />
+              <div>
+                <Label className="!mt-0 flex items-center gap-1"><Globe className="h-3 w-3" /> Página pública</Label>
+                <p className="text-[10px] text-muted-foreground">Cria página em /projetos/{editing?.slug || "slug"} visível para qualquer pessoa.</p>
+              </div>
             </div>
           </div>
           <DialogFooter>
