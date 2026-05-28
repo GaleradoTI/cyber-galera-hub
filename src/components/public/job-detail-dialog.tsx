@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Briefcase, ExternalLink, Heart, MapPin } from "lucide-react";
+import { Briefcase, ExternalLink, Heart, MapPin, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +10,15 @@ import { toast } from "sonner";
 export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
   const [saved, setSaved] = useState(false);
+  const [applied, setApplied] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!job || !user) { setSaved(false); return; }
+    if (!job || !user) { setSaved(false); setApplied(false); return; }
     supabase.from("saved_jobs").select("id").eq("user_id", user.id).eq("job_id", job.id).maybeSingle()
       .then(({ data }) => setSaved(!!data));
+    supabase.from("job_applications").select("id").eq("user_id", user.id).eq("job_id", job.id).maybeSingle()
+      .then(({ data }) => setApplied(!!data));
   }, [job, user]);
 
   if (!job) return null;
@@ -31,6 +34,16 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
       if (error) toast.error(error.message); else { setSaved(true); toast.success("Vaga salva"); }
     }
     setBusy(false);
+  };
+
+  const apply = async () => {
+    if (!user) return;
+    setBusy(true);
+    const { error } = await supabase.from("job_applications").insert({ user_id: user.id, job_id: job.id });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setApplied(true);
+    toast.success("Candidatura registrada!");
   };
 
   return (
@@ -70,9 +83,20 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
         )}
 
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
+          {isAuthenticated && (
+            applied ? (
+              <Button variant="default" disabled className="flex-1 min-w-[180px]">
+                <CheckCircle2 className="h-4 w-4 mr-2" /> Candidatura enviada
+              </Button>
+            ) : (
+              <Button variant="neon" onClick={apply} disabled={busy} className="flex-1 min-w-[180px]">
+                <CheckCircle2 className="h-4 w-4 mr-2" /> Candidatar-se
+              </Button>
+            )
+          )}
           {job.apply_url && (
-            <a href={job.apply_url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[180px]">
-              <Button variant="neon" className="w-full"><ExternalLink className="h-4 w-4 mr-2" /> Candidatar-se</Button>
+            <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline"><ExternalLink className="h-4 w-4 mr-2" /> Site da vaga</Button>
             </a>
           )}
           {isAuthenticated ? (
