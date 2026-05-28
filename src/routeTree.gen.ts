@@ -33,6 +33,7 @@ import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
 import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
+import { Route as DashboardCandidaturasRouteImport } from './routes/dashboard.candidaturas'
 import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.candidatos'
 
 const VagasRoute = VagasRouteImport.update({
@@ -155,6 +156,11 @@ const DashboardCargosRoute = DashboardCargosRouteImport.update({
   path: '/cargos',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardCandidaturasRoute = DashboardCandidaturasRouteImport.update({
+  id: '/candidaturas',
+  path: '/candidaturas',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardCandidatosRoute = DashboardCandidatosRouteImport.update({
   id: '/candidatos',
   path: '/candidatos',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
+  '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
+  '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
+  '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/candidatos'
+    | '/dashboard/candidaturas'
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/candidatos'
+    | '/dashboard/candidaturas'
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/vagas'
     | '/dashboard/candidatos'
+    | '/dashboard/candidaturas'
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/eventos'
@@ -510,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCargosRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/candidaturas': {
+      id: '/dashboard/candidaturas'
+      path: '/candidaturas'
+      fullPath: '/dashboard/candidaturas'
+      preLoaderRoute: typeof DashboardCandidaturasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/candidatos': {
       id: '/dashboard/candidatos'
       path: '/candidatos'
@@ -522,6 +541,7 @@ declare module '@tanstack/react-router' {
 
 interface DashboardRouteChildren {
   DashboardCandidatosRoute: typeof DashboardCandidatosRoute
+  DashboardCandidaturasRoute: typeof DashboardCandidaturasRoute
   DashboardCargosRoute: typeof DashboardCargosRoute
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
   DashboardEventosRoute: typeof DashboardEventosRoute
@@ -538,6 +558,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCandidatosRoute: DashboardCandidatosRoute,
+  DashboardCandidaturasRoute: DashboardCandidaturasRoute,
   DashboardCargosRoute: DashboardCargosRoute,
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
   DashboardEventosRoute: DashboardEventosRoute,
@@ -573,3 +594,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
