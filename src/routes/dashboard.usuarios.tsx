@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2 } from "lucide-react";
+import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserPassword } from "@/lib/admin-users.functions";
@@ -11,13 +11,18 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/usuarios")({ component: UsuariosPage });
 
-type ProfileRow = { id: string; user_id: string; display_name: string; email: string; is_blocked: boolean; created_at: string };
+type ProfileRow = { id: string; user_id: string; display_name: string; email: string; is_blocked: boolean; created_at: string; is_verified_recruiter: boolean };
 type RoleRow = { user_id: string; role: string };
+type BadgeRow = { id: string; user_id: string; label: string; color: string };
+
+const BADGE_COLORS = ["primary", "secondary", "accent", "destructive"];
 
 function UsuariosPage() {
   const navigate = useNavigate();
@@ -29,6 +34,9 @@ function UsuariosPage() {
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
   const [resetting, setResetting] = useState<ProfileRow | null>(null);
   const [customPwd, setCustomPwd] = useState("");
+  const [badgeFilter, setBadgeFilter] = useState<string>("__all");
+  const [addBadgeFor, setAddBadgeFor] = useState<ProfileRow | null>(null);
+  const [newBadge, setNewBadge] = useState({ label: "", color: "primary" });
   const resetPwdFn = useServerFn(resetUserPassword);
 
   useEffect(() => {
@@ -38,7 +46,7 @@ function UsuariosPage() {
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id,user_id,display_name,email,is_blocked,created_at").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("profiles").select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter").order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
     },
@@ -52,6 +60,27 @@ function UsuariosPage() {
       return (data ?? []) as RoleRow[];
     },
   });
+
+  const { data: badgesData = [] } = useQuery({
+    queryKey: ["admin-badges"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("member_badges").select("*");
+      if (error) throw error;
+      return (data ?? []) as BadgeRow[];
+    },
+  });
+
+  const badgesByUser = useMemo(() => {
+    const m = new Map<string, BadgeRow[]>();
+    badgesData.forEach((b) => {
+      const arr = m.get(b.user_id) ?? [];
+      arr.push(b);
+      m.set(b.user_id, arr);
+    });
+    return m;
+  }, [badgesData]);
+
+  const allBadgeLabels = useMemo(() => Array.from(new Set(badgesData.map((b) => b.label))).sort(), [badgesData]);
 
   const rolesByUser = useMemo(() => {
     const m = new Map<string, string[]>();
@@ -77,14 +106,22 @@ function UsuariosPage() {
   };
 
   const filtered = profiles.filter((p) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return p.email?.toLowerCase().includes(q) || p.display_name?.toLowerCase().includes(q);
+    if (search) {
+      const q = search.toLowerCase();
+      if (!(p.email?.toLowerCase().includes(q) || p.display_name?.toLowerCase().includes(q))) return false;
+    }
+    if (badgeFilter !== "__all") {
+      const bs = badgesByUser.get(p.user_id) ?? [];
+      if (!bs.some((b) => b.label === badgeFilter)) return false;
+    }
+    return true;
   });
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
     qc.invalidateQueries({ queryKey: ["admin-roles"] });
+    qc.invalidateQueries({ queryKey: ["admin-badges"] });
+    qc.invalidateQueries({ queryKey: ["member-badges"] });
     qc.invalidateQueries({ queryKey: ["roles"] });
     qc.invalidateQueries({ queryKey: ["profile"] });
   };
@@ -139,6 +176,32 @@ function UsuariosPage() {
     refresh();
   };
 
+  const toggleVerified = async (p: ProfileRow) => {
+    if (!isSuperAdmin) return toast.error("Somente SUPER ADMIN.");
+    const { error } = await supabase.from("profiles").update({ is_verified_recruiter: !p.is_verified_recruiter }).eq("user_id", p.user_id);
+    if (error) return toast.error(error.message);
+    toast.success(p.is_verified_recruiter ? "Verificação removida" : "Recrutador verificado");
+    refresh();
+  };
+
+  const addBadge = async () => {
+    if (!addBadgeFor || !newBadge.label.trim()) return;
+    const { error } = await supabase.from("member_badges").insert({
+      user_id: addBadgeFor.user_id, label: newBadge.label.trim(), color: newBadge.color,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Cargo atribuído");
+    setAddBadgeFor(null);
+    setNewBadge({ label: "", color: "primary" });
+    refresh();
+  };
+
+  const removeBadge = async (id: string) => {
+    const { error } = await supabase.from("member_badges").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    refresh();
+  };
+
   const doResetPassword = async () => {
     if (!resetting) return;
     try {
@@ -158,6 +221,15 @@ function UsuariosPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou email" className="pl-9" />
         </div>
+        {allBadgeLabels.length > 0 && (
+          <Select value={badgeFilter} onValueChange={setBadgeFilter}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar por cargo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all">Todos os cargos</SelectItem>
+              {allBadgeLabels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <div className="text-xs text-muted-foreground ml-auto">{filtered.length} usuário(s)</div>
       </div>
 
@@ -179,6 +251,7 @@ function UsuariosPage() {
               const role = primaryOf(p.user_id);
               const isTargetAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
               const canActOnTarget = isSuperAdmin || !isTargetAdmin;
+              const userBadges = badgesByUser.get(p.user_id) ?? [];
               return (
                 <TableRow key={p.id}>
                   <TableCell>
@@ -187,8 +260,35 @@ function UsuariosPage() {
                         {(p.display_name ?? p.email).slice(0, 1).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-medium truncate">{p.display_name}</div>
+                        <div className="text-sm font-medium truncate flex items-center gap-1">
+                          {p.display_name}
+                          {p.is_verified_recruiter && (
+                            <span title="Recrutador verificado"><BadgeCheck className="h-3.5 w-3.5 text-primary" /></span>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground truncate">{p.email}</div>
+                        {(userBadges.length > 0 || isSuperAdmin) && (
+                          <div className="flex flex-wrap items-center gap-1 mt-1">
+                            {userBadges.map((b) => (
+                              <span key={b.id} className={`group inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border text-[9px] font-bold tracking-wider border-${b.color} text-${b.color}`}>
+                                {b.label.toUpperCase()}
+                                {isSuperAdmin && (
+                                  <button onClick={() => removeBadge(b.id)} className="opacity-50 hover:opacity-100">
+                                    <X className="h-2.5 w-2.5" />
+                                  </button>
+                                )}
+                              </span>
+                            ))}
+                            {isSuperAdmin && (
+                              <button
+                                onClick={() => { setAddBadgeFor(p); setNewBadge({ label: "", color: "primary" }); }}
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-dashed border-muted-foreground/40 text-[9px] text-muted-foreground hover:border-primary hover:text-primary"
+                              >
+                                <Plus className="h-2.5 w-2.5" /> CARGO
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </TableCell>
@@ -220,6 +320,12 @@ function UsuariosPage() {
                         {(rolesByUser.get(p.user_id) ?? []).includes("RECRUTADOR") ? "Remover recrutador" : "Tornar recrutador"}
                       </Button>
                     )}
+                    {isSuperAdmin && (rolesByUser.get(p.user_id) ?? []).includes("RECRUTADOR") && (
+                      <Button size="sm" variant="outline" onClick={() => toggleVerified(p)}>
+                        <BadgeCheck className="h-3 w-3 mr-1" />
+                        {p.is_verified_recruiter ? "Remover verificação" : "Verificar"}
+                      </Button>
+                    )}
                     <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => setConfirm(p)}>
                       {p.is_blocked ? "Reativar" : "Bloquear"}
                     </Button>
@@ -238,6 +344,34 @@ function UsuariosPage() {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!addBadgeFor} onOpenChange={(o) => !o && setAddBadgeFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Atribuir cargo</DialogTitle>
+            <DialogDescription>{addBadgeFor?.display_name} — {addBadgeFor?.email}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Nome do cargo</Label>
+              <Input value={newBadge.label} onChange={(e) => setNewBadge({ ...newBadge, label: e.target.value })} placeholder="Ex: Embaixador" />
+            </div>
+            <div>
+              <Label>Cor</Label>
+              <Select value={newBadge.color} onValueChange={(v) => setNewBadge({ ...newBadge, color: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {BADGE_COLORS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAddBadgeFor(null)}>Cancelar</Button>
+            <Button onClick={addBadge}>Atribuir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="mt-6 text-xs text-muted-foreground space-y-1">
         <p className="flex items-center gap-2"><Crown className="h-3 w-3 text-secondary" /> SUPER ADMIN: promove/rebaixa ADMIN e gerencia todos os usuários.</p>
