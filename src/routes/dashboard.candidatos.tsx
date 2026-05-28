@@ -1,7 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Search, ExternalLink } from "lucide-react";
+import { Mail, Search, ExternalLink, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
@@ -96,6 +96,11 @@ function CandidatosPage() {
             <div className="flex flex-wrap gap-2 mt-4">
               <Button asChild size="sm">
                 <a href={`mailto:${c.email}`}><Mail className="h-3 w-3 mr-1" /> Contatar</a>
+              </Button>
+              <Button asChild size="sm" variant="secondary">
+                <Link to="/dashboard/mensagens" search={{ to: c.user_id }}>
+                  <MessageSquare className="h-3 w-3 mr-1" /> Mensagem
+                </Link>
               </Button>
               {c.social_links &&
                 Object.entries(c.social_links)
