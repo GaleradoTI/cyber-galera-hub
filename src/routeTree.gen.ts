@@ -22,6 +22,7 @@ import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
+import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
 import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
 import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
 import { Route as DashboardProjetosRouteImport } from './routes/dashboard.projetos'
@@ -101,6 +102,11 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardRoute,
+} as any)
+const ProjetosSlugRoute = ProjetosSlugRouteImport.update({
+  id: '/projetos/$slug',
+  path: '/projetos/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardVagasRoute = DashboardVagasRouteImport.update({
   id: '/vagas',
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/projetos': typeof DashboardProjetosRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/dashboard/projetos': typeof DashboardProjetosRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/dashboard/projetos': typeof DashboardProjetosRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -289,6 +298,7 @@ export interface FileRouteTypes {
     | '/dashboard/projetos'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/projetos/$slug'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/dashboard/projetos'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/projetos/$slug'
     | '/dashboard'
   id:
     | '__root__'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '/dashboard/projetos'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/projetos/$slug'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
@@ -362,6 +374,7 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
   VagasRoute: typeof VagasRoute
+  ProjetosSlugRoute: typeof ProjetosSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard/'
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/projetos/$slug': {
+      id: '/projetos/$slug'
+      path: '/projetos/$slug'
+      fullPath: '/projetos/$slug'
+      preLoaderRoute: typeof ProjetosSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/vagas': {
       id: '/dashboard/vagas'
@@ -611,7 +631,18 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
   VagasRoute: VagasRoute,
+  ProjetosSlugRoute: ProjetosSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
