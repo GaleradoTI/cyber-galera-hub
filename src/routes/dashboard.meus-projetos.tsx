@@ -79,9 +79,7 @@ function MeusProjetosPage() {
     queryKey: ["my-squads-profiles", userIds.join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id,display_name,email").in("user_id", userIds);
-      // also fetch avatar_url for richer comments view
-      // (single call: include avatar_url)
+      const { data, error } = await supabase.from("profiles").select("user_id,display_name,email,avatar_url").in("user_id", userIds);
       if (error) throw error;
       return (data ?? []) as Profile[];
     },
