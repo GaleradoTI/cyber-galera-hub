@@ -11,13 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { PostCard } from "@/components/dashboard/post-card";
 
 export const Route = createFileRoute("/dashboard/meus-projetos")({ component: MeusProjetosPage });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string };
 type Squad = { id: string; project_id: string; name: string; description: string | null };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
-type Profile = { user_id: string; display_name: string; email: string };
+type Profile = { user_id: string; display_name: string; email: string; avatar_url: string | null };
 type Post = { id: string; project_id: string; user_id: string; content: string; created_at: string };
 
 function MeusProjetosPage() {
@@ -78,7 +79,7 @@ function MeusProjetosPage() {
     queryKey: ["my-squads-profiles", userIds.join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id,display_name,email").in("user_id", userIds);
+      const { data, error } = await supabase.from("profiles").select("user_id,display_name,email,avatar_url").in("user_id", userIds);
       if (error) throw error;
       return (data ?? []) as Profile[];
     },
@@ -258,23 +259,15 @@ function MeusProjetosPage() {
                 <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
                   {projectPosts.map((post) => {
                     const author = profileById.get(post.user_id);
-                    const mine = post.user_id === user?.id;
                     return (
-                      <div key={post.id} className="rounded-md border border-border/30 p-3 bg-muted/10">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="text-xs text-muted-foreground">
-                            <span className="font-semibold text-foreground">{author?.display_name ?? "Usuário"}</span>
-                            {" • "}
-                            {new Date(post.created_at).toLocaleString("pt-BR")}
-                          </div>
-                          {mine && (
-                            <Button size="sm" variant="ghost" className="text-destructive h-6 w-6 p-0" onClick={() => deletePost(post.id)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          )}
-                        </div>
-                        <p className="text-sm mt-1 whitespace-pre-wrap">{post.content}</p>
-                      </div>
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        author={author}
+                        currentUserId={user!.id}
+                        profileById={profileById}
+                        onDelete={() => deletePost(post.id)}
+                      />
                     );
                   })}
                   {projectPosts.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhum post ainda.</p>}
