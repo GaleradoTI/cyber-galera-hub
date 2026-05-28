@@ -18,6 +18,10 @@ import {
   Menu,
   ChevronLeft,
   Heart,
+  FolderKanban,
+  UserSearch,
+  Award,
+  Building2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -28,6 +32,7 @@ const ROLE_META: Record<string, { label: string; icon: any; className: string }>
   SUPER_ADMIN: { label: "SUPER ADMIN", icon: Crown, className: "border-secondary text-secondary shadow-[0_0_20px_hsl(var(--secondary)/0.4)]" },
   ADMIN: { label: "ADMIN", icon: ShieldCheck, className: "border-primary text-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)]" },
   MODERADOR: { label: "MODERADOR", icon: Sparkles, className: "border-accent text-accent" },
+  RECRUTADOR: { label: "RECRUTADOR", icon: Building2, className: "border-accent text-accent shadow-[0_0_18px_hsl(var(--accent)/0.35)]" },
   MEMBRO: { label: "MEMBRO", icon: UserIcon, className: "border-muted text-muted-foreground" },
 };
 
@@ -53,8 +58,17 @@ export function useDashboardRoles() {
   });
   const isSuperAdmin = roles.includes("SUPER_ADMIN");
   const isAdmin = isSuperAdmin || roles.includes("ADMIN");
-  const primary = isSuperAdmin ? "SUPER_ADMIN" : roles.includes("ADMIN") ? "ADMIN" : roles.includes("MODERADOR") ? "MODERADOR" : "MEMBRO";
-  return { user, roles, isAdmin, isSuperAdmin, primary, profile, rolesLoading, rolesReady: !!user?.id && rolesFetched };
+  const isRecruiter = roles.includes("RECRUTADOR");
+  const primary = isSuperAdmin
+    ? "SUPER_ADMIN"
+    : roles.includes("ADMIN")
+    ? "ADMIN"
+    : roles.includes("MODERADOR")
+    ? "MODERADOR"
+    : isRecruiter
+    ? "RECRUTADOR"
+    : "MEMBRO";
+  return { user, roles, isAdmin, isSuperAdmin, isRecruiter, primary, profile, rolesLoading, rolesReady: !!user?.id && rolesFetched };
 }
 
 export function RoleBadge({ role }: { role: string }) {
@@ -71,7 +85,7 @@ export function RoleBadge({ role }: { role: string }) {
 export function DashboardShell({ children, title, description }: { children: ReactNode; title: string; description?: string }) {
   const navigate = useNavigate();
   const { loading, isAuthenticated } = useAuth();
-  const { isAdmin, isSuperAdmin, primary, profile, user } = useDashboardRoles();
+  const { isAdmin, isSuperAdmin, isRecruiter, primary, profile, user } = useDashboardRoles();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(true);
 
@@ -79,16 +93,45 @@ export function DashboardShell({ children, title, description }: { children: Rea
     if (!loading && !isAuthenticated) navigate({ to: "/login" });
   }, [loading, isAuthenticated, navigate]);
 
-  const items = [
-    { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
-    { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
-    { to: "/dashboard/minhas-vagas", label: "Vagas Salvas", icon: Heart, show: !isAdmin },
-    { to: "/dashboard/meus-eventos", label: "Meus Eventos", icon: Calendar, show: !isAdmin },
-    { to: "/dashboard/usuarios", label: "Usuários", icon: Users, show: isAdmin },
-    { to: "/dashboard/vagas", label: "Vagas", icon: Briefcase, show: isAdmin },
-    { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAdmin },
-    { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
-    { to: "/dashboard/logs", label: "Logs de Auditoria", icon: FileText, show: isAdmin },
+  const sections: { heading?: string; items: { to: string; label: string; icon: any; show: boolean }[] }[] = [
+    {
+      items: [
+        { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
+        { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
+        { to: "/dashboard/meus-projetos", label: "Meus Projetos", icon: FolderKanban, show: true },
+      ],
+    },
+    {
+      heading: "MEMBRO",
+      items: [
+        { to: "/dashboard/minhas-vagas", label: "Vagas Salvas", icon: Heart, show: !isAdmin && !isRecruiter },
+        { to: "/dashboard/meus-eventos", label: "Meus Eventos", icon: Calendar, show: !isAdmin },
+      ],
+    },
+    {
+      heading: "RECRUTADOR",
+      items: [
+        { to: "/dashboard/vagas", label: "Minhas Vagas", icon: Briefcase, show: isRecruiter && !isAdmin },
+        { to: "/dashboard/candidatos", label: "Candidatos", icon: UserSearch, show: isRecruiter || isAdmin },
+      ],
+    },
+    {
+      heading: "ADMINISTRAÇÃO",
+      items: [
+        { to: "/dashboard/usuarios", label: "Usuários", icon: Users, show: isAdmin },
+        { to: "/dashboard/vagas", label: "Vagas", icon: Briefcase, show: isAdmin },
+        { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAdmin },
+        { to: "/dashboard/projetos", label: "Projetos / Squads", icon: FolderKanban, show: isAdmin },
+        { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
+        { to: "/dashboard/logs", label: "Logs de Auditoria", icon: FileText, show: isAdmin },
+      ],
+    },
+    {
+      heading: "SUPER ADMIN",
+      items: [
+        { to: "/dashboard/cargos", label: "Cargos / Badges", icon: Award, show: isSuperAdmin },
+      ],
+    },
   ];
 
   return (
@@ -128,29 +171,39 @@ export function DashboardShell({ children, title, description }: { children: Rea
               </div>
             </div>
           )}
-          <nav className="space-y-1 flex-1 overflow-y-auto">
-            {items.filter((i) => i.show).map((i) => {
-              const active = pathname === i.to;
-              const Icon = i.icon;
+          <nav className="space-y-3 flex-1 overflow-y-auto">
+            {sections.map((section, idx) => {
+              const visible = section.items.filter((i) => i.show);
+              if (visible.length === 0) return null;
               return (
-                <Link
-                  key={i.to}
-                  to={i.to}
-                  title={i.label}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition",
-                    active
-                      ? "bg-primary/15 text-primary border border-primary/30"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
-                    !open && "justify-center px-2",
+                <div key={idx} className="space-y-1">
+                  {open && section.heading && (
+                    <div className="px-3 pt-1 pb-1 text-[9px] font-bold tracking-[0.25em] text-muted-foreground/70">
+                      {section.heading}
+                    </div>
                   )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" />
-                  {open && <span className="truncate">{i.label}</span>}
-                  {open && (i.to === "/dashboard/configuracoes" || i.to === "/dashboard/usuarios") && isSuperAdmin && (
-                    <span className="ml-auto text-[9px] font-bold tracking-[0.15em] text-secondary">SUPER</span>
-                  )}
-                </Link>
+                  {visible.map((i) => {
+                    const active = pathname === i.to;
+                    const Icon = i.icon;
+                    return (
+                      <Link
+                        key={`${idx}-${i.to}`}
+                        to={i.to}
+                        title={i.label}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition",
+                          active
+                            ? "bg-primary/15 text-primary border border-primary/30"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
+                          !open && "justify-center px-2",
+                        )}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {open && <span className="truncate">{i.label}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
               );
             })}
           </nav>

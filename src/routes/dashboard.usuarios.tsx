@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound } from "lucide-react";
+import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserPassword } from "@/lib/admin-users.functions";
@@ -65,7 +65,15 @@ function UsuariosPage() {
 
   const primaryOf = (uid: string) => {
     const rs = rolesByUser.get(uid) ?? [];
-    return rs.includes("SUPER_ADMIN") ? "SUPER_ADMIN" : rs.includes("ADMIN") ? "ADMIN" : rs.includes("MODERADOR") ? "MODERADOR" : "MEMBRO";
+    return rs.includes("SUPER_ADMIN")
+      ? "SUPER_ADMIN"
+      : rs.includes("ADMIN")
+      ? "ADMIN"
+      : rs.includes("MODERADOR")
+      ? "MODERADOR"
+      : rs.includes("RECRUTADOR")
+      ? "RECRUTADOR"
+      : "MEMBRO";
   };
 
   const filtered = profiles.filter((p) => {
@@ -116,6 +124,18 @@ function UsuariosPage() {
     const { error } = await supabase.from("user_roles").delete().eq("user_id", p.user_id).eq("role", "ADMIN");
     if (error) return toast.error(error.message);
     toast.success(`${p.email} rebaixado para MEMBRO`);
+    refresh();
+  };
+
+  const toggleRecruiter = async (p: ProfileRow, currentRoles: string[]) => {
+    if (!isSuperAdmin) return toast.error("Somente SUPER ADMIN.");
+    const has = currentRoles.includes("RECRUTADOR");
+    const op = has
+      ? supabase.from("user_roles").delete().eq("user_id", p.user_id).eq("role", "RECRUTADOR")
+      : supabase.from("user_roles").insert({ user_id: p.user_id, role: "RECRUTADOR" as any });
+    const { error } = await op;
+    if (error) return toast.error(error.message);
+    toast.success(has ? `${p.email} deixou de ser recrutador` : `${p.email} agora é recrutador`);
     refresh();
   };
 
@@ -192,6 +212,12 @@ function UsuariosPage() {
                     {isSuperAdmin && role === "ADMIN" && (
                       <Button size="sm" variant="outline" onClick={() => demoteFromAdmin(p)}>
                         <ArrowDown className="h-3 w-3 mr-1" /> Rebaixar
+                      </Button>
+                    )}
+                    {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
+                      <Button size="sm" variant="outline" onClick={() => toggleRecruiter(p, rolesByUser.get(p.user_id) ?? [])}>
+                        <Building2 className="h-3 w-3 mr-1" />
+                        {(rolesByUser.get(p.user_id) ?? []).includes("RECRUTADOR") ? "Remover recrutador" : "Tornar recrutador"}
                       </Button>
                     )}
                     <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => setConfirm(p)}>
