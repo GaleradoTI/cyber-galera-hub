@@ -1,92 +1,74 @@
-# Plano de implementação
+## Onda 4 — escopo grande, separado por blocos
 
-Escopo grande — vou entregar em **3 ondas** para manter qualidade e revisar entre cada uma.
+### Bloco A — Vitrine pública de projetos (corrige feedback)
+- Nova rota `/projetos` (listagem) no menu público do site (junto de Vagas, Eventos, Canais, FAQ).
+- Card por projeto público: capa, nome, descrição curta, tech_stack, link → `/projetos/$slug`.
+- Refinar `/projetos/$slug`: hero com capa, animação de entrada suave, skeletons enquanto carrega, layout 100% responsivo (mobile-first), botões de compartilhar.
+- Adicionar link "Projetos" no `NAV_LINKS` (site-config) e no footer.
 
----
+### Bloco B — Dashboard Home renovado (fechando Onda 3, feature 4)
+- `/dashboard` (`dashboard.index.tsx`) por perfil:
+  - **Membro**: vagas casadas (match por tech_tags), candidaturas em andamento, próximos eventos.
+  - **Recrutador**: funil (enviadas/em análise/contratado/rejeitada), candidatos novos na semana, atalho criar vaga.
+  - **Admin/Super**: KPIs (usuários ativos, vagas publicadas, projetos ativos, eventos próximos).
+- Cards com skeleton loading, animação fade-in.
 
-## Onda 1 — Fundação (migração + uploads + edição de cargos)
+### Bloco C — Feature 5: Exportação CSV de candidatos
+- Botão "Exportar CSV" em `/dashboard/candidatos`.
+- Gera CSV client-side com nome, email, vaga, status, data. Respeita filtro atual.
 
-### 1.1 Migração SQL (banco)
-- **`member_badges`**: já tem CRUD; só falta UI de edição (sem migração).
-- **`notifications`** (nova): `user_id`, `type`, `title`, `body`, `link`, `read_at`. RLS: dono lê/atualiza; admin/sistema insere via server fn.
-- **`direct_messages`** (nova): `sender_id`, `recipient_id`, `content`, `read_at`. RLS: só remetente/destinatário leem.
-- **`post_comments`** (nova): `post_id`, `user_id`, `content`. RLS: membros do projeto.
-- **`post_reactions`** (nova): `post_id`, `user_id`, `emoji`. Unique (post,user,emoji). RLS: membros do projeto.
-- **`profiles`**: adicionar `is_verified_recruiter boolean default false` (só super_admin altera via policy específica).
-- **`projects`**: adicionar `is_public boolean default false`, `tech_stack text[]`.
-- **Storage buckets**: `avatars` (público), `project-covers` (público) + RLS por dono.
+### Bloco D — Feature 6: Match inteligente
+- Em `/vagas` e detalhe da vaga: para usuário logado com `tech_tags`, calcular % de aderência (intersecção / union × 100).
+- Badge "85% match" colorido por faixa (verde >70, amarelo 40–70, cinza <40).
+- Em `/dashboard/candidatos`: mostrar % match do candidato com a vaga.
 
-### 1.2 Edição de cargos (`/dashboard/cargos`)
-- Botão de editar em cada badge: label, cor.
-- Filtro por usuário, busca por label.
+### Bloco E — Feature 7: Eventos por squad
+- Nova migração: `squad_events` (squad_id, name, description, event_date, event_time, location_or_link, created_by). RLS: só membros do squad e admins veem; líder do squad cria/edita.
+- UI em `/dashboard/meus-projetos` (aba "Eventos do squad") para listar/criar.
 
-### 1.3 Uploads
-- Avatar do perfil (`/dashboard/perfil`): troca de URL colada para uploader.
-- Capa do projeto (`/dashboard/projetos`): idem.
-- Componente reutilizável `ImageUploader` em `src/components/ui/image-uploader.tsx`.
+### Bloco F — Feature 9: Busca global (Ctrl+K)
+- Componente `CommandPalette` usando `cmdk` (já existe `command.tsx`).
+- Atalho `Ctrl/Cmd+K` no shell do dashboard.
+- Indexa: vagas (publicadas), projetos (membro), usuários (admin), eventos.
 
----
+### Bloco G — Feature 14: AI helper (Lovable AI Gateway)
+- Server fn `ai-helper.functions.ts` usando `LOVABLE_API_KEY` (já em secrets) com modelo `google/gemini-2.5-flash`.
+- Botão "✨ Gerar com IA" em:
+  - `/dashboard/vagas` editor → gera descrição a partir de título + tech.
+  - `/dashboard/perfil` → sugere `tech_tags` a partir da bio.
+- Streaming opcional — versão inicial sem stream (resposta completa).
 
-## Onda 2 — Engajamento (notificações + mural + badges em usuários)
-
-### 2.1 Notificações
-- Sino no header do dashboard (`dashboard-shell.tsx`) com badge de não lidas.
-- Dropdown lista as 10 mais recentes, marca como lida ao clicar, link para o item.
-- Server fn `createNotification` chamada nos eventos: nova candidatura recebida, virou líder de squad, novo post no seu squad, nova DM.
-- Polling a cada 30s (sem realtime para manter simples).
-
-### 2.2 Mural — comentários e reações
-- Em `dashboard.meus-projetos.tsx`: expandir cada post.
-- Reações: 👍 ❤️ 🚀 🎉 — clica para toggle.
-- Comentários: input simples, lista cronológica, autor pode deletar o próprio.
-
-### 2.3 Badges na lista de usuários
-- `/dashboard/usuarios`: mostrar badges ao lado do nome.
-- Super admin: botão "+ Cargo" abre popover para atribuir/remover.
-- Filtro por badge no topo da tabela.
-
----
-
-## Onda 3 — Recrutador & público (DMs + verificado + página pública + home renovado)
-
-### 3.1 Mensagens diretas
-- Nova rota `/dashboard/mensagens` (lista de conversas + thread).
-- Botão "Enviar mensagem" em `/dashboard/candidatos` (recrutador → candidato).
-- Inbox simples, sem typing/realtime; refresh em foco + polling 20s.
-
-### 3.2 Recrutador verificado
-- Super admin marca `is_verified_recruiter` na tela de usuários (botão dedicado).
-- Badge "Recrutador verificado" visível em vagas e DMs.
-- Filtro "só recrutadores verificados" na visão pública (futuro).
-
-### 3.3 Página pública do projeto
-- Rota nova `/projetos/$slug` (público se `is_public=true`).
-- Mostra: nome, descrição, capa, squads e líderes (nome + avatar), tech_stack.
-- Server fn pública (admin client) que retorna só campos seguros.
-- Link de "Página pública" no card do projeto admin quando `is_public=true`.
-- Toggle "Tornar pública" no edit de projeto.
-
-### 3.4 Dashboard Home renovado (`/dashboard`)
-- **Membro**: cards "Vagas casadas com suas tech tags", "Minhas candidaturas em andamento", "Próximos eventos".
-- **Recrutador**: funil (Enviadas / Em análise / Contratado / Rejeitada) das suas vagas, total candidatos novos na semana.
-- **Admin/Super**: KPIs (usuários ativos, vagas publicadas, eventos próximos, projetos ativos).
+### Bloco H — Segurança e privacidade
+1. **Senhas no banco**: confirmar que o app NÃO armazena senha em tabela própria — autenticação é 100% via Supabase Auth (`auth.users`, gerenciado pela plataforma). Documentar em `security memory`.
+2. **JSON / colunas sensíveis**:
+   - `profiles` hoje tem RLS bem restrita (dono, admin, recrutador-quando-looking) — OK. Mas o select padrão expõe `email` para recrutador. Vou criar view `public_profiles` sem `email/social_links/is_blocked` e atualizar a página pública do projeto e listagens públicas para usar a view.
+   - `/projetos/$slug`: hoje busca `profiles.*` direto via JS — limitar a `display_name, avatar_url` via view pública.
+   - `audit_logs`, `lgpd_consents`, `user_roles` — já restritos a admin/dono, OK.
+3. **Validação de input** (Zod) nos server fns novos (AI helper, exportação).
+4. **Rate limit leve** no AI helper (1 req / 5s por usuário, em memória do worker — best effort).
 
 ---
 
 ## Detalhes técnicos
 
-- Tudo em React + TanStack Router + Supabase JS (padrão do projeto).
-- Mutações sensíveis (criar notificação cruzada, marcar verificado, página pública) via `createServerFn` com `requireSupabaseAuth` e checagem de role server-side.
-- RLS sempre via funções `is_admin_or_super`, `has_role`, `is_project_member`, `is_squad_leader` já existentes; criar `is_message_participant` se necessário.
-- Storage: paths `{user_id}/{filename}` para isolar via RLS.
-- Sem realtime — polling leve para manter custo zero.
+- TanStack Router (rotas em `src/routes/`), Supabase JS, Tailwind tokens.
+- Página pública usa client supabase (anon) + RLS já permite (`is_public=true`).
+- AI Helper via `https://ai.gateway.lovable.dev/v1/chat/completions` com header `Authorization: Bearer ${LOVABLE_API_KEY}` em server fn.
+- CSV: blob client-side, sem servidor.
+- Match: calculado client-side (sem custo extra de query).
 
 ---
 
-## Ordem de execução
+## Sugestões pós-entrega
 
-1. **Onda 1** (migração + edição cargos + uploads) — confirmo com você antes de seguir
-2. **Onda 2** (notificações + mural + badges em usuários)
-3. **Onda 3** (DMs + verificado + página pública + home renovado)
+- **Compartilhamento social**: og:image dinâmico por projeto público.
+- **Convites por e-mail** (recrutador convida candidato direto pra vaga).
+- **Histórico de conversas** persistido com search por palavra-chave.
+- **Modo escuro/claro** (hoje só dark).
+- **Onboarding guiado** no primeiro login.
+- **Webhook Discord/Slack** quando vaga é publicada.
 
-Posso começar pela Onda 1 agora?
+---
+
+## Ordem
+Faço tudo numa sequência só: migração (squad_events + view public_profiles) → frontend dos blocos A–G → segurança/limpeza no final. Confirma?
