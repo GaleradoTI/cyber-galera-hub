@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Crown, Layers, ArrowLeft, Globe } from "lucide-react";
+import { Crown, Layers, ArrowLeft, Globe, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { PublicLayout } from "@/components/public/public-layout";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/projetos/$slug")({
   component: PublicProjectPage,
@@ -59,7 +63,8 @@ function PublicProjectPage() {
     queryKey: ["public-squad-profiles", userIds.join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id,display_name,avatar_url").in("user_id", userIds);
+      // Usa a view pública para não expor email/social_links
+      const { data, error } = await (supabase as any).from("public_profiles").select("user_id,display_name,avatar_url").in("user_id", userIds);
       if (error) throw error;
       return (data ?? []) as Profile[];
     },
@@ -67,37 +72,71 @@ function PublicProjectPage() {
   const profileById = new Map(profiles.map((p) => [p.user_id, p]));
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Carregando…</div>;
+    return (
+      <PublicLayout>
+        <div className="container max-w-4xl mx-auto px-4 py-10 space-y-4">
+          <Skeleton className="h-56 w-full rounded-xl" />
+          <Skeleton className="h-10 w-2/3" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+          <div className="grid sm:grid-cols-2 gap-4 mt-6">
+            <Skeleton className="h-40 rounded-xl" />
+            <Skeleton className="h-40 rounded-xl" />
+          </div>
+        </div>
+      </PublicLayout>
+    );
   }
 
   if (error || !project) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <h1 className="text-2xl font-bold">Projeto não encontrado</h1>
-          <p className="text-muted-foreground text-sm">Este projeto não existe ou não está público.</p>
-          <Link to="/" className="text-primary hover:underline text-sm">← Voltar ao início</Link>
+      <PublicLayout>
+        <div className="min-h-[50vh] flex items-center justify-center">
+          <div className="text-center space-y-3">
+            <h1 className="text-2xl font-bold">Projeto não encontrado</h1>
+            <p className="text-muted-foreground text-sm">Este projeto não existe ou não está público.</p>
+            <Link to="/projetos" className="text-primary hover:underline text-sm">← Ver todos os projetos</Link>
+          </div>
         </div>
-      </div>
+      </PublicLayout>
     );
   }
 
+  const share = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: project.name, text: project.description ?? "", url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast.success("Link copiado!");
+      }
+    } catch {
+      /* user cancelled */
+    }
+  };
+
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container max-w-4xl mx-auto px-4 py-10">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
-          <ArrowLeft className="h-3 w-3" /> Voltar
-        </Link>
+    <PublicLayout>
+      <article className="container max-w-4xl mx-auto px-4 py-8 md:py-12 animate-in fade-in duration-500">
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <Link to="/projetos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
+            <ArrowLeft className="h-3 w-3" /> Todos os projetos
+          </Link>
+          <Button size="sm" variant="outline" onClick={share}>
+            <Share2 className="h-3 w-3 mr-1.5" /> Compartilhar
+          </Button>
+        </div>
 
         {project.cover_url && (
-          <img src={project.cover_url} alt={project.name} className="w-full h-56 object-cover rounded-xl border border-border/40 mb-6" />
+          <img src={project.cover_url} alt={project.name} loading="lazy" className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-xl border border-border/40 mb-6" />
         )}
 
         <div className="flex items-center gap-2 text-xs text-secondary mb-2">
           <Globe className="h-3 w-3" /> <span className="font-bold tracking-[0.3em]">PROJETO PÚBLICO</span>
         </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gradient-neon">{project.name}</h1>
-        {project.description && <p className="text-muted-foreground mt-3 text-lg">{project.description}</p>}
+        <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient-neon">{project.name}</h1>
+        {project.description && <p className="text-muted-foreground mt-3 text-base md:text-lg leading-relaxed">{project.description}</p>}
 
         {project.tech_stack && project.tech_stack.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
@@ -107,15 +146,15 @@ function PublicProjectPage() {
           </div>
         )}
 
-        <h2 className="text-sm font-bold tracking-[0.25em] text-muted-foreground/70 mt-10 mb-4 flex items-center gap-2">
+        <h2 className="text-xs font-bold tracking-[0.3em] text-muted-foreground/70 mt-10 mb-4 flex items-center gap-2">
           <Layers className="h-3 w-3" /> SQUADS
         </h2>
 
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
           {squads.map((s) => {
             const ms = members.filter((m) => m.squad_id === s.id);
             return (
-              <div key={s.id} className="glass rounded-xl p-5 border border-primary/20">
+              <div key={s.id} className="glass rounded-xl p-4 md:p-5 border border-primary/20">
                 <h3 className="font-bold">{s.name}</h3>
                 {s.description && <p className="text-xs text-muted-foreground mt-1">{s.description}</p>}
                 <div className="mt-3 space-y-1">
@@ -124,13 +163,13 @@ function PublicProjectPage() {
                     return (
                       <div key={m.id} className="flex items-center gap-2 text-sm">
                         {u?.avatar_url ? (
-                          <img src={u.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                          <img src={u.avatar_url} alt="" loading="lazy" className="w-6 h-6 rounded-full object-cover" />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 flex items-center justify-center text-[10px] font-black">
                             {(u?.display_name ?? "?").slice(0, 1).toUpperCase()}
                           </div>
                         )}
-                        <span>{u?.display_name ?? "—"}</span>
+                        <span className="truncate">{u?.display_name ?? "—"}</span>
                         {m.role_in_squad === "LIDER" && <Crown className="h-3 w-3 text-secondary" />}
                       </div>
                     );
@@ -142,7 +181,7 @@ function PublicProjectPage() {
           })}
           {squads.length === 0 && <p className="text-sm text-muted-foreground">Sem squads cadastrados ainda.</p>}
         </div>
-      </div>
-    </main>
+      </article>
+    </PublicLayout>
   );
 }
