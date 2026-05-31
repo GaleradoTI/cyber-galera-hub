@@ -1,12 +1,14 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Search, ExternalLink, MessageSquare } from "lucide-react";
+import { Mail, Search, ExternalLink, MessageSquare, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { downloadCSV } from "@/lib/csv";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/candidatos")({ component: CandidatosPage });
 
@@ -63,6 +65,26 @@ function CandidatosPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, e-mail, área ou bio" className="pl-9" />
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (filtered.length === 0) return toast.info("Nada a exportar.");
+            downloadCSV(
+              `candidatos-${new Date().toISOString().slice(0, 10)}.csv`,
+              filtered.map((c) => ({
+                nome: c.display_name,
+                email: c.email,
+                area: c.work_area ?? "",
+                tech_tags: (c.tech_tags ?? []).join("; "),
+                bio: (c.bio ?? "").replace(/\s+/g, " ").slice(0, 500),
+              })),
+            );
+            toast.success("CSV gerado.");
+          }}
+        >
+          <Download className="h-3 w-3 mr-1.5" /> Exportar CSV
+        </Button>
         <div className="text-xs text-muted-foreground ml-auto">{filtered.length} candidato(s)</div>
       </div>
 
