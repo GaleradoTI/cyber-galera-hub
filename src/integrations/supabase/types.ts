@@ -627,6 +627,45 @@ export type Database = {
           },
         ]
       }
+      squad_events: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          event_date: string
+          event_time: string | null
+          id: string
+          location_or_link: string | null
+          name: string
+          squad_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          event_date: string
+          event_time?: string | null
+          id?: string
+          location_or_link?: string | null
+          name: string
+          squad_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_date?: string
+          event_time?: string | null
+          id?: string
+          location_or_link?: string | null
+          name?: string
+          squad_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       squad_members: {
         Row: {
           created_at: string
@@ -746,7 +785,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          display_name: string | null
+          is_verified_recruiter: boolean | null
+          tech_tags: string[] | null
+          user_id: string | null
+          work_area: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          is_verified_recruiter?: boolean | null
+          tech_tags?: string[] | null
+          user_id?: string | null
+          work_area?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          is_verified_recruiter?: boolean | null
+          tech_tags?: string[] | null
+          user_id?: string | null
+          work_area?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

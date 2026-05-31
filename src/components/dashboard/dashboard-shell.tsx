@@ -30,6 +30,7 @@ import { useAuth, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NotificationsBell } from "@/components/dashboard/notifications-bell";
+import { CommandPalette, useCommandPalette } from "@/components/dashboard/command-palette";
 
 const ROLE_META: Record<string, { label: string; icon: any; className: string }> = {
   SUPER_ADMIN: { label: "SUPER ADMIN", icon: Crown, className: "border-secondary text-secondary shadow-[0_0_20px_hsl(var(--secondary)/0.4)]" },
@@ -91,6 +92,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
   const { isAdmin, isSuperAdmin, isRecruiter, primary, profile, user } = useDashboardRoles();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(true);
+  const palette = useCommandPalette();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate({ to: "/login" });
@@ -237,6 +239,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
           {children}
         </div>
       </main>
+      <CommandPalette open={palette.open} onOpenChange={palette.setOpen} />
     </div>
   );
 }
