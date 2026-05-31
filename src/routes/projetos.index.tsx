@@ -1,0 +1,105 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { FolderKanban, ArrowRight, Globe } from "lucide-react";
+import { PublicLayout } from "@/components/public/public-layout";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export const Route = createFileRoute("/projetos/")({
+  head: () => ({
+    meta: [
+      { title: "Projetos públicos — GALERA DO T.I." },
+      { name: "description", content: "Conheça os projetos abertos da comunidade GALERA DO T.I., seus squads e tecnologias." },
+      { property: "og:title", content: "Projetos públicos — GALERA DO T.I." },
+      { property: "og:description", content: "Conheça os projetos abertos da comunidade GALERA DO T.I." },
+    ],
+  }),
+  component: ProjetosIndex,
+});
+
+type PublicProject = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; tech_stack: string[] };
+
+function ProjetosIndex() {
+  const { data: projects = [], isLoading } = useQuery({
+    queryKey: ["public-projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id,name,slug,description,cover_url,tech_stack")
+        .eq("is_public", true)
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as PublicProject[];
+    },
+  });
+
+  return (
+    <PublicLayout>
+      <section className="container mx-auto px-4 py-12 md:py-16">
+        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2 flex items-center gap-2">
+          <Globe className="h-3 w-3" /> COMUNIDADE
+        </div>
+        <h1 className="text-3xl md:text-5xl font-black tracking-tight">Projetos da galera</h1>
+        <p className="text-muted-foreground mt-3 max-w-2xl">
+          Iniciativas abertas mantidas por squads da comunidade. Veja quem está construindo o quê e quais tecnologias estão sendo usadas.
+        </p>
+
+        {isLoading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
+          </div>
+        ) : projects.length === 0 ? (
+          <div className="mt-12 glass rounded-xl p-10 text-center">
+            <FolderKanban className="h-10 w-10 mx-auto text-muted-foreground" />
+            <p className="text-muted-foreground mt-3">Nenhum projeto público no momento. Volte em breve.</p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
+            {projects.map((p) => (
+              <Link
+                key={p.id}
+                to="/projetos/$slug"
+                params={{ slug: p.slug }}
+                className="group glass rounded-xl overflow-hidden border border-primary/20 hover:border-primary/50 transition flex flex-col animate-in fade-in"
+              >
+                <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 overflow-hidden">
+                  {p.cover_url ? (
+                    <img
+                      src={p.cover_url}
+                      alt={p.name}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <FolderKanban className="h-12 w-12 text-primary/40" />
+                    </div>
+                  )}
+                </div>
+                <div className="p-5 flex-1 flex flex-col">
+                  <h3 className="font-bold text-lg">{p.name}</h3>
+                  {p.description && (
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-1">{p.description}</p>
+                  )}
+                  {p.tech_stack && p.tech_stack.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {p.tech_stack.slice(0, 5).map((t) => (
+                        <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{t}</span>
+                      ))}
+                      {p.tech_stack.length > 5 && (
+                        <span className="text-[10px] px-2 py-0.5 text-muted-foreground">+{p.tech_stack.length - 5}</span>
+                      )}
+                    </div>
+                  )}
+                  <div className="mt-4 inline-flex items-center gap-1 text-xs font-bold tracking-widest text-primary group-hover:gap-2 transition-all">
+                    VER PROJETO <ArrowRight className="h-3 w-3" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+    </PublicLayout>
+  );
+}
