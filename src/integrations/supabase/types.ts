@@ -785,6 +785,39 @@ export type Database = {
       }
     }
     Views: {
+      lgpd_consents_admin: {
+        Row: {
+          accepted_at: string | null
+          consent_origin: string | null
+          consent_status: boolean | null
+          id: string | null
+          ip_address_masked: string | null
+          privacy_policy_version: string | null
+          terms_version: string | null
+          user_id: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          consent_origin?: string | null
+          consent_status?: boolean | null
+          id?: string | null
+          ip_address_masked?: never
+          privacy_policy_version?: string | null
+          terms_version?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          consent_origin?: string | null
+          consent_status?: boolean | null
+          id?: string | null
+          ip_address_masked?: never
+          privacy_policy_version?: string | null
+          terms_version?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -809,6 +842,39 @@ export type Database = {
           bio?: string | null
           display_name?: string | null
           is_verified_recruiter?: boolean | null
+          tech_tags?: string[] | null
+          user_id?: string | null
+          work_area?: string | null
+        }
+        Relationships: []
+      }
+      recruiter_candidates: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          display_name: string | null
+          is_verified_recruiter: boolean | null
+          looking_for_job: boolean | null
+          tech_tags: string[] | null
+          user_id: string | null
+          work_area: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          is_verified_recruiter?: boolean | null
+          looking_for_job?: boolean | null
+          tech_tags?: string[] | null
+          user_id?: string | null
+          work_area?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          display_name?: string | null
+          is_verified_recruiter?: boolean | null
+          looking_for_job?: boolean | null
           tech_tags?: string[] | null
           user_id?: string | null
           work_area?: string | null
