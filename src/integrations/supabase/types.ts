@@ -785,39 +785,6 @@ export type Database = {
       }
     }
     Views: {
-      lgpd_consents_admin: {
-        Row: {
-          accepted_at: string | null
-          consent_origin: string | null
-          consent_status: boolean | null
-          id: string | null
-          ip_address_masked: string | null
-          privacy_policy_version: string | null
-          terms_version: string | null
-          user_id: string | null
-        }
-        Insert: {
-          accepted_at?: string | null
-          consent_origin?: string | null
-          consent_status?: boolean | null
-          id?: string | null
-          ip_address_masked?: never
-          privacy_policy_version?: string | null
-          terms_version?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          accepted_at?: string | null
-          consent_origin?: string | null
-          consent_status?: boolean | null
-          id?: string | null
-          ip_address_masked?: never
-          privacy_policy_version?: string | null
-          terms_version?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -848,41 +815,34 @@ export type Database = {
         }
         Relationships: []
       }
-      recruiter_candidates: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          display_name: string | null
-          is_verified_recruiter: boolean | null
-          looking_for_job: boolean | null
-          tech_tags: string[] | null
-          user_id: string | null
-          work_area: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          display_name?: string | null
-          is_verified_recruiter?: boolean | null
-          looking_for_job?: boolean | null
-          tech_tags?: string[] | null
-          user_id?: string | null
-          work_area?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          display_name?: string | null
-          is_verified_recruiter?: boolean | null
-          looking_for_job?: boolean | null
-          tech_tags?: string[] | null
-          user_id?: string | null
-          work_area?: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
+      get_lgpd_consents_admin: {
+        Args: never
+        Returns: {
+          accepted_at: string
+          consent_origin: string
+          consent_status: boolean
+          id: string
+          ip_address_masked: string
+          privacy_policy_version: string
+          terms_version: string
+          user_id: string
+        }[]
+      }
+      get_recruiter_candidates: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          bio: string
+          display_name: string
+          is_verified_recruiter: boolean
+          looking_for_job: boolean
+          tech_tags: string[]
+          user_id: string
+          work_area: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
