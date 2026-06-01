@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Search, ExternalLink, MessageSquare, Download } from "lucide-react";
+import { Search, MessageSquare, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
@@ -15,11 +15,9 @@ export const Route = createFileRoute("/dashboard/candidatos")({ component: Candi
 type Candidate = {
   user_id: string;
   display_name: string;
-  email: string;
   bio: string | null;
   work_area: string | null;
   looking_for_job: boolean;
-  social_links: Record<string, string> | null;
   tech_tags: string[] | null;
 };
 
@@ -35,13 +33,10 @@ function CandidatosPage() {
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ["candidates"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,email,bio,work_area,looking_for_job,social_links,tech_tags")
-        .eq("looking_for_job", true)
-        .order("display_name");
+      const { data, error } = await supabase.rpc("get_recruiter_candidates");
       if (error) throw error;
-      return (data ?? []) as Candidate[];
+      const rows = (data ?? []) as Candidate[];
+      return [...rows].sort((a, b) => (a.display_name ?? "").localeCompare(b.display_name ?? ""));
     },
   });
 
@@ -51,7 +46,6 @@ function CandidatosPage() {
     return candidates.filter(
       (c) =>
         c.display_name?.toLowerCase().includes(q) ||
-        c.email?.toLowerCase().includes(q) ||
         c.work_area?.toLowerCase().includes(q) ||
         c.bio?.toLowerCase().includes(q) ||
         (c.tech_tags ?? []).some((t) => t.toLowerCase().includes(q)),
@@ -63,7 +57,7 @@ function CandidatosPage() {
       <div className="flex items-center gap-2 mb-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, e-mail, área ou bio" className="pl-9" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, área, bio ou stack" className="pl-9" />
         </div>
         <Button
           variant="outline"
@@ -74,7 +68,6 @@ function CandidatosPage() {
               `candidatos-${new Date().toISOString().slice(0, 10)}.csv`,
               filtered.map((c) => ({
                 nome: c.display_name,
-                email: c.email,
                 area: c.work_area ?? "",
                 tech_tags: (c.tech_tags ?? []).join("; "),
                 bio: (c.bio ?? "").replace(/\s+/g, " ").slice(0, 500),
@@ -116,25 +109,11 @@ function CandidatosPage() {
             )}
 
             <div className="flex flex-wrap gap-2 mt-4">
-              <Button asChild size="sm">
-                <a href={`mailto:${c.email}`}><Mail className="h-3 w-3 mr-1" /> Contatar</a>
-              </Button>
               <Button asChild size="sm" variant="secondary">
                 <Link to="/dashboard/mensagens" search={{ to: c.user_id }}>
                   <MessageSquare className="h-3 w-3 mr-1" /> Mensagem
                 </Link>
               </Button>
-              {c.social_links &&
-                Object.entries(c.social_links)
-                  .filter(([, v]) => !!v)
-                  .slice(0, 3)
-                  .map(([k, v]) => (
-                    <Button key={k} asChild size="sm" variant="outline">
-                      <a href={v as string} target="_blank" rel="noreferrer">
-                        {k} <ExternalLink className="h-3 w-3 ml-1" />
-                      </a>
-                    </Button>
-                  ))}
             </div>
           </div>
         ))}
