@@ -33,7 +33,7 @@ const profileSchema = z.object({
 
 function PerfilPage() {
   const qc = useQueryClient();
-  const { user } = useDashboardRoles();
+  const { user, rolesReady } = useDashboardRoles();
   const [form, setForm] = useState({
     display_name: "",
     bio: "",
@@ -117,7 +117,7 @@ function PerfilPage() {
 
   return (
     <DashboardShell title="Meu Perfil" description="Atualize seus dados, links e disponibilidade.">
-      {isLoading ? (
+      {!user || !rolesReady || isLoading ? (
         <div className="text-muted-foreground">Carregando…</div>
       ) : (
         <div className="grid gap-5">
