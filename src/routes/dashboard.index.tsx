@@ -11,7 +11,18 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/dashboard/")({ component: DashboardIndex });
 
 function DashboardIndex() {
-  const { user, isAdmin, isSuperAdmin, isRecruiter, primary, profile } = useDashboardRoles();
+  const { user, isAdmin, isSuperAdmin, isRecruiter, primary, profile, rolesLoading, rolesReady } = useDashboardRoles();
+
+  if (!user || rolesLoading || !rolesReady) {
+    return (
+      <DashboardShell title="Carregando dashboard" description="Validando sua sessão...">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+        </div>
+        <Skeleton className="h-48 rounded-xl mt-8" />
+      </DashboardShell>
+    );
+  }
 
   return (
     <DashboardShell
