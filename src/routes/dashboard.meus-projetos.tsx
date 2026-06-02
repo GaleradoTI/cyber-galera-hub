@@ -160,7 +160,7 @@ function MeusProjetosPage() {
 
   return (
     <DashboardShell title="Meus Projetos" description="Projetos e squads em que você participa.">
-      {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {(!user || isLoading) && <p className="text-muted-foreground text-sm">Carregando…</p>}
       {!isLoading && projects.length === 0 && (
         <div className="glass rounded-xl p-10 text-center text-muted-foreground">
           Você ainda não foi adicionado a nenhum squad. O SUPER ADMIN pode incluir você.
