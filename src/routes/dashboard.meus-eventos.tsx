@@ -36,7 +36,7 @@ function MeusEventosPage() {
 
   return (
     <DashboardShell title="Meus Eventos" description="Eventos em que você demonstrou interesse.">
-      {isLoading && <div className="text-muted-foreground">Carregando…</div>}
+      {(!user || isLoading) && <div className="text-muted-foreground">Carregando…</div>}
       {!isLoading && data.length === 0 && (
         <div className="glass rounded-xl p-8 text-center">
           <Calendar className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
