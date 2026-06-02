@@ -60,7 +60,7 @@ function CandidaturasPage() {
 
   return (
     <DashboardShell title="Minhas Candidaturas" description="Histórico das vagas para as quais você se candidatou.">
-      {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {(!user || isLoading) && <p className="text-muted-foreground text-sm">Carregando…</p>}
       {!isLoading && apps.length === 0 && (
         <div className="glass rounded-xl p-10 text-center text-muted-foreground">
           Você ainda não se candidatou a nenhuma vaga.
