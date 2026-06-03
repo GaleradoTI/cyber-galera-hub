@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /reset-password
+
+Sitemap: https://galera-do-ti.lovable.app/sitemap.xml

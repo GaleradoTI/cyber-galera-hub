@@ -176,6 +176,10 @@ function DynamicSiteHead() {
       };
       setLink("icon", favicon.url);
       setLink("apple-touch-icon", favicon.apple_touch_url);
+      setLink("canonical", seo.site_url);
+      if (seo.site_url) {
+        setMeta('meta[property="og:url"]', "property", "og:url", seo.site_url);
+      }
     })();
     return () => { cancelled = true; };
   }, []);
