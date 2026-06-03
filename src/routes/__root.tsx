@@ -122,10 +122,64 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInvalidator />
+      <DynamicSiteHead />
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
+}
+
+function DynamicSiteHead() {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("public_site_settings")
+        .select("setting_key, setting_value")
+        .in("setting_key", ["seo", "favicon"]);
+      if (cancelled || error || !data) return;
+      const seo = (data.find((r) => r.setting_key === "seo")?.setting_value ?? {}) as Record<string, string>;
+      const favicon = (data.find((r) => r.setting_key === "favicon")?.setting_value ?? {}) as Record<string, string>;
+
+      if (seo.default_title) document.title = seo.default_title;
+
+      const setMeta = (selector: string, attr: "name" | "property", key: string, content?: string) => {
+        if (!content) return;
+        let el = document.head.querySelector<HTMLMetaElement>(selector);
+        if (!el) {
+          el = document.createElement("meta");
+          el.setAttribute(attr, key);
+          document.head.appendChild(el);
+        }
+        el.setAttribute("content", content);
+      };
+      setMeta('meta[name="description"]', "name", "description", seo.default_description);
+      setMeta('meta[name="keywords"]', "name", "keywords", seo.keywords);
+      setMeta('meta[name="author"]', "name", "author", seo.author);
+      setMeta('meta[property="og:title"]', "property", "og:title", seo.default_title);
+      setMeta('meta[property="og:description"]', "property", "og:description", seo.default_description);
+      setMeta('meta[property="og:image"]', "property", "og:image", seo.og_image);
+      setMeta('meta[name="twitter:title"]', "name", "twitter:title", seo.default_title);
+      setMeta('meta[name="twitter:description"]', "name", "twitter:description", seo.default_description);
+      setMeta('meta[name="twitter:image"]', "name", "twitter:image", seo.og_image);
+      setMeta('meta[name="twitter:site"]', "name", "twitter:site", seo.twitter_site);
+
+      const setLink = (rel: string, href?: string) => {
+        if (!href) return;
+        let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+        if (!el) {
+          el = document.createElement("link");
+          el.setAttribute("rel", rel);
+          document.head.appendChild(el);
+        }
+        el.setAttribute("href", href);
+      };
+      setLink("icon", favicon.url);
+      setLink("apple-touch-icon", favicon.apple_touch_url);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  return null;
 }
 
 function AuthInvalidator() {
