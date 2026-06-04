@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { FolderKanban, ArrowRight, Globe } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/projetos/")({
   head: () => ({
@@ -20,6 +23,8 @@ export const Route = createFileRoute("/projetos/")({
 type PublicProject = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; tech_stack: string[] };
 
 function ProjetosIndex() {
+  const [q, setQ] = useState("");
+  const [tech, setTech] = useState("all");
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["public-projects"],
     queryFn: async () => {
@@ -33,6 +38,19 @@ function ProjetosIndex() {
     },
   });
 
+  const techOptions = useMemo(() => {
+    const set = new Set<string>();
+    projects.forEach((p) => (p.tech_stack ?? []).forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [projects]);
+
+  const filtered = projects.filter((p) => {
+    const t = q.toLowerCase();
+    const matchSearch = !t || p.name.toLowerCase().includes(t) || (p.description ?? "").toLowerCase().includes(t);
+    const matchTech = tech === "all" || (p.tech_stack ?? []).includes(tech);
+    return matchSearch && matchTech;
+  });
+
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-12 md:py-16">
@@ -44,18 +62,30 @@ function ProjetosIndex() {
           Iniciativas abertas mantidas por squads da comunidade. Veja quem está construindo o quê e quais tecnologias estão sendo usadas.
         </p>
 
+        <div className="mt-6 grid md:grid-cols-3 gap-2 max-w-3xl">
+          <Input className="md:col-span-2" placeholder="Buscar projeto..." value={q} onChange={(e) => setQ(e.target.value)} />
+          <Select value={tech} onValueChange={setTech}>
+            <SelectTrigger><SelectValue placeholder="Tecnologia" /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              <SelectItem value="all">Todas tecnologias</SelectItem>
+              {techOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">{filtered.length} projeto(s)</p>
+
         {isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
           </div>
-        ) : projects.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="mt-12 glass rounded-xl p-10 text-center">
             <FolderKanban className="h-10 w-10 mx-auto text-muted-foreground" />
             <p className="text-muted-foreground mt-3">Nenhum projeto público no momento. Volte em breve.</p>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
-            {projects.map((p) => (
+            {filtered.map((p) => (
               <Link
                 key={p.id}
                 to="/projetos/$slug"
