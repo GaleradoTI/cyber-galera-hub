@@ -7,6 +7,8 @@ import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashbo
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { X } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -25,6 +27,8 @@ function CandidatosPage() {
   const navigate = useNavigate();
   const { isAdmin, isRecruiter, rolesReady } = useDashboardRoles();
   const [search, setSearch] = useState("");
+  const [area, setArea] = useState("all");
+  const [tech, setTech] = useState("all");
 
   useEffect(() => {
     if (rolesReady && !isAdmin && !isRecruiter) navigate({ to: "/dashboard" });
@@ -40,25 +44,60 @@ function CandidatosPage() {
     },
   });
 
+  const areaOptions = useMemo(() => {
+    const set = new Set<string>();
+    candidates.forEach((c) => c.work_area && set.add(c.work_area));
+    return Array.from(set).sort();
+  }, [candidates]);
+  const techOptions = useMemo(() => {
+    const set = new Set<string>();
+    candidates.forEach((c) => (c.tech_tags ?? []).forEach((t) => set.add(t)));
+    return Array.from(set).sort();
+  }, [candidates]);
+
   const filtered = useMemo(() => {
-    if (!search) return candidates;
     const q = search.toLowerCase();
-    return candidates.filter(
-      (c) =>
+    return candidates.filter((c) => {
+      const matchSearch =
+        !q ||
         c.display_name?.toLowerCase().includes(q) ||
         c.work_area?.toLowerCase().includes(q) ||
         c.bio?.toLowerCase().includes(q) ||
-        (c.tech_tags ?? []).some((t) => t.toLowerCase().includes(q)),
-    );
-  }, [candidates, search]);
+        (c.tech_tags ?? []).some((t) => t.toLowerCase().includes(q));
+      const matchArea = area === "all" || c.work_area === area;
+      const matchTech = tech === "all" || (c.tech_tags ?? []).includes(tech);
+      return matchSearch && matchArea && matchTech;
+    });
+  }, [candidates, search, area, tech]);
+
+  const activeFilters = [area !== "all", tech !== "all"].filter(Boolean).length;
 
   return (
     <DashboardShell title="Candidatos" description="Membros sinalizando que estão em busca de oportunidades.">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome, área, bio ou stack" className="pl-9" />
         </div>
+        <Select value={area} onValueChange={setArea}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Área" /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value="all">Todas áreas</SelectItem>
+            {areaOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Select value={tech} onValueChange={setTech}>
+          <SelectTrigger className="w-[180px]"><SelectValue placeholder="Tecnologia" /></SelectTrigger>
+          <SelectContent className="max-h-72">
+            <SelectItem value="all">Todas tecnologias</SelectItem>
+            {techOptions.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        {activeFilters > 0 && (
+          <Button variant="ghost" size="sm" onClick={() => { setArea("all"); setTech("all"); }}>
+            <X className="h-3 w-3 mr-1" /> Limpar
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"

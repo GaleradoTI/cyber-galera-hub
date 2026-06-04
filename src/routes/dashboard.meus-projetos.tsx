@@ -12,13 +12,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { PostCard } from "@/components/dashboard/post-card";
+import { MemberDetailDialog, type MemberProfile } from "@/components/profile/member-detail-dialog";
 
 export const Route = createFileRoute("/dashboard/meus-projetos")({ component: MeusProjetosPage });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string };
 type Squad = { id: string; project_id: string; name: string; description: string | null };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
-type Profile = { user_id: string; display_name: string; email: string; avatar_url: string | null };
+type Profile = {
+  user_id: string;
+  display_name: string;
+  email: string;
+  avatar_url: string | null;
+  bio: string | null;
+  phone: string | null;
+  work_area: string | null;
+  tech_tags: string[] | null;
+  social_links: Record<string, string> | null;
+};
 type Post = { id: string; project_id: string; user_id: string; content: string; created_at: string };
 
 function MeusProjetosPage() {
@@ -26,6 +37,7 @@ function MeusProjetosPage() {
   const qc = useQueryClient();
   const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
   const [postText, setPostText] = useState<Record<string, string>>({});
+  const [openMember, setOpenMember] = useState<{ profile: MemberProfile; role?: string; squadName?: string } | null>(null);
 
   // squads I belong to
   const { data: mySquadMembership = [] } = useQuery({
@@ -80,10 +92,27 @@ function MeusProjetosPage() {
     enabled: userIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase.from("profiles").select("user_id,display_name,email,avatar_url").in("user_id", userIds);
+      // tentativa adicional: campos extras (bio/phone/social_links/...) podem ou não estar disponíveis
+      // dependendo da política RLS — não bloqueia o carregamento.
       if (error) throw error;
       return (data ?? []) as Profile[];
     },
   });
+
+  // segunda query para campos sensíveis liberados pela policy de "Project teammates view profile"
+  const { data: teammateProfiles = [] } = useQuery({
+    queryKey: ["my-squads-profiles-extra", userIds.join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id,bio,phone,work_area,tech_tags,social_links")
+        .in("user_id", userIds);
+      if (error) return [];
+      return (data ?? []) as any[];
+    },
+  });
+  const extraById = useMemo(() => new Map(teammateProfiles.map((p: any) => [p.user_id, p])), [teammateProfiles]);
 
   const { data: posts = [] } = useQuery({
     queryKey: ["project-posts", myProjectIds.join(",")],
@@ -226,11 +255,33 @@ function MeusProjetosPage() {
                         <div className="mt-2 flex flex-wrap gap-1">
                           {ms.map((m) => {
                             const u = profileById.get(m.user_id);
+                            const extra = extraById.get(m.user_id) ?? {};
                             return (
-                              <div key={m.id} className="flex items-center gap-1 px-2 py-0.5 rounded bg-background/60 text-xs">
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() =>
+                                  setOpenMember({
+                                    profile: {
+                                      user_id: m.user_id,
+                                      display_name: u?.display_name ?? null,
+                                      avatar_url: u?.avatar_url ?? null,
+                                      email: u?.email ?? null,
+                                      bio: extra.bio ?? null,
+                                      phone: extra.phone ?? null,
+                                      work_area: extra.work_area ?? null,
+                                      tech_tags: extra.tech_tags ?? null,
+                                      social_links: extra.social_links ?? null,
+                                    },
+                                    role: m.role_in_squad,
+                                    squadName: s.name,
+                                  })
+                                }
+                                className="flex items-center gap-1 px-2 py-0.5 rounded bg-background/60 text-xs hover:bg-primary/15 hover:text-primary transition"
+                              >
                                 {m.role_in_squad === "LIDER" && <Crown className="h-3 w-3 text-secondary" />}
                                 <span>{u?.display_name ?? "—"}</span>
-                              </div>
+                              </button>
                             );
                           })}
                         </div>
@@ -291,6 +342,14 @@ function MeusProjetosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <MemberDetailDialog
+        open={!!openMember}
+        onOpenChange={(o) => !o && setOpenMember(null)}
+        profile={openMember?.profile ?? null}
+        role={openMember?.role}
+        squadName={openMember?.squadName}
+      />
     </DashboardShell>
   );
 }

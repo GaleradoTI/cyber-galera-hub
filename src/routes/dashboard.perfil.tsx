@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag } from "lucide-react";
+import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -19,6 +19,7 @@ const profileSchema = z.object({
   display_name: z.string().trim().min(2, "Nome muito curto").max(80),
   bio: z.string().trim().max(500).optional().nullable(),
   work_area: z.string().trim().max(80).optional().nullable(),
+  phone: z.string().trim().max(40).optional().nullable(),
   looking_for_job: z.boolean(),
   tech_tags: z.array(z.string().trim().min(1).max(40)).max(20),
   avatar_url: z.string().trim().max(500).optional().nullable(),
@@ -38,6 +39,7 @@ function PerfilPage() {
     display_name: "",
     bio: "",
     work_area: "",
+    phone: "",
     looking_for_job: false,
     tech_tags: [] as string[],
     avatar_url: "" as string | null,
@@ -63,6 +65,7 @@ function PerfilPage() {
       display_name: profile.display_name ?? "",
       bio: profile.bio ?? "",
       work_area: profile.work_area ?? "",
+      phone: (profile as any).phone ?? "",
       looking_for_job: !!profile.looking_for_job,
       tech_tags: (profile.tech_tags ?? []) as string[],
       avatar_url: profile.avatar_url ?? "",
@@ -83,6 +86,7 @@ function PerfilPage() {
         display_name: parsed.data.display_name,
         bio: parsed.data.bio ?? null,
         work_area: parsed.data.work_area ?? null,
+        phone: parsed.data.phone ?? null,
         looking_for_job: parsed.data.looking_for_job,
         tech_tags: parsed.data.tech_tags,
         avatar_url: parsed.data.avatar_url ?? null,
@@ -152,6 +156,10 @@ function PerfilPage() {
               <div>
                 <Label className="flex items-center gap-2"><Briefcase className="h-3 w-3" /> Área de atuação</Label>
                 <Input value={form.work_area} onChange={(e) => setForm({ ...form, work_area: e.target.value })} placeholder="Ex.: Front-end, Dados, DevOps" />
+              </div>
+              <div>
+                <Label className="flex items-center gap-2"><Phone className="h-3 w-3" /> Telefone / WhatsApp</Label>
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
               </div>
               <div className="flex items-end gap-3 pb-1">
                 <Switch checked={form.looking_for_job} onCheckedChange={(v) => setForm({ ...form, looking_for_job: v })} />
