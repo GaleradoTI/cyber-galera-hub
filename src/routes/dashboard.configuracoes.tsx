@@ -1,7 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles } from "lucide-react";
+import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -57,6 +59,7 @@ function SettingsPage() {
           <TabsContent value="seo" className="mt-5 space-y-5">
             {byKey.seo && <SeoCard setting={byKey.seo} onSaved={onSaved} />}
             {byKey.favicon && <FaviconCard setting={byKey.favicon} onSaved={onSaved} />}
+            <HistoryCard onReverted={onSaved} />
           </TabsContent>
 
           <TabsContent value="hero" className="mt-5 space-y-5">
@@ -363,5 +366,148 @@ function GenericCard({ setting, onSaved, title }: { setting: Setting; onSaved: (
         })}
       </div>
     </CardShell>
+  );
+}
+
+/* ---------------------- History + revert (preview) ---------------------- */
+type HistoryRow = {
+  id: string;
+  setting_key: string;
+  setting_value: any;
+  changed_by: string | null;
+  changed_by_name: string | null;
+  created_at: string;
+};
+
+function HistoryCard({ onReverted }: { onReverted: () => void }) {
+  const [keyFilter, setKeyFilter] = useState<"all" | "seo" | "favicon">("all");
+  const [preview, setPreview] = useState<HistoryRow | null>(null);
+  const [reverting, setReverting] = useState(false);
+
+  const { data: rows = [], isLoading, refetch } = useQuery({
+    queryKey: ["site-settings-history", keyFilter],
+    queryFn: async () => {
+      let q = (supabase as any)
+        .from("site_settings_history")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (keyFilter !== "all") q = q.eq("setting_key", keyFilter);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data ?? []) as HistoryRow[];
+    },
+  });
+
+  const revert = async () => {
+    if (!preview) return;
+    setReverting(true);
+    const { error } = await supabase
+      .from("public_site_settings")
+      .update({ setting_value: preview.setting_value })
+      .eq("setting_key", preview.setting_key);
+    setReverting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`"${preview.setting_key}" revertido para versão anterior.`);
+    setPreview(null);
+    refetch();
+    onReverted();
+  };
+
+  return (
+    <div className="glass rounded-xl p-5 border border-primary/20">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <div className="text-[10px] font-bold tracking-[0.25em] text-primary flex items-center gap-1.5"><History className="h-3 w-3" /> HISTÓRICO</div>
+          <h3 className="font-bold text-lg mt-0.5">Versões anteriores</h3>
+          <p className="text-xs text-muted-foreground mt-1">Snapshots gerados automaticamente toda vez que SEO ou favicon mudam. Pré-visualize antes de reverter.</p>
+        </div>
+        <div className="flex gap-1">
+          {(["all", "seo", "favicon"] as const).map((k) => (
+            <Button key={k} size="sm" variant={keyFilter === k ? "secondary" : "ghost"} onClick={() => setKeyFilter(k)}>
+              {k === "all" ? "Todos" : k.toUpperCase()}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {isLoading && <p className="text-xs text-muted-foreground">Carregando…</p>}
+      {!isLoading && rows.length === 0 && (
+        <p className="text-xs text-muted-foreground text-center py-6">Nenhuma versão anterior ainda. Salve uma alteração para começar a gerar histórico.</p>
+      )}
+      {!isLoading && rows.length > 0 && (
+        <div className="space-y-2">
+          {rows.map((r) => {
+            const v = r.setting_value ?? {};
+            const title = v.default_title || v.url || "(sem título)";
+            return (
+              <div key={r.id} className="flex items-center justify-between gap-3 rounded-md border border-border/40 px-3 py-2 bg-muted/10">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-[10px]">{r.setting_key}</Badge>
+                    <span className="text-sm font-medium truncate">{String(title).slice(0, 80)}</span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {new Date(r.created_at).toLocaleString("pt-BR")}
+                    {r.changed_by_name && <> · por <span className="text-foreground/80">{r.changed_by_name}</span></>}
+                  </p>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => setPreview(r)}>
+                  <Eye className="h-3 w-3 mr-1" /> Pré-visualizar
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <Dialog open={!!preview} onOpenChange={(o) => !o && setPreview(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-4 w-4" /> Pré-visualização da versão de <Badge variant="outline">{preview?.setting_key}</Badge>
+            </DialogTitle>
+            <DialogDescription>
+              Salvo em {preview && new Date(preview.created_at).toLocaleString("pt-BR")}
+              {preview?.changed_by_name && <> por <strong>{preview.changed_by_name}</strong></>}
+            </DialogDescription>
+          </DialogHeader>
+
+          {preview?.setting_key === "seo" && preview.setting_value && (
+            <div className="space-y-3">
+              <div className="rounded-md border border-border/40 bg-background/50 p-3">
+                <div className="text-xs text-emerald-400 truncate">{preview.setting_value.site_url || "—"}</div>
+                <div className="text-base text-blue-400 truncate">{preview.setting_value.default_title || "—"}</div>
+                <div className="text-sm text-muted-foreground line-clamp-2">{preview.setting_value.default_description || "—"}</div>
+              </div>
+              {preview.setting_value.og_image && (
+                <img src={preview.setting_value.og_image} alt="og" className="w-full max-h-48 object-cover rounded-md border border-border/40" />
+              )}
+            </div>
+          )}
+
+          {preview?.setting_key === "favicon" && preview.setting_value && (
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 rounded-md border border-border/40 bg-muted/30 flex items-center justify-center overflow-hidden">
+                {preview.setting_value.url ? <img src={preview.setting_value.url} alt="" className="w-12 h-12 object-contain" /> : <ImageIcon className="h-5 w-5" />}
+              </div>
+              <div className="text-xs text-muted-foreground break-all">{preview.setting_value.url || "—"}</div>
+            </div>
+          )}
+
+          <details className="mt-2">
+            <summary className="text-xs text-muted-foreground cursor-pointer">Ver JSON completo</summary>
+            <pre className="mt-2 text-[11px] bg-muted/30 rounded p-2 overflow-auto max-h-60">{JSON.stringify(preview?.setting_value, null, 2)}</pre>
+          </details>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPreview(null)}>Cancelar</Button>
+            <Button onClick={revert} disabled={reverting}>
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> {reverting ? "Revertendo…" : "Reverter para esta versão"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
