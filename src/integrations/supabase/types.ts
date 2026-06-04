@@ -452,6 +452,7 @@ export type Database = {
           is_verified_recruiter: boolean
           looking_for_job: boolean
           newsletter_opt_in: boolean
+          phone: string | null
           social_links: Json
           tech_tags: string[]
           updated_at: string
@@ -469,6 +470,7 @@ export type Database = {
           is_verified_recruiter?: boolean
           looking_for_job?: boolean
           newsletter_opt_in?: boolean
+          phone?: string | null
           social_links?: Json
           tech_tags?: string[]
           updated_at?: string
@@ -486,6 +488,7 @@ export type Database = {
           is_verified_recruiter?: boolean
           looking_for_job?: boolean
           newsletter_opt_in?: boolean
+          phone?: string | null
           social_links?: Json
           tech_tags?: string[]
           updated_at?: string
@@ -626,6 +629,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      site_settings_history: {
+        Row: {
+          changed_by: string | null
+          changed_by_name: string | null
+          created_at: string
+          id: string
+          setting_key: string
+          setting_value: Json
+        }
+        Insert: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          setting_key: string
+          setting_value: Json
+        }
+        Update: {
+          changed_by?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+        }
+        Relationships: []
       }
       squad_events: {
         Row: {
@@ -869,6 +899,10 @@ export type Database = {
         Returns: boolean
       }
       promote_user_to_super_admin: { Args: { _email: string }; Returns: string }
+      users_share_project: {
+        Args: { _a: string; _b: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "SUPER_ADMIN" | "ADMIN" | "MEMBRO" | "RECRUTADOR"
