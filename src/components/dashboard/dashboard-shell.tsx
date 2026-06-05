@@ -24,6 +24,7 @@ import {
   Building2,
   ClipboardList,
   MessageSquare,
+  MessageSquareQuote,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -105,6 +106,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
         { to: "/dashboard/meus-projetos", label: "Meus Projetos", icon: FolderKanban, show: true },
         { to: "/dashboard/mensagens", label: "Mensagens", icon: MessageSquare, show: true },
+        { to: "/dashboard/depoimentos", label: "Depoimentos", icon: MessageSquareQuote, show: true },
       ],
     },
     {
