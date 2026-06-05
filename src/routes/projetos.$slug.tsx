@@ -17,7 +17,7 @@ export const Route = createFileRoute("/projetos/$slug")({
   }),
 });
 
-type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string; is_public: boolean; tech_stack: string[] };
+type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; banner_url: string | null; status: string; is_public: boolean; tech_stack: string[] };
 type Squad = { id: string; name: string; description: string | null; project_id: string };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; avatar_url: string | null };
@@ -118,8 +118,24 @@ function PublicProjectPage() {
 
   return (
     <PublicLayout>
-      <article className="container max-w-4xl mx-auto px-4 py-8 md:py-12 animate-in fade-in duration-500">
-        <div className="flex items-center justify-between gap-3 mb-6">
+      {project.banner_url && (
+        <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden">
+          <img
+            src={project.banner_url}
+            alt={`Banner do projeto ${project.name}`}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 container max-w-4xl mx-auto px-4 py-4 md:py-6">
+            <div className="text-[10px] sm:text-xs font-bold tracking-[0.3em] text-secondary mb-1 flex items-center gap-2">
+              <Globe className="h-3 w-3" /> PROJETO PÚBLICO
+            </div>
+            <h1 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tight text-gradient-neon">{project.name}</h1>
+          </div>
+        </div>
+      )}
+      <article className="container max-w-4xl mx-auto px-4 py-6 md:py-10 animate-in fade-in duration-500">
+        <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
           <Link to="/projetos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
             <ArrowLeft className="h-3 w-3" /> Todos os projetos
           </Link>
@@ -128,14 +144,18 @@ function PublicProjectPage() {
           </Button>
         </div>
 
-        {project.cover_url && (
+        {!project.banner_url && project.cover_url && (
           <img src={project.cover_url} alt={project.name} loading="lazy" className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-xl border border-border/40 mb-6" />
         )}
 
-        <div className="flex items-center gap-2 text-xs text-secondary mb-2">
-          <Globe className="h-3 w-3" /> <span className="font-bold tracking-[0.3em]">PROJETO PÚBLICO</span>
-        </div>
-        <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient-neon">{project.name}</h1>
+        {!project.banner_url && (
+          <>
+            <div className="flex items-center gap-2 text-xs text-secondary mb-2">
+              <Globe className="h-3 w-3" /> <span className="font-bold tracking-[0.3em]">PROJETO PÚBLICO</span>
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient-neon">{project.name}</h1>
+          </>
+        )}
         {project.description && <p className="text-muted-foreground mt-3 text-base md:text-lg leading-relaxed">{project.description}</p>}
 
         {project.tech_stack && project.tech_stack.length > 0 && (
