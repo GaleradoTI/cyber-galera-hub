@@ -17,7 +17,7 @@ import { ImageUploader } from "@/components/ui/image-uploader";
 
 export const Route = createFileRoute("/dashboard/projetos")({ component: ProjetosAdminPage });
 
-type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string; created_at: string; is_public: boolean; tech_stack: string[] };
+type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; banner_url: string | null; status: string; created_at: string; is_public: boolean; tech_stack: string[] };
 type Squad = { id: string; project_id: string; name: string; description: string | null };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; email: string };
@@ -36,6 +36,23 @@ function ProjetosAdminPage() {
   const [managingSquad, setManagingSquad] = useState<Squad | null>(null);
   const [newMemberId, setNewMemberId] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("MEMBRO");
+  const [memberSearch, setMemberSearch] = useState("");
+  // All squad-member rows for the current project, used to filter the
+  // "add member" list and enforce the 1-squad-per-project rule on the client.
+  const { data: projectMemberships = [] } = useQuery({
+    queryKey: ["project-memberships", managingSquad?.id, managingProject?.id],
+    enabled: !!managingSquad?.id,
+    queryFn: async () => {
+      const project_id = (allSquads.find((s) => s.id === managingSquad!.id)?.project_id) ?? null;
+      if (!project_id) return [] as SquadMember[];
+      const squadIdsInProject = allSquads.filter((s) => s.project_id === project_id).map((s) => s.id);
+      const { data, error } = await supabase
+        .from("squad_members").select("*").in("squad_id", squadIdsInProject);
+      if (error) throw error;
+      return (data ?? []) as SquadMember[];
+    },
+  });
+  const usersAlreadyInProject = useMemo(() => new Set(projectMemberships.map((m) => m.user_id)), [projectMemberships]);
 
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
@@ -102,6 +119,7 @@ function ProjetosAdminPage() {
       slug: editing.slug || slugify(editing.name!),
       description: editing.description ?? null,
       cover_url: editing.cover_url ?? null,
+      banner_url: editing.banner_url ?? null,
       status: editing.status ?? "ativo",
       is_public: !!editing.is_public,
       tech_stack: editing.tech_stack ?? [],
@@ -151,13 +169,23 @@ function ProjetosAdminPage() {
   const addMember = async () => {
     if (!managingSquad || !newMemberId) return;
     if (!isSuperAdmin) return toast.error("Apenas SUPER ADMIN adiciona membros.");
+    if (usersAlreadyInProject.has(newMemberId)) {
+      return toast.error("Usuário já participa de outro squad deste projeto.");
+    }
     const { error } = await supabase.from("squad_members").insert({
       squad_id: managingSquad.id, user_id: newMemberId, role_in_squad: newMemberRole,
     });
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = error.message.includes("outro squad")
+        ? "Usuário já participa de outro squad deste projeto."
+        : error.message;
+      return toast.error(msg);
+    }
     setNewMemberId("");
     setNewMemberRole("MEMBRO");
+    setMemberSearch("");
     qc.invalidateQueries({ queryKey: ["squad-members", managingSquad.id] });
+    qc.invalidateQueries({ queryKey: ["project-memberships"] });
   };
 
   const removeMember = async (m: SquadMember) => {
@@ -286,6 +314,17 @@ function ProjetosAdminPage() {
               label="Capa do projeto"
               aspect="video"
             />
+            <ImageUploader
+              bucket="project-covers"
+              folder={`${editing?.id ?? "novo"}/banner`}
+              value={editing?.banner_url ?? null}
+              onChange={(url) => setEditing({ ...editing!, banner_url: url })}
+              label="Banner do projeto (hero da página pública)"
+              aspect="video"
+            />
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              Imagem em destaque no topo da página /projetos/{editing?.slug || "slug"}. Recomendado: 1920×600.
+            </p>
             <div>
               <Label>Tech stack</Label>
               <Input
