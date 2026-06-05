@@ -25,13 +25,16 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 - **Meu Perfil**: nome, e-mail, bio, área de atuação, "em busca de oportunidade", redes sociais e troca de senha
 - **Vagas Salvas**: lista + remoção
 - **Meus Eventos**: inscrições + remoção
+- **Meus Projetos**: squads que participo, mural de posts, modal de membro com contatos
+- **Depoimentos**: enviar/editar/excluir depoimento (passa por moderação antes de aparecer no site público)
 
 ### Dashboard — Admin
 - CRUD de Vagas (busca, filtros, paginação)
 - CRUD de Eventos (modais)
 - Usuários: bloquear/reativar, editar, **resetar senha** para padrão configurável
-- Configurações do Site: edita JSON de todas as chaves de `public_site_settings`
-  (hero, contact, about, stats, social_links, footer, seo, newsletter, partners, cta_section, legal, password_policy)
+- Projetos / Squads: capa + **banner separado** (hero da página pública), busca de membros por nome/e-mail e regra que impede o mesmo usuário em mais de um squad por projeto
+- Depoimentos: aprovar / rejeitar com observação
+- Configurações do Site: SEO (prévia Google, Open Graph e **Twitter Card** ao vivo), favicon com validação, histórico de versões com pré-visualização e reversão, hero, contact, about, stats, social_links, footer, newsletter, partners, cta_section, legal, password_policy
 - Logs de auditoria
 
 ### Dashboard — Super Admin

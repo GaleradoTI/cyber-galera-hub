@@ -534,6 +534,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          banner_url: string | null
           cover_url: string | null
           created_at: string
           created_by: string | null
@@ -547,6 +548,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          banner_url?: string | null
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -560,6 +562,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          banner_url?: string | null
           cover_url?: string | null
           created_at?: string
           created_by?: string | null
@@ -762,6 +765,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      testimonials: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          moderated_at: string | null
+          moderator_id: string | null
+          moderator_note: string | null
+          rating: number
+          role_title: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderator_id?: string | null
+          moderator_note?: string | null
+          rating: number
+          role_title?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderator_id?: string | null
+          moderator_note?: string | null
+          rating?: number
+          role_title?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_event_interests: {
         Row: {

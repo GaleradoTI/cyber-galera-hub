@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye } from "lucide-react";
+import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,6 +138,11 @@ function SeoCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }
   };
 
   const siteUrl = (draft.site_url as string) || "https://galera-do-ti.lovable.app";
+  const twHandle = (draft.twitter_site as string) || "";
+  const twCardType = (draft.twitter_card as string) || "summary_large_image";
+  const twTitle = (draft.twitter_title as string) || (draft.default_title as string) || "Título do site";
+  const twDescription = (draft.twitter_description as string) || (draft.default_description as string) || "Descrição";
+  const twImage = (draft.twitter_image as string) || (draft.og_image as string) || "";
 
   return (
     <CardShell title="SEO Global" description="Title, description e Open Graph aplicados em todas as páginas." badge="SEO" saving={saving} onSave={save}>
@@ -162,6 +167,38 @@ function SeoCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }
           <Field label="Imagem Open Graph (URL)">
             <Input placeholder="https://..." value={draft.og_image ?? ""} onChange={(e) => set("og_image", e.target.value)} />
           </Field>
+
+          <div className="pt-3 mt-1 border-t border-border/40">
+            <p className="text-[10px] font-bold tracking-[0.25em] text-secondary mb-2 flex items-center gap-1.5">
+              <Twitter className="h-3 w-3" /> TWITTER CARD
+            </p>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Card type">
+                  <select
+                    value={twCardType}
+                    onChange={(e) => set("twitter_card", e.target.value)}
+                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="summary">summary</option>
+                    <option value="summary_large_image">summary_large_image</option>
+                  </select>
+                </Field>
+                <Field label="@handle do criador">
+                  <Input value={draft.twitter_creator ?? ""} onChange={(e) => set("twitter_creator", e.target.value)} placeholder="@usuario" />
+                </Field>
+              </div>
+              <Field label="Twitter title (deixe vazio para reusar o título padrão)">
+                <Input value={draft.twitter_title ?? ""} onChange={(e) => set("twitter_title", e.target.value)} maxLength={70} />
+              </Field>
+              <Field label="Twitter description (deixe vazio para reusar a descrição padrão)">
+                <Textarea rows={2} value={draft.twitter_description ?? ""} onChange={(e) => set("twitter_description", e.target.value)} maxLength={200} />
+              </Field>
+              <Field label="Twitter image (deixe vazio para reusar a og:image)">
+                <Input value={draft.twitter_image ?? ""} onChange={(e) => set("twitter_image", e.target.value)} placeholder="https://..." />
+              </Field>
+            </div>
+          </div>
         </div>
 
         {/* live preview */}
@@ -192,6 +229,40 @@ function SeoCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }
                 <div className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{siteUrl.replace(/^https?:\/\//, "")}</div>
                 <div className="font-bold text-sm truncate">{draft.default_title || "Título do site"}</div>
                 <div className="text-xs text-muted-foreground line-clamp-2">{draft.default_description || "Descrição"}</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Twitter className="h-3 w-3" /> PRÉVIA TWITTER / X
+            </p>
+            <div className="rounded-2xl border border-border/40 overflow-hidden bg-background/50">
+              {twCardType === "summary_large_image" ? (
+                twImage ? (
+                  <img src={twImage} alt="" className="w-full h-44 object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+                ) : (
+                  <div className="w-full h-44 bg-muted/30 flex items-center justify-center text-xs text-muted-foreground">
+                    <ImageIcon className="h-4 w-4 mr-1" /> sem twitter:image
+                  </div>
+                )
+              ) : null}
+              <div className={`flex ${twCardType === "summary" ? "items-stretch" : "flex-col"} `}>
+                {twCardType === "summary" && (
+                  <div className="w-24 sm:w-28 shrink-0 bg-muted/30 flex items-center justify-center">
+                    {twImage ? (
+                      <img src={twImage} alt="" className="w-full h-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} />
+                    ) : (
+                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                )}
+                <div className="p-3 flex-1 min-w-0">
+                  <div className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{siteUrl.replace(/^https?:\/\//, "")}</div>
+                  <div className="font-semibold text-sm leading-snug line-clamp-2">{twTitle}</div>
+                  <div className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{twDescription}</div>
+                  {twHandle && <div className="text-[10px] text-muted-foreground mt-1.5">via {twHandle}</div>}
+                </div>
               </div>
             </div>
           </div>

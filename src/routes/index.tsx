@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobCard } from "@/components/public/job-card";
 import { EventCard } from "@/components/public/event-card";
 import { ChannelGrid } from "@/components/public/channel-grid";
+import { TestimonialsSection } from "@/components/public/testimonials-section";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -130,6 +131,9 @@ function Index() {
           <ChannelGrid />
         </div>
       </section>
+
+      {/* Depoimentos da comunidade */}
+      <TestimonialsSection />
 
       {/* CTA Final */}
       <section className="container mx-auto px-4 py-20">
