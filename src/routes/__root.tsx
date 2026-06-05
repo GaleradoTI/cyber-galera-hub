@@ -163,6 +163,12 @@ function DynamicSiteHead() {
       setMeta('meta[name="twitter:description"]', "name", "twitter:description", seo.default_description);
       setMeta('meta[name="twitter:image"]', "name", "twitter:image", seo.og_image);
       setMeta('meta[name="twitter:site"]', "name", "twitter:site", seo.twitter_site);
+      // Specific twitter overrides
+      setMeta('meta[name="twitter:card"]', "name", "twitter:card", seo.twitter_card);
+      setMeta('meta[name="twitter:creator"]', "name", "twitter:creator", seo.twitter_creator);
+      if (seo.twitter_title) setMeta('meta[name="twitter:title"]', "name", "twitter:title", seo.twitter_title);
+      if (seo.twitter_description) setMeta('meta[name="twitter:description"]', "name", "twitter:description", seo.twitter_description);
+      if (seo.twitter_image) setMeta('meta[name="twitter:image"]', "name", "twitter:image", seo.twitter_image);
 
       const setLink = (rel: string, href?: string) => {
         if (!href) return;
