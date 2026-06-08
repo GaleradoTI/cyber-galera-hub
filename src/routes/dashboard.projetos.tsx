@@ -320,7 +320,11 @@ function ProjetosAdminPage() {
               value={editing?.banner_url ?? null}
               onChange={(url) => setEditing({ ...editing!, banner_url: url })}
               label="Banner do projeto (hero da página pública)"
-              aspect="video"
+              aspect="wide"
+              resizeMax={1920}
+              minWidth={1200}
+              maxBytes={8 * 1024 * 1024}
+              hint="JPG/PNG/WebP até 8MB · redimensionado para 1920px · mínimo 1200px de largura"
             />
             <p className="text-[10px] text-muted-foreground -mt-1">
               Imagem em destaque no topo da página /projetos/{editing?.slug || "slug"}. Recomendado: 1920×600.
