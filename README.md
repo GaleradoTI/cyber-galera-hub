@@ -17,12 +17,17 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 ### Área pública
 - Home com hero, estatísticas e CTA configuráveis
 - Vagas, Eventos, Canais, FAQ, Sobre, Termos, Privacidade
-- SEO por rota (head() com title/description/og:*)
+- SEO por rota (head() com title/description/og:* e twitter:*) — preview ao
+  vivo de Google, Open Graph e Twitter Card no dashboard, aplicado no
+  `<head>` do site público
 - Autenticação por e-mail/senha
 
 ### Dashboard — Membro
 - Visão geral com contagem de vagas salvas e eventos
-- **Meu Perfil**: nome, e-mail, bio, área de atuação, "em busca de oportunidade", redes sociais e troca de senha
+- **Meu Perfil**: nome, e-mail, bio, área de atuação, "em busca de
+  oportunidade", **redes sociais livres** (presets LinkedIn/GitHub/Instagram/
+  Twitter/YouTube/Discord/Site + qualquer chave personalizada) e troca de
+  senha
 - **Vagas Salvas**: lista + remoção
 - **Meus Eventos**: inscrições + remoção
 - **Meus Projetos**: squads que participo, mural de posts, modal de membro com contatos
@@ -32,10 +37,17 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 - CRUD de Vagas (busca, filtros, paginação)
 - CRUD de Eventos (modais)
 - Usuários: bloquear/reativar, editar, **resetar senha** para padrão configurável
-- Projetos / Squads: capa + **banner separado** (hero da página pública), busca de membros por nome/e-mail e regra que impede o mesmo usuário em mais de um squad por projeto
+- Projetos / Squads: capa + **banner separado** (hero da página pública,
+  com fallback de gradiente + nome grande quando não há banner; upload com
+  validação JPG/PNG/WebP, máx 8MB e redimensionamento automático para
+  1920px), busca de membros por nome/e-mail e regra que impede o mesmo
+  usuário em mais de um squad por projeto. Na página pública os membros
+  aparecem ordenados por **Líder > Cargo no squad > Nome**.
 - Depoimentos: aprovar / rejeitar com observação
 - Configurações do Site: SEO (prévia Google, Open Graph e **Twitter Card** ao vivo), favicon com validação, histórico de versões com pré-visualização e reversão, hero, contact, about, stats, social_links, footer, newsletter, partners, cta_section, legal, password_policy
-- Logs de auditoria
+- **Logs de auditoria** preenchidos automaticamente: criação de usuário
+  (`USER_CREATED`), alterações em projetos (`PROJECT_CREATED/UPDATED/
+  DELETED`) e em configurações do site (`SETTING_UPDATED`)
 
 ### Dashboard — Super Admin
 - Tudo do Admin
