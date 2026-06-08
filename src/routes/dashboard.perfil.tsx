@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone } from "lucide-react";
+import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -23,14 +23,21 @@ const profileSchema = z.object({
   looking_for_job: z.boolean(),
   tech_tags: z.array(z.string().trim().min(1).max(40)).max(20),
   avatar_url: z.string().trim().max(500).optional().nullable(),
-  social_links: z.object({
-    linkedin: z.string().trim().max(200).optional(),
-    github: z.string().trim().max(200).optional(),
-    instagram: z.string().trim().max(200).optional(),
-    twitter: z.string().trim().max(200).optional(),
-    website: z.string().trim().max(200).optional(),
-  }),
+  social_links: z.record(
+    z.string().trim().min(1).max(30).regex(/^[a-z0-9_-]+$/i, "Use apenas letras, números, _ ou -"),
+    z.string().trim().max(300),
+  ),
 });
+
+const PRESET_SOCIALS: { key: string; label: string; Icon: any; placeholder: string }[] = [
+  { key: "linkedin", label: "LinkedIn", Icon: Linkedin, placeholder: "https://linkedin.com/in/..." },
+  { key: "github", label: "GitHub", Icon: Github, placeholder: "https://github.com/..." },
+  { key: "instagram", label: "Instagram", Icon: Instagram, placeholder: "https://instagram.com/..." },
+  { key: "twitter", label: "Twitter / X", Icon: Twitter, placeholder: "https://x.com/..." },
+  { key: "youtube", label: "YouTube", Icon: Youtube, placeholder: "https://youtube.com/@..." },
+  { key: "discord", label: "Discord", Icon: MessageCircle, placeholder: "usuario#1234 ou convite" },
+  { key: "website", label: "Site", Icon: Globe, placeholder: "https://..." },
+];
 
 function PerfilPage() {
   const qc = useQueryClient();
@@ -43,11 +50,13 @@ function PerfilPage() {
     looking_for_job: false,
     tech_tags: [] as string[],
     avatar_url: "" as string | null,
-    social_links: { linkedin: "", github: "", instagram: "", twitter: "", website: "" } as Record<string, string>,
+    social_links: {} as Record<string, string>,
   });
   const [saving, setSaving] = useState(false);
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
   const [tagInput, setTagInput] = useState("");
+  const [customKey, setCustomKey] = useState("");
+  const [customUrl, setCustomUrl] = useState("");
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -69,15 +78,16 @@ function PerfilPage() {
       looking_for_job: !!profile.looking_for_job,
       tech_tags: (profile.tech_tags ?? []) as string[],
       avatar_url: profile.avatar_url ?? "",
-      social_links: {
-        linkedin: "", github: "", instagram: "", twitter: "", website: "",
-        ...((profile.social_links ?? {}) as Record<string, string>),
-      },
+      social_links: { ...((profile.social_links ?? {}) as Record<string, string>) },
     });
   }, [profile]);
 
   const save = async () => {
-    const parsed = profileSchema.safeParse(form);
+    // remove entradas vazias antes de validar
+    const cleanedSocial = Object.fromEntries(
+      Object.entries(form.social_links).filter(([, v]) => v && v.trim().length > 0),
+    );
+    const parsed = profileSchema.safeParse({ ...form, social_links: cleanedSocial });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setSaving(true);
     const { error } = await supabase
@@ -99,6 +109,25 @@ function PerfilPage() {
     qc.invalidateQueries({ queryKey: ["my-profile"] });
     qc.invalidateQueries({ queryKey: ["profile"] });
   };
+
+  const addCustomSocial = () => {
+    const key = customKey.trim().toLowerCase();
+    if (!key) return toast.error("Informe um nome para a rede");
+    if (!/^[a-z0-9_-]+$/.test(key)) return toast.error("Use apenas letras, números, _ ou -");
+    if (form.social_links[key] !== undefined) return toast.error("Essa rede já existe");
+    setForm({ ...form, social_links: { ...form.social_links, [key]: customUrl.trim() } });
+    setCustomKey("");
+    setCustomUrl("");
+  };
+
+  const removeSocial = (key: string) => {
+    const next = { ...form.social_links };
+    delete next[key];
+    setForm({ ...form, social_links: next });
+  };
+
+  const presetKeys = new Set(PRESET_SOCIALS.map((p) => p.key));
+  const customEntries = Object.entries(form.social_links).filter(([k]) => !presetKeys.has(k));
 
   const updateEmail = async () => {
     const email = prompt("Novo e-mail:", user?.email ?? "");
@@ -204,22 +233,50 @@ function PerfilPage() {
           <section className="glass rounded-xl p-5 border border-primary/20">
             <h2 className="font-bold text-sm mb-4">Redes sociais</h2>
             <div className="grid sm:grid-cols-2 gap-3">
-              {([
-                ["linkedin", "LinkedIn", Linkedin],
-                ["github", "GitHub", Github],
-                ["instagram", "Instagram", Instagram],
-                ["twitter", "Twitter / X", Twitter],
-                ["website", "Site", Globe],
-              ] as const).map(([k, label, Icon]) => (
-                <div key={k}>
+              {PRESET_SOCIALS.map(({ key, label, Icon, placeholder }) => (
+                <div key={key}>
                   <Label className="flex items-center gap-2"><Icon className="h-3 w-3" /> {label}</Label>
                   <Input
-                    value={form.social_links[k] ?? ""}
-                    onChange={(e) => setForm({ ...form, social_links: { ...form.social_links, [k]: e.target.value } })}
-                    placeholder="https://"
+                    value={form.social_links[key] ?? ""}
+                    onChange={(e) => setForm({ ...form, social_links: { ...form.social_links, [key]: e.target.value } })}
+                    placeholder={placeholder}
                   />
                 </div>
               ))}
+            </div>
+
+            {customEntries.length > 0 && (
+              <>
+                <div className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground/70 mt-5 mb-2">REDES PERSONALIZADAS</div>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {customEntries.map(([k, v]) => (
+                    <div key={k}>
+                      <Label className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 truncate"><Globe className="h-3 w-3" /> {k}</span>
+                        <button type="button" onClick={() => removeSocial(k)} className="text-destructive text-xs">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Label>
+                      <Input
+                        value={v}
+                        onChange={(e) => setForm({ ...form, social_links: { ...form.social_links, [k]: e.target.value } })}
+                        placeholder="https://"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            <div className="mt-5 pt-4 border-t border-border/40">
+              <div className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground/70 mb-2">ADICIONAR REDE PERSONALIZADA</div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input className="sm:w-40" placeholder="ex: tiktok" value={customKey} onChange={(e) => setCustomKey(e.target.value)} maxLength={30} />
+                <Input className="flex-1" placeholder="URL ou handle" value={customUrl} onChange={(e) => setCustomUrl(e.target.value)} maxLength={300} />
+                <Button type="button" variant="outline" onClick={addCustomSocial}>
+                  <Plus className="h-3 w-3 mr-1" /> Adicionar
+                </Button>
+              </div>
             </div>
           </section>
 

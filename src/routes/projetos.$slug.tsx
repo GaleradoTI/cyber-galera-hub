@@ -71,6 +71,18 @@ function PublicProjectPage() {
   });
   const profileById = new Map(profiles.map((p) => [p.user_id, p]));
 
+  // Líder primeiro, depois ordem de cargo (role_in_squad alfabético), depois nome.
+  const ROLE_ORDER: Record<string, number> = { LIDER: 0, MEMBRO: 2 };
+  const sortMembers = (a: SquadMember, b: SquadMember) => {
+    const ra = ROLE_ORDER[a.role_in_squad] ?? 1;
+    const rb = ROLE_ORDER[b.role_in_squad] ?? 1;
+    if (ra !== rb) return ra - rb;
+    if (a.role_in_squad !== b.role_in_squad) return a.role_in_squad.localeCompare(b.role_in_squad);
+    const na = profileById.get(a.user_id)?.display_name ?? "";
+    const nb = profileById.get(b.user_id)?.display_name ?? "";
+    return na.localeCompare(nb, "pt-BR");
+  };
+
   if (isLoading) {
     return (
       <PublicLayout>
@@ -118,22 +130,28 @@ function PublicProjectPage() {
 
   return (
     <PublicLayout>
-      {project.banner_url && (
-        <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden">
+      {/* Hero: usa banner quando disponível; senão gradiente com nome grande */}
+      <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden">
+        {project.banner_url ? (
           <img
             src={project.banner_url}
             alt={`Banner do projeto ${project.name}`}
             className="w-full h-full object-cover"
+            onError={(e) => ((e.currentTarget.style.display = "none"))}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 container max-w-4xl mx-auto px-4 py-4 md:py-6">
-            <div className="text-[10px] sm:text-xs font-bold tracking-[0.3em] text-secondary mb-1 flex items-center gap-2">
-              <Globe className="h-3 w-3" /> PROJETO PÚBLICO
-            </div>
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-black tracking-tight text-gradient-neon">{project.name}</h1>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/40 via-background to-secondary/40" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 container max-w-4xl mx-auto px-4 py-4 md:py-6">
+          <div className="text-[10px] sm:text-xs font-bold tracking-[0.3em] text-secondary mb-1 flex items-center gap-2">
+            <Globe className="h-3 w-3" /> PROJETO PÚBLICO
           </div>
+          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-gradient-neon leading-tight">
+            {project.name}
+          </h1>
         </div>
-      )}
+      </div>
       <article className="container max-w-4xl mx-auto px-4 py-6 md:py-10 animate-in fade-in duration-500">
         <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
           <Link to="/projetos" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary">
@@ -144,18 +162,6 @@ function PublicProjectPage() {
           </Button>
         </div>
 
-        {!project.banner_url && project.cover_url && (
-          <img src={project.cover_url} alt={project.name} loading="lazy" className="w-full h-48 sm:h-64 md:h-80 object-cover rounded-xl border border-border/40 mb-6" />
-        )}
-
-        {!project.banner_url && (
-          <>
-            <div className="flex items-center gap-2 text-xs text-secondary mb-2">
-              <Globe className="h-3 w-3" /> <span className="font-bold tracking-[0.3em]">PROJETO PÚBLICO</span>
-            </div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-gradient-neon">{project.name}</h1>
-          </>
-        )}
         {project.description && <p className="text-muted-foreground mt-3 text-base md:text-lg leading-relaxed">{project.description}</p>}
 
         {project.tech_stack && project.tech_stack.length > 0 && (
@@ -170,9 +176,9 @@ function PublicProjectPage() {
           <Layers className="h-3 w-3" /> SQUADS
         </h2>
 
-        <div className="grid sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
           {squads.map((s) => {
-            const ms = members.filter((m) => m.squad_id === s.id);
+            const ms = members.filter((m) => m.squad_id === s.id).sort(sortMembers);
             return (
               <div key={s.id} className="glass rounded-xl p-4 md:p-5 border border-primary/20">
                 <h3 className="font-bold">{s.name}</h3>
@@ -189,8 +195,14 @@ function PublicProjectPage() {
                             {(u?.display_name ?? "?").slice(0, 1).toUpperCase()}
                           </div>
                         )}
-                        <span className="truncate">{u?.display_name ?? "—"}</span>
-                        {m.role_in_squad === "LIDER" && <Crown className="h-3 w-3 text-secondary" />}
+                        <span className="truncate flex-1">{u?.display_name ?? "—"}</span>
+                        {m.role_in_squad === "LIDER" ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-secondary shrink-0">
+                            <Crown className="h-3 w-3" /> LÍDER
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground shrink-0">{m.role_in_squad}</span>
+                        )}
                       </div>
                     );
                   })}
