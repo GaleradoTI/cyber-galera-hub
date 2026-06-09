@@ -34,6 +34,7 @@ import { Route as DashboardMeusProjetosRouteImport } from './routes/dashboard.me
 import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meus-eventos'
 import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensagens'
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
+import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardDepoimentosRouteImport } from './routes/dashboard.depoimentos'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
 import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
@@ -165,6 +166,11 @@ const DashboardLogsRoute = DashboardLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardEventosRoute = DashboardEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardDepoimentosRoute = DashboardDepoimentosRouteImport.update({
   id: '/depoimentos',
   path: '/depoimentos',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
+  '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -241,6 +248,7 @@ export interface FileRoutesByTo {
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
+  '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -274,6 +282,7 @@ export interface FileRoutesById {
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
+  '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/depoimentos'
+    | '/dashboard/eventos'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -339,6 +349,7 @@ export interface FileRouteTypes {
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/depoimentos'
+    | '/dashboard/eventos'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -371,6 +382,7 @@ export interface FileRouteTypes {
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
     | '/dashboard/depoimentos'
+    | '/dashboard/eventos'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -580,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLogsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/eventos': {
+      id: '/dashboard/eventos'
+      path: '/eventos'
+      fullPath: '/dashboard/eventos'
+      preLoaderRoute: typeof DashboardEventosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/depoimentos': {
       id: '/dashboard/depoimentos'
       path: '/depoimentos'
@@ -624,6 +643,7 @@ interface DashboardRouteChildren {
   DashboardCargosRoute: typeof DashboardCargosRoute
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
   DashboardDepoimentosRoute: typeof DashboardDepoimentosRoute
+  DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMensagensRoute: typeof DashboardMensagensRoute
   DashboardMeusEventosRoute: typeof DashboardMeusEventosRoute
@@ -642,6 +662,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCargosRoute: DashboardCargosRoute,
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
   DashboardDepoimentosRoute: DashboardDepoimentosRoute,
+  DashboardEventosRoute: DashboardEventosRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardMensagensRoute: DashboardMensagensRoute,
   DashboardMeusEventosRoute: DashboardMeusEventosRoute,
@@ -678,13 +699,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
