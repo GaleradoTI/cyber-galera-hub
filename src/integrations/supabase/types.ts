@@ -116,9 +116,43 @@ export type Database = {
         }
         Relationships: []
       }
+      event_checkins: {
+        Row: {
+          checked_in_at: string
+          event_id: string
+          id: string
+          source: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string
+          event_id: string
+          id?: string
+          source?: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string
+          event_id?: string
+          id?: string
+          source?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_checkins_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
+          address: string | null
           category: string | null
+          cover_url: string | null
           created_at: string
           created_by: string | null
           description: string
@@ -126,13 +160,19 @@ export type Database = {
           event_time: string | null
           id: string
           location_or_link: string | null
+          max_attendees: number | null
           modality: Database["public"]["Enums"]["event_modality"]
           name: string
+          online_link: string | null
+          speakers: Json
           status: Database["public"]["Enums"]["content_status"]
+          theme: string | null
           updated_at: string
         }
         Insert: {
+          address?: string | null
           category?: string | null
+          cover_url?: string | null
           created_at?: string
           created_by?: string | null
           description: string
@@ -140,13 +180,19 @@ export type Database = {
           event_time?: string | null
           id?: string
           location_or_link?: string | null
+          max_attendees?: number | null
           modality: Database["public"]["Enums"]["event_modality"]
           name: string
+          online_link?: string | null
+          speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
+          theme?: string | null
           updated_at?: string
         }
         Update: {
+          address?: string | null
           category?: string | null
+          cover_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string
@@ -154,9 +200,13 @@ export type Database = {
           event_time?: string | null
           id?: string
           location_or_link?: string | null
+          max_attendees?: number | null
           modality?: Database["public"]["Enums"]["event_modality"]
           name?: string
+          online_link?: string | null
+          speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
+          theme?: string | null
           updated_at?: string
         }
         Relationships: []

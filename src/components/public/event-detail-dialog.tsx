@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar, ExternalLink, Heart, MapPin } from "lucide-react";
+import { Calendar, ExternalLink, Heart, MapPin, Mic2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +20,9 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
 
   if (!event) return null;
   const isUrl = event.location_or_link && /^https?:\/\//i.test(event.location_or_link);
+  const onlineLink = event.online_link || (isUrl ? event.location_or_link : null);
+  const place = event.address || (!isUrl ? event.location_or_link : null);
+  const speakers: any[] = Array.isArray(event.speakers) ? event.speakers : [];
 
   const toggle = async () => {
     if (!user) return;
@@ -56,16 +59,18 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
           )}
         </div>
 
-        {event.location_or_link && (
+        {event.theme && <div className="text-sm"><span className="font-semibold">Tema:</span> <span className="text-primary">{event.theme}</span></div>}
+
+        {place && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0" />
-            {isUrl ? (
-              <a href={event.location_or_link} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline break-all">
-                {event.location_or_link}
-              </a>
-            ) : (
-              <span>{event.location_or_link}</span>
-            )}
+            <span>{place}</span>
+          </div>
+        )}
+        {onlineLink && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ExternalLink className="h-4 w-4 shrink-0" />
+            <a href={onlineLink} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline break-all">{onlineLink}</a>
           </div>
         )}
 
@@ -73,9 +78,24 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
           <div className="text-sm whitespace-pre-wrap leading-relaxed">{event.description}</div>
         )}
 
+        {speakers.length > 0 && (
+          <div>
+            <div className="text-sm font-semibold mb-2 flex items-center gap-2"><Mic2 className="h-4 w-4 text-primary" /> Palestrantes</div>
+            <ul className="space-y-2">
+              {speakers.map((s, i) => (
+                <li key={i} className="glass rounded p-3 border border-border/40">
+                  <div className="font-medium text-sm">{s.name}</div>
+                  {s.topic && <div className="text-xs text-primary">{s.topic}</div>}
+                  {s.bio && <div className="text-xs text-muted-foreground mt-1">{s.bio}</div>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
-          {isUrl && (
-            <a href={event.location_or_link} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[180px]">
+          {onlineLink && (
+            <a href={onlineLink} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[180px]">
               <Button variant="neon" className="w-full"><ExternalLink className="h-4 w-4 mr-2" /> Acessar evento</Button>
             </a>
           )}

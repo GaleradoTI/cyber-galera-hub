@@ -1,12 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { Briefcase, Calendar, FolderKanban, Heart, ShieldCheck, Users, Sparkles, ClipboardList, Inbox, CheckCheck, X, UserPlus, Plus } from "lucide-react";
+import { Briefcase, Calendar, FolderKanban, Heart, ShieldCheck, Users, Sparkles, ClipboardList, Inbox, CheckCheck, X, UserPlus, Plus, MapPin, ExternalLink, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { calcMatchPercent, matchClass } from "@/lib/match";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/dashboard/")({ component: DashboardIndex });
 
@@ -33,6 +35,7 @@ function DashboardIndex() {
         : "Sua área pessoal na GALERA DO T.I."
       }
     >
+      {!isAdmin && user && <FeaturedEvent userId={user.id} />}
       {isAdmin ? (
         <AdminHome isSuperAdmin={isSuperAdmin} />
       ) : isRecruiter ? (
@@ -41,6 +44,84 @@ function DashboardIndex() {
         <MemberHome userId={user!.id} techTags={profile?.tech_tags ?? []} role={primary} />
       )}
     </DashboardShell>
+  );
+}
+
+/* ===================== FEATURED EVENT ===================== */
+
+function FeaturedEvent({ userId }: { userId: string }) {
+  const qc = useQueryClient();
+  const { data: ev } = useQuery({
+    queryKey: ["featured-event"],
+    queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from("events")
+        .select("id,name,theme,event_date,event_time,modality,online_link,address,location_or_link,cover_url,speakers")
+        .eq("status", "publicado")
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+  const { data: checked } = useQuery({
+    queryKey: ["featured-checkin", ev?.id, userId],
+    enabled: !!ev?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("event_checkins").select("id").eq("event_id", ev!.id).eq("user_id", userId).maybeSingle();
+      return !!data;
+    },
+  });
+  if (!ev) return null;
+  const link = ev.online_link || (ev.location_or_link?.startsWith("http") ? ev.location_or_link : null);
+  const place = ev.address || (!ev.location_or_link?.startsWith("http") ? ev.location_or_link : null);
+  const speakers = Array.isArray(ev.speakers) ? ev.speakers : [];
+
+  const checkin = async () => {
+    if (checked) {
+      const { error } = await supabase.from("event_checkins").delete().eq("event_id", ev.id).eq("user_id", userId);
+      if (error) return toast.error(error.message);
+      toast.success("Check-in cancelado");
+    } else {
+      const { error } = await supabase.from("event_checkins").insert({ event_id: ev.id, user_id: userId });
+      if (error) return toast.error(error.message);
+      toast.success("Check-in confirmado!");
+    }
+    qc.invalidateQueries({ queryKey: ["featured-checkin"] });
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl glass border border-primary/30 p-5 sm:p-6 mb-6">
+      <div className="absolute inset-0 bg-gradient-neon opacity-10 pointer-events-none" />
+      {ev.cover_url && <img src={ev.cover_url} alt={ev.name} className="absolute inset-0 w-full h-full object-cover opacity-20" loading="lazy" />}
+      <div className="relative flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <div className="text-[10px] tracking-[0.3em] font-bold text-secondary mb-1">PRÓXIMO EVENTO</div>
+          <h3 className="text-xl sm:text-2xl font-black">{ev.name}</h3>
+          {ev.theme && <p className="text-sm text-primary mt-1">{ev.theme}</p>}
+          <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
+            <span><Calendar className="h-3 w-3 inline mr-1" />{new Date(ev.event_date).toLocaleDateString("pt-BR")}{ev.event_time ? ` • ${ev.event_time.slice(0,5)}` : ""}</span>
+            <span className="uppercase">{ev.modality}</span>
+            {place && <span><MapPin className="h-3 w-3 inline mr-1" />{place}</span>}
+          </div>
+          {speakers.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              <span className="font-semibold text-foreground">Palestrantes:</span>{" "}
+              {speakers.slice(0, 3).map((s: any) => s.name).filter(Boolean).join(", ")}
+              {speakers.length > 3 ? ` +${speakers.length - 3}` : ""}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 shrink-0">
+          {link && <a href={link} target="_blank" rel="noopener noreferrer"><Button variant="outline" size="sm"><ExternalLink className="h-3 w-3 mr-1" /> Acessar</Button></a>}
+          <Button onClick={checkin} variant={checked ? "default" : "neon"} size="sm">
+            <CheckCircle2 className="h-3 w-3 mr-1" /> {checked ? "Check-in feito" : "Fazer check-in"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -206,28 +287,31 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     queryKey: ["admin-kpis"],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const [users, jobs, events, projects] = await Promise.all([
+      const [users, jobs, events, projects, checkins] = await Promise.all([
         supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_blocked", false),
         supabase.from("jobs").select("id", { count: "exact", head: true }).eq("status", "publicado"),
         supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "publicado").gte("event_date", today),
         supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "ativo"),
+        supabase.from("event_checkins").select("id", { count: "exact", head: true }),
       ]);
       return {
         users: users.count ?? 0,
         jobs: jobs.count ?? 0,
         events: events.count ?? 0,
         projects: projects.count ?? 0,
+        checkins: checkins.count ?? 0,
       };
     },
   });
 
   return (
     <>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Stat icon={Users} label="Usuários ativos" value={stats?.users ?? "…"} />
         <Stat icon={Briefcase} label="Vagas publicadas" value={stats?.jobs ?? "…"} />
         <Stat icon={Calendar} label="Eventos próximos" value={stats?.events ?? "…"} />
         <Stat icon={FolderKanban} label="Projetos ativos" value={stats?.projects ?? "…"} />
+        <Stat icon={CheckCircle2} label="Check-ins totais" value={stats?.checkins ?? "…"} />
       </div>
 
       <Section title="Painel administrativo">
