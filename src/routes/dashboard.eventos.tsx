@@ -371,6 +371,27 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
           <DialogTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /> {event?.name}</DialogTitle>
           <DialogDescription>Métricas de inscrição e check-in.</DialogDescription>
         </DialogHeader>
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!data?.rows?.length}
+            onClick={() => {
+              if (!data?.rows?.length || !event) return;
+              downloadCSV(
+                `evento-${event.name.replace(/\W+/g, "-").toLowerCase()}-participantes.csv`,
+                data.rows.map((r: any) => ({
+                  nome: r.display_name,
+                  email: r.email,
+                  telefone: r.phone ?? "",
+                  area: r.work_area ?? "",
+                  papel: (r.roles ?? []).join("|"),
+                  status: r.checked_in ? "check-in" : "inscrito",
+                })),
+              );
+            }}
+          ><Download className="h-3 w-3 mr-1" /> Exportar CSV</Button>
+        </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Interesses</div><div className="text-2xl font-black text-gradient-neon">{data?.interests ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Check-ins</div><div className="text-2xl font-black text-gradient-neon">{data?.checkins ?? "…"}</div></div>
