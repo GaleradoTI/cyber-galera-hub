@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, ExternalLink, Trash2, CheckCircle2, MapPin } from "lucide-react";
+import { Calendar, ExternalLink, Trash2, CheckCircle2, MapPin, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -35,10 +35,31 @@ function MeusEventosPage() {
     },
   });
 
+  const { data: waitlist = [] } = useQuery({
+    queryKey: ["my-waitlist", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("event_waitlist" as any)
+        .select("id, position, events(id,name,event_date,event_time,modality)")
+        .eq("user_id", user!.id)
+        .order("position", { ascending: true });
+      return (data ?? []) as any[];
+    },
+  });
+
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["my-events"] });
     qc.invalidateQueries({ queryKey: ["my-checkins"] });
+    qc.invalidateQueries({ queryKey: ["my-waitlist"] });
     qc.invalidateQueries({ queryKey: ["interests-count"] });
+  };
+
+  const leaveWaitlist = async (id: string) => {
+    const { error } = await supabase.from("event_waitlist" as any).delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Saiu da lista de espera");
+    refresh();
   };
 
   const remove = async (id: string) => {
@@ -109,6 +130,25 @@ function MeusEventosPage() {
           );
         })}
       </div>
+
+      {waitlist.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-bold text-sm mb-3 flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /> Lista de espera</h2>
+          <div className="grid gap-2">
+            {waitlist.map((w: any) => (
+              <div key={w.id} className="glass rounded-xl p-3 border border-border/40 flex items-center justify-between gap-2">
+                <div>
+                  <div className="font-medium">{w.events?.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {w.events?.event_date && new Date(w.events.event_date).toLocaleDateString("pt-BR")} • Posição #{w.position}
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" onClick={() => leaveWaitlist(w.id)}><Trash2 className="h-3 w-3" /></Button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </DashboardShell>
   );
 }

@@ -10,12 +10,15 @@ import { toast } from "sonner";
 export function EventDetailDialog({ event, open, onOpenChange }: { event: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
   const [interested, setInterested] = useState(false);
+  const [waitlistPos, setWaitlistPos] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!event || !user) { setInterested(false); return; }
     supabase.from("user_event_interests").select("id").eq("user_id", user.id).eq("event_id", event.id).maybeSingle()
       .then(({ data }) => setInterested(!!data));
+    supabase.from("event_waitlist" as any).select("position").eq("user_id", user.id).eq("event_id", event.id).maybeSingle()
+      .then(({ data }: any) => setWaitlistPos(data?.position ?? null));
   }, [event, user]);
 
   if (!event) return null;
@@ -30,9 +33,14 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
     if (interested) {
       const { error } = await supabase.from("user_event_interests").delete().eq("user_id", user.id).eq("event_id", event.id);
       if (error) toast.error(error.message); else { setInterested(false); toast.success("Inscrição removida"); }
+    } else if (waitlistPos) {
+      const { error } = await supabase.from("event_waitlist" as any).delete().eq("user_id", user.id).eq("event_id", event.id);
+      if (error) toast.error(error.message); else { setWaitlistPos(null); toast.success("Saiu da lista de espera"); }
     } else {
-      const { error } = await supabase.from("user_event_interests").insert({ user_id: user.id, event_id: event.id });
-      if (error) toast.error(error.message); else { setInterested(true); toast.success("Você se inscreveu!"); }
+      const { data, error }: any = await supabase.rpc("register_event_interest" as any, { _event_id: event.id });
+      if (error) toast.error(error.message);
+      else if (data?.status === "waitlist") { setWaitlistPos(data.position); toast.info(`Vagas esgotadas. Você entrou na lista de espera (#${data.position}).`); }
+      else { setInterested(true); toast.success("Você se inscreveu!"); }
     }
     setBusy(false);
   };
@@ -56,6 +64,16 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
           )}
           {event.category && (
             <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/30">{event.category}</span>
+          )}
+          {event.source && (
+            <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${event.source === "comunidade" ? "bg-primary/15 text-primary border-primary/30" : "bg-muted text-muted-foreground border-border"}`}>
+              {event.source === "comunidade" ? "Comunidade" : "Terceiros"}
+            </span>
+          )}
+          {event.max_attendees && (
+            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">
+              {event.max_attendees} vagas
+            </span>
           )}
         </div>
 
@@ -100,9 +118,9 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
             </a>
           )}
           {isAuthenticated ? (
-            <Button variant={interested ? "default" : "outline"} onClick={toggle} disabled={busy}>
+            <Button variant={interested ? "default" : waitlistPos ? "secondary" : "outline"} onClick={toggle} disabled={busy}>
               <Heart className={`h-4 w-4 mr-2 ${interested ? "fill-current" : ""}`} />
-              {interested ? "Inscrito" : "Tenho interesse"}
+              {interested ? "Inscrito" : waitlistPos ? `Lista de espera #${waitlistPos}` : "Tenho interesse"}
             </Button>
           ) : (
             <Link to="/login"><Button variant="outline"><Heart className="h-4 w-4 mr-2" /> Entrar para se inscrever</Button></Link>

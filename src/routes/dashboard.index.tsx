@@ -57,8 +57,9 @@ function FeaturedEvent({ userId }: { userId: string }) {
       const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
         .from("events")
-        .select("id,name,theme,event_date,event_time,modality,online_link,address,location_or_link,cover_url,speakers")
+        .select("id,name,theme,event_date,event_time,modality,online_link,address,location_or_link,cover_url,speakers,source")
         .eq("status", "publicado")
+        .eq("source", "comunidade")
         .gte("event_date", today)
         .order("event_date", { ascending: true })
         .limit(1)

@@ -148,9 +148,45 @@ export type Database = {
           },
         ]
       }
+      event_waitlist: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          position: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_waitlist_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           address: string | null
+          approval_note: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
           category: string | null
           cover_url: string | null
           created_at: string
@@ -164,13 +200,19 @@ export type Database = {
           modality: Database["public"]["Enums"]["event_modality"]
           name: string
           online_link: string | null
+          source: string
           speakers: Json
           status: Database["public"]["Enums"]["content_status"]
+          submitted_by: string | null
           theme: string | null
           updated_at: string
         }
         Insert: {
           address?: string | null
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
@@ -184,13 +226,19 @@ export type Database = {
           modality: Database["public"]["Enums"]["event_modality"]
           name: string
           online_link?: string | null
+          source?: string
           speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
+          submitted_by?: string | null
           theme?: string | null
           updated_at?: string
         }
         Update: {
           address?: string | null
+          approval_note?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
           category?: string | null
           cover_url?: string | null
           created_at?: string
@@ -204,8 +252,10 @@ export type Database = {
           modality?: Database["public"]["Enums"]["event_modality"]
           name?: string
           online_link?: string | null
+          source?: string
           speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
+          submitted_by?: string | null
           theme?: string | null
           updated_at?: string
         }
@@ -994,6 +1044,7 @@ export type Database = {
         Returns: boolean
       }
       promote_user_to_super_admin: { Args: { _email: string }; Returns: string }
+      register_event_interest: { Args: { _event_id: string }; Returns: Json }
       users_share_project: {
         Args: { _a: string; _b: string }
         Returns: boolean
