@@ -22,6 +22,11 @@ export function EventCard({ event, onClick }: { event: any; onClick?: () => void
             {event.modality}
           </span>
         )}
+        {event.source && (
+          <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border ${event.source === "comunidade" ? "bg-primary/10 text-primary border-primary/30" : "bg-muted text-muted-foreground border-border"}`}>
+            {event.source === "comunidade" ? "Comunidade" : "Terceiros"}
+          </span>
+        )}
         {date && (
           <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/30">
             {date}
