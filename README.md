@@ -29,13 +29,20 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   Twitter/YouTube/Discord/Site + qualquer chave personalizada) e troca de
   senha
 - **Vagas Salvas**: lista + remoção
-- **Meus Eventos**: inscrições + remoção
+- **Meus Eventos**: inscrições, lista de espera quando o evento atinge o limite de vagas e check-in confirmado
+- **Sugerir Evento**: membros e recrutadores enviam eventos da comunidade
+  ou de terceiros para aprovação por um admin
 - **Meus Projetos**: squads que participo, mural de posts, modal de membro com contatos
 - **Depoimentos**: enviar/editar/excluir depoimento (passa por moderação antes de aparecer no site público)
+- Cartão de **participação** no perfil com check-ins, conversão e badges
+  por marcos (Explorador → Embaixador)
 
 ### Dashboard — Admin
 - CRUD de Vagas (busca, filtros, paginação)
-- CRUD de Eventos (modais)
+- CRUD de Eventos com **fonte** (Comunidade × Terceiros), aprovação de
+  sugestões enviadas por membros/recrutadores, limite de vagas + **lista
+  de espera automática** com promoção quando uma vaga libera, métricas
+  por evento e **exportação CSV** dos inscritos/check-ins
 - Usuários: bloquear/reativar, editar, **resetar senha** para padrão configurável
 - Projetos / Squads: capa + **banner separado** (hero da página pública,
   com fallback de gradiente + nome grande quando não há banner; upload com
@@ -47,7 +54,10 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 - Configurações do Site: SEO (prévia Google, Open Graph e **Twitter Card** ao vivo), favicon com validação, histórico de versões com pré-visualização e reversão, hero, contact, about, stats, social_links, footer, newsletter, partners, cta_section, legal, password_policy
 - **Logs de auditoria** preenchidos automaticamente: criação de usuário
   (`USER_CREATED`), alterações em projetos (`PROJECT_CREATED/UPDATED/
-  DELETED`) e em configurações do site (`SETTING_UPDATED`)
+  DELETED`), configurações do site (`SETTING_UPDATED`), submissão e
+  moderação de eventos (`EVENT_SUBMITTED`, `EVENT_APPROVED`,
+  `EVENT_REJECTED`, `EVENT_CREATED`), check-ins (`EVENT_CHECKIN`) e
+  lista de espera (`EVENT_WAITLIST`, `EVENT_WAITLIST_PROMOTED`)
 
 ### Dashboard — Super Admin
 - Tudo do Admin
