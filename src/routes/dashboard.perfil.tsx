@@ -309,3 +309,54 @@ function PerfilPage() {
     </DashboardShell>
   );
 }
+
+function ParticipationCard({ userId }: { userId: string }) {
+  const { data } = useQuery({
+    queryKey: ["my-participation", userId],
+    queryFn: async () => {
+      const [ci, it] = await Promise.all([
+        supabase.from("event_checkins").select("event_id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("user_event_interests").select("event_id", { count: "exact", head: true }).eq("user_id", userId),
+      ]);
+      return { checkins: ci.count ?? 0, interests: it.count ?? 0 };
+    },
+  });
+  const checkins = data?.checkins ?? 0;
+  const interests = data?.interests ?? 0;
+  const tiers = [
+    { n: 1, label: "Explorador", color: "bg-secondary/15 text-secondary border-secondary/30" },
+    { n: 5, label: "Frequente", color: "bg-primary/15 text-primary border-primary/30" },
+    { n: 10, label: "Engajado", color: "bg-accent/15 text-accent border-accent/30" },
+    { n: 25, label: "Embaixador", color: "bg-destructive/15 text-destructive border-destructive/30" },
+  ];
+  const earned = tiers.filter((t) => checkins >= t.n);
+  return (
+    <section className="glass rounded-xl p-5 border border-primary/20">
+      <h2 className="font-bold text-sm mb-4 flex items-center gap-2"><Trophy className="h-4 w-4 text-primary" /> Participação na comunidade</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+        <div className="glass rounded-lg p-3 border border-border/40">
+          <div className="text-[10px] tracking-[0.2em] text-muted-foreground">CHECK-INS</div>
+          <div className="text-2xl font-black text-gradient-neon flex items-center gap-1"><CheckCircle2 className="h-5 w-5" /> {checkins}</div>
+        </div>
+        <div className="glass rounded-lg p-3 border border-border/40">
+          <div className="text-[10px] tracking-[0.2em] text-muted-foreground">INTERESSES</div>
+          <div className="text-2xl font-black flex items-center gap-1"><Heart className="h-5 w-5 text-primary" /> {interests}</div>
+        </div>
+        <div className="glass rounded-lg p-3 border border-border/40">
+          <div className="text-[10px] tracking-[0.2em] text-muted-foreground">CONVERSÃO</div>
+          <div className="text-2xl font-black">{interests > 0 ? Math.round((checkins / interests) * 100) : 0}%</div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {tiers.map((t) => {
+          const has = earned.includes(t);
+          return (
+            <span key={t.label} className={`text-xs px-2 py-1 rounded-full border ${has ? t.color : "bg-muted/40 text-muted-foreground border-border opacity-60"}`}>
+              {t.label} <span className="opacity-70">({t.n}+)</span>
+            </span>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
