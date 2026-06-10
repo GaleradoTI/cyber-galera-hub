@@ -286,6 +286,8 @@ function PerfilPage() {
             </Button>
           </div>
 
+          <ParticipationCard userId={user!.id} />
+
           <section className="glass rounded-xl p-5 border border-destructive/30">
             <h2 className="font-bold text-sm mb-4">Alterar senha</h2>
             <div className="grid sm:grid-cols-2 gap-3">
