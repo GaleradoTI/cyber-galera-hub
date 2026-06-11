@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { ReportButton } from "@/components/dashboard/report-button";
 
 export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
@@ -107,6 +108,7 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
           ) : (
             <Link to="/login"><Button variant="outline"><Heart className="h-4 w-4 mr-2" /> Entrar para salvar</Button></Link>
           )}
+          {isAuthenticated && <ReportButton entityType="job" entityId={job.id} />}
         </div>
       </DialogContent>
     </Dialog>
