@@ -38,6 +38,7 @@ import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensa
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardDepoimentosRouteImport } from './routes/dashboard.depoimentos'
+import { Route as DashboardDenunciasRouteImport } from './routes/dashboard.denuncias'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
 import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
 import { Route as DashboardCandidaturasRouteImport } from './routes/dashboard.candidaturas'
@@ -188,6 +189,11 @@ const DashboardDepoimentosRoute = DashboardDepoimentosRouteImport.update({
   path: '/depoimentos',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardDenunciasRoute = DashboardDenunciasRouteImport.update({
+  id: '/denuncias',
+  path: '/denuncias',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
+  '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
+    | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
+    | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
     | '/dashboard/configuracoes'
+    | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/eventos'
     | '/dashboard/logs'
@@ -644,6 +656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDepoimentosRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/denuncias': {
+      id: '/dashboard/denuncias'
+      path: '/denuncias'
+      fullPath: '/dashboard/denuncias'
+      preLoaderRoute: typeof DashboardDenunciasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/configuracoes': {
       id: '/dashboard/configuracoes'
       path: '/configuracoes'
@@ -680,6 +699,7 @@ interface DashboardRouteChildren {
   DashboardCandidaturasRoute: typeof DashboardCandidaturasRoute
   DashboardCargosRoute: typeof DashboardCargosRoute
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
+  DashboardDenunciasRoute: typeof DashboardDenunciasRoute
   DashboardDepoimentosRoute: typeof DashboardDepoimentosRoute
   DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
@@ -701,6 +721,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCandidaturasRoute: DashboardCandidaturasRoute,
   DashboardCargosRoute: DashboardCargosRoute,
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
+  DashboardDenunciasRoute: DashboardDenunciasRoute,
   DashboardDepoimentosRoute: DashboardDepoimentosRoute,
   DashboardEventosRoute: DashboardEventosRoute,
   DashboardLogsRoute: DashboardLogsRoute,
