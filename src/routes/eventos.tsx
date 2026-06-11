@@ -6,6 +6,8 @@ import { EventCard } from "@/components/public/event-card";
 import { supabase } from "@/integrations/supabase/client";
 import { EventDetailDialog } from "@/components/public/event-detail-dialog";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/hooks/use-auth";
+import { Lock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -21,6 +23,7 @@ export const Route = createFileRoute("/eventos")({
 });
 
 function EventosPage() {
+  const { isAuthenticated } = useAuth();
   const [selected, setSelected] = useState<any | null>(null);
   const [q, setQ] = useState("");
   const [modality, setModality] = useState("all");
@@ -107,7 +110,20 @@ function EventosPage() {
           <p className="text-muted-foreground mt-10">Nenhum evento encontrado.</p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
-            {filtered.map((e: any) => <EventCard key={e.id} event={e} onClick={() => setSelected(e)} />)}
+            {filtered.map((e: any) => {
+              const isThirdAnon = !isAuthenticated && e.source === "terceiros";
+              return <EventCard key={e.id} event={e} onClick={isThirdAnon ? undefined : () => setSelected(e)} />;
+            })}
+          </div>
+        )}
+        {!isAuthenticated && (
+          <div className="mt-10 glass rounded-xl p-5 border border-primary/30 flex items-center gap-3">
+            <Lock className="h-5 w-5 text-primary shrink-0" />
+            <div className="text-sm">
+              Eventos da <strong>comunidade</strong> são exclusivos para cadastrados.{" "}
+              <a href="/cadastro" className="text-primary underline">Crie sua conta</a> ou{" "}
+              <a href="/login" className="text-primary underline">entre</a> para vê-los.
+            </div>
           </div>
         )}
         <EventDetailDialog event={selected} open={!!selected} onOpenChange={(v) => !v && setSelected(null)} />
