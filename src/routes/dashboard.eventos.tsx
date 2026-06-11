@@ -337,7 +337,12 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
         supabase.from("event_checkins").select("user_id, checked_in_at").eq("event_id", event!.id),
         supabase.from("user_event_interests").select("user_id, created_at").eq("event_id", event!.id),
       ]);
-      const ids = Array.from(new Set([...(ci.data ?? []).map((r: any) => r.user_id), ...(it.data ?? []).map((r: any) => r.user_id)]));
+      const wl: any = await (supabase as any).from("event_waitlist").select("user_id, position, created_at").eq("event_id", event!.id).order("position");
+      const ids = Array.from(new Set([
+        ...(ci.data ?? []).map((r: any) => r.user_id),
+        ...(it.data ?? []).map((r: any) => r.user_id),
+        ...((wl.data ?? []) as any[]).map((r: any) => r.user_id),
+      ]));
       let profiles: any[] = [];
       let roles: any[] = [];
       if (ids.length) {
@@ -352,12 +357,16 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
       roles.forEach((r: any) => { (roleMap[r.user_id] = roleMap[r.user_id] ?? []).push(r.role); });
       const profMap = new Map(profiles.map((p) => [p.user_id, p]));
       const checkedSet = new Set((ci.data ?? []).map((r: any) => r.user_id));
+      const wlMap = new Map(((wl.data ?? []) as any[]).map((r: any) => [r.user_id, r.position]));
+      const interestedSet = new Set((it.data ?? []).map((r: any) => r.user_id));
       const rows = ids.map((id) => ({
         ...(profMap.get(id) ?? { user_id: id, display_name: "—", email: "—", phone: null, work_area: null }),
         roles: roleMap[id] ?? [],
         checked_in: checkedSet.has(id),
+        interested: interestedSet.has(id),
+        waitlist_position: wlMap.get(id) ?? null,
       }));
-      return { rows, checkins: ci.data?.length ?? 0, interests: it.data?.length ?? 0 };
+      return { rows, checkins: ci.data?.length ?? 0, interests: it.data?.length ?? 0, waitlist: (wl.data ?? []).length };
     },
   });
   const conv = useMemo(() => {
@@ -386,15 +395,17 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
                   telefone: r.phone ?? "",
                   area: r.work_area ?? "",
                   papel: (r.roles ?? []).join("|"),
-                  status: r.checked_in ? "check-in" : "inscrito",
+                  status: r.checked_in ? "check-in" : r.interested ? "inscrito" : r.waitlist_position ? `lista-espera-${r.waitlist_position}` : "—",
+                  posicao_espera: r.waitlist_position ?? "",
                 })),
               );
             }}
           ><Download className="h-3 w-3 mr-1" /> Exportar CSV</Button>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Interesses</div><div className="text-2xl font-black text-gradient-neon">{data?.interests ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Check-ins</div><div className="text-2xl font-black text-gradient-neon">{data?.checkins ?? "…"}</div></div>
+          <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Lista de espera</div><div className="text-2xl font-black text-gradient-neon">{data?.waitlist ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Conversão</div><div className="text-2xl font-black text-gradient-neon">{conv}%</div></div>
         </div>
         <div className="overflow-x-auto">
@@ -424,6 +435,8 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
                   <TableCell>
                     {r.checked_in
                       ? <Badge>Check-in</Badge>
+                      : r.waitlist_position
+                      ? <Badge variant="outline">Espera #{r.waitlist_position}</Badge>
                       : <Badge variant="secondary">Inscrito</Badge>}
                   </TableCell>
                 </TableRow>
