@@ -11,6 +11,7 @@ import { JobCard } from "@/components/public/job-card";
 import { EventCard } from "@/components/public/event-card";
 import { ChannelGrid } from "@/components/public/channel-grid";
 import { TestimonialsSection } from "@/components/public/testimonials-section";
+import { PartnersCarousel } from "@/components/public/partners-carousel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -131,6 +132,8 @@ function Index() {
           <ChannelGrid />
         </div>
       </section>
+
+      <PartnersCarousel />
 
       {/* Depoimentos da comunidade */}
       <TestimonialsSection />

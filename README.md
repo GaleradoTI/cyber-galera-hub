@@ -134,3 +134,21 @@ src/
 ## Licença
 
 Privado — comunidade GALERA DO T.I.
+## Nova rodada — Parceiros, Denúncias, Q&A e acesso restrito
+
+- **Eventos da comunidade** agora só aparecem para usuários autenticados (RLS). Eventos de terceiros continuam públicos e, para visitantes anônimos, abrem direto no link externo.
+- **Parceiros**: nova área admin em `/dashboard/parceiros` (logo, descrição, site, ordem, ativo). Carrossel autoplay na home pública.
+- **Q&A por evento** (`event_questions`): perguntas dos inscritos com moderação por admin (aprovar/rejeitar/responder/apagar). Aprovadas ficam públicas no dialog do evento.
+- **Denúncias** (`reports`) em vagas/eventos: botão "Denunciar" nos dialogs públicos, painel admin em `/dashboard/denuncias` com ações "Resolver", "Improcedente" e "Despublicar". Função `resolve_report()` move conteúdo para rascunho, registra audit log e notifica o autor.
+- **Métricas de evento** agora incluem coluna de lista de espera e a exportação CSV consolida inscritos + check-ins + waitlist em uma planilha por evento.
+- **Sidebar**: link "Explorar Vagas" no menu do membro para voltar à listagem pública sem sair do dashboard.
+
+### Logs de auditoria adicionados
+- `REPORT_RESOLVED` / `REPORT_DISMISSED` / `REPORT_UNPUBLISHED`
+
+### Pendente / próximas sugestões
+- Lembretes automáticos 24h/1h antes do evento (precisa configurar Lovable Emails ou push).
+- Página pública de parceiros (`/parceiros`) com grid completo, além do carrossel da home.
+- Página `/membros/:handle` com perfil público, badges e participação.
+- Pesquisa pós-evento (NPS) para inscritos com check-in.
+- Editor rico (markdown) para descrição de evento/vaga.

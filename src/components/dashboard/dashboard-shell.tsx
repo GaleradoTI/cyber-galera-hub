@@ -25,6 +25,9 @@ import {
   ClipboardList,
   MessageSquare,
   MessageSquareQuote,
+  Handshake,
+  Flag,
+  Briefcase as BriefcaseIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -112,6 +115,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
     {
       heading: "MEMBRO",
       items: [
+        { to: "/vagas", label: "Explorar Vagas", icon: BriefcaseIcon, show: !isAdmin && !isRecruiter },
         { to: "/dashboard/minhas-vagas", label: "Vagas Salvas", icon: Heart, show: !isAdmin && !isRecruiter },
         { to: "/dashboard/candidaturas", label: "Minhas Candidaturas", icon: ClipboardList, show: !isAdmin && !isRecruiter },
         { to: "/dashboard/meus-eventos", label: "Meus Eventos", icon: Calendar, show: !isAdmin },
@@ -132,6 +136,8 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/vagas", label: "Vagas", icon: Briefcase, show: isAdmin },
         { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAdmin },
         { to: "/dashboard/projetos", label: "Projetos / Squads", icon: FolderKanban, show: isAdmin },
+        { to: "/dashboard/parceiros", label: "Parceiros", icon: Handshake, show: isAdmin },
+        { to: "/dashboard/denuncias", label: "Denúncias", icon: Flag, show: isAdmin },
         { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
         { to: "/dashboard/logs", label: "Logs de Auditoria", icon: FileText, show: isAdmin },
       ],

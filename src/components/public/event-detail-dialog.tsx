@@ -6,12 +6,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { EventQA } from "./event-qa";
+import { ReportButton } from "@/components/dashboard/report-button";
+import { useQuery } from "@tanstack/react-query";
 
 export function EventDetailDialog({ event, open, onOpenChange }: { event: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
   const [interested, setInterested] = useState(false);
   const [waitlistPos, setWaitlistPos] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const { data: isAdmin = false } = useQuery({
+    queryKey: ["is-admin", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user!.id);
+      return (data ?? []).some((r: any) => r.role === "ADMIN" || r.role === "SUPER_ADMIN");
+    },
+  });
 
   useEffect(() => {
     if (!event || !user) { setInterested(false); return; }
@@ -125,7 +136,10 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
           ) : (
             <Link to="/login"><Button variant="outline"><Heart className="h-4 w-4 mr-2" /> Entrar para se inscrever</Button></Link>
           )}
+          {isAuthenticated && <ReportButton entityType="event" entityId={event.id} />}
         </div>
+
+        <EventQA eventId={event.id} isAdmin={isAdmin} />
       </DialogContent>
     </Dialog>
   );
