@@ -11,6 +11,7 @@ import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { formatDateOnly } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/sugerir-evento")({ component: SugerirEventoPage });
 
@@ -152,7 +153,7 @@ function SugerirEventoPage() {
                   <div key={e.id} className="glass rounded-xl p-3 border border-border/40 flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       <div className="font-medium truncate">{e.name}</div>
-                      <div className="text-xs text-muted-foreground">{new Date(e.event_date).toLocaleDateString("pt-BR")} • {e.modality} • {e.source}</div>
+                      <div className="text-xs text-muted-foreground">{formatDateOnly(e.event_date)} • {e.modality} • {e.source}</div>
                       {e.approval_note && <div className="text-xs text-destructive mt-1">{e.approval_note}</div>}
                     </div>
                     <div className="flex items-center gap-2">
