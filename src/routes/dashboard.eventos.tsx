@@ -292,7 +292,7 @@ function EventosAdminPage() {
             {viewing?.theme && <div><strong>Tema:</strong> {viewing.theme}</div>}
             {viewing?.online_link && <div><strong>Link:</strong> <a className="text-secondary underline break-all" href={viewing.online_link} target="_blank" rel="noreferrer">{viewing.online_link}</a></div>}
             {viewing?.address && <div><strong>Endereço:</strong> {viewing.address}</div>}
-            <p className="whitespace-pre-wrap">{viewing?.description}</p>
+            <MarkdownView>{viewing?.description ?? ""}</MarkdownView>
             {(viewing?.speakers ?? []).length > 0 && (
               <div>
                 <div className="font-semibold mb-2">Palestrantes</div>
