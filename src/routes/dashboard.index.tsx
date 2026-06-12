@@ -9,6 +9,7 @@ import { calcMatchPercent, matchClass } from "@/lib/match";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatDateOnly } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/")({ component: DashboardIndex });
 
@@ -103,7 +104,7 @@ function FeaturedEvent({ userId }: { userId: string }) {
           <h3 className="text-xl sm:text-2xl font-black">{ev.name}</h3>
           {ev.theme && <p className="text-sm text-primary mt-1">{ev.theme}</p>}
           <div className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            <span><Calendar className="h-3 w-3 inline mr-1" />{new Date(ev.event_date).toLocaleDateString("pt-BR")}{ev.event_time ? ` • ${ev.event_time.slice(0,5)}` : ""}</span>
+            <span><Calendar className="h-3 w-3 inline mr-1" />{formatDateOnly(ev.event_date)}{ev.event_time ? ` • ${ev.event_time.slice(0,5)}` : ""}</span>
             <span className="uppercase">{ev.modality}</span>
             {place && <span><MapPin className="h-3 w-3 inline mr-1" />{place}</span>}
           </div>
@@ -207,7 +208,7 @@ function MemberHome({ userId, techTags, role }: { userId: string; techTags: stri
               {events.map((e: any) => (
                 <li key={e.id} className="flex items-center justify-between glass rounded-lg p-3 border border-primary/10">
                   <span className="truncate">{e.name}</span>
-                  <span className="text-xs text-muted-foreground">{new Date(e.event_date).toLocaleDateString("pt-BR")}</span>
+                  <span className="text-xs text-muted-foreground">{formatDateOnly(e.event_date)}</span>
                 </li>
               ))}
             </ul>
