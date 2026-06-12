@@ -10,6 +10,7 @@ import { EventQA } from "./event-qa";
 import { ReportButton } from "@/components/dashboard/report-button";
 import { useQuery } from "@tanstack/react-query";
 import { MarkdownView } from "@/components/ui/markdown-editor";
+import { formatDateOnly } from "@/lib/utils";
 
 export function EventDetailDialog({ event, open, onOpenChange }: { event: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
@@ -68,7 +69,7 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
             <Calendar className="h-5 w-5 text-primary" /> {event.name}
           </DialogTitle>
           <DialogDescription>
-            {new Date(event.event_date).toLocaleDateString("pt-BR", { dateStyle: "full" })}
+            {formatDateOnly(event.event_date, "pt-BR", { dateStyle: "full" })}
             {event.event_time ? ` • ${event.event_time}` : ""}
           </DialogDescription>
         </DialogHeader>
