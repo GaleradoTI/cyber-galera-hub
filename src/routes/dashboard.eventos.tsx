@@ -243,7 +243,7 @@ function EventosAdminPage() {
               )}
               <div className="sm:col-span-2"><Label>Imagem de capa (URL)</Label><Input value={editing.cover_url ?? ""} onChange={(e) => setEditing({ ...editing, cover_url: e.target.value })} placeholder="https://…" /></div>
               <div><Label>Limite de vagas</Label><Input type="number" min={1} value={editing.max_attendees ?? ""} onChange={(e) => setEditing({ ...editing, max_attendees: e.target.value ? Number(e.target.value) : null })} /></div>
-              <div className="sm:col-span-2"><Label>Descrição *</Label><Textarea rows={6} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Descrição * (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={8} /></div>
               <div>
                 <Label>Status</Label>
                 <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
