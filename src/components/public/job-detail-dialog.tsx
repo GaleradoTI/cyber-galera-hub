@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ReportButton } from "@/components/dashboard/report-button";
+import { MarkdownView } from "@/components/ui/markdown-editor";
 
 export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
