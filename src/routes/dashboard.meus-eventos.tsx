@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatDateOnly } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/meus-eventos")({ component: MeusEventosPage });
 
@@ -108,7 +109,7 @@ function MeusEventosPage() {
                 <div className="font-bold">{e.name}</div>
                 {e.theme && <div className="text-xs text-primary mt-0.5">{e.theme}</div>}
                 <div className="text-xs text-muted-foreground mt-1">
-                  {new Date(e.event_date).toLocaleDateString("pt-BR")}
+                  {formatDateOnly(e.event_date)}
                   {e.event_time ? ` • ${e.event_time}` : ""} • {e.modality}
                 </div>
                 {place && <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><MapPin className="h-3 w-3" /> {place}</div>}
@@ -140,7 +141,7 @@ function MeusEventosPage() {
                 <div>
                   <div className="font-medium">{w.events?.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {w.events?.event_date && new Date(w.events.event_date).toLocaleDateString("pt-BR")} • Posição #{w.position}
+                    {w.events?.event_date && formatDateOnly(w.events.event_date)} • Posição #{w.position}
                   </div>
                 </div>
                 <Button size="sm" variant="ghost" onClick={() => leaveWaitlist(w.id)}><Trash2 className="h-3 w-3" /></Button>

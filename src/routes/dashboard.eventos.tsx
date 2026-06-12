@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { downloadCSV } from "@/lib/csv";
+import { formatDateOnly } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/eventos")({ component: EventosAdminPage });
 
@@ -164,7 +165,7 @@ function EventosAdminPage() {
             {filtered.map((ev) => (
               <TableRow key={ev.id}>
                 <TableCell className="font-medium">{ev.name}</TableCell>
-                <TableCell>{new Date(ev.event_date).toLocaleDateString("pt-BR")} {ev.event_time?.slice(0, 5) ?? ""}</TableCell>
+                <TableCell>{formatDateOnly(ev.event_date)} {ev.event_time?.slice(0, 5) ?? ""}</TableCell>
                 <TableCell><Badge variant="outline">{ev.modality}</Badge></TableCell>
                 <TableCell><Badge variant={ev.source === "comunidade" ? "default" : "secondary"}>{ev.source === "comunidade" ? "Comunidade" : "Terceiros"}</Badge></TableCell>
                 <TableCell>
@@ -285,7 +286,7 @@ function EventosAdminPage() {
           <DialogHeader>
             <DialogTitle>{viewing?.name}</DialogTitle>
             <DialogDescription>
-              {viewing && new Date(viewing.event_date).toLocaleDateString("pt-BR")} {viewing?.event_time?.slice(0, 5) ?? ""} • {viewing?.modality}
+              {viewing && formatDateOnly(viewing.event_date)} {viewing?.event_time?.slice(0, 5) ?? ""} • {viewing?.modality}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm">
