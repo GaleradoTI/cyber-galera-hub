@@ -120,7 +120,7 @@ function SugerirEventoPage() {
               <div><Label>Categoria</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Workshop, Meetup…" /></div>
               <div><Label>Limite de vagas</Label><Input type="number" min={1} value={form.max_attendees} onChange={(e) => setForm({ ...form, max_attendees: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Imagem (URL)</Label><Input value={form.cover_url} onChange={(e) => setForm({ ...form, cover_url: e.target.value })} /></div>
-              <div className="sm:col-span-2"><Label>Descrição *</Label><Textarea rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Descrição * (Markdown)</Label><MarkdownEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={6} /></div>
               <div className="sm:col-span-2">
                 <div className="flex items-center justify-between mb-2">
                   <Label>Palestrantes</Label>
