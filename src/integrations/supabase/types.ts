@@ -395,6 +395,7 @@ export type Database = {
           id: string
           location: string | null
           modality: Database["public"]["Enums"]["work_modality"]
+          send_to_bot: boolean | null
           seniority: Database["public"]["Enums"]["seniority_level"]
           short_description: string | null
           status: Database["public"]["Enums"]["content_status"]
@@ -411,6 +412,7 @@ export type Database = {
           id?: string
           location?: string | null
           modality: Database["public"]["Enums"]["work_modality"]
+          send_to_bot?: boolean | null
           seniority: Database["public"]["Enums"]["seniority_level"]
           short_description?: string | null
           status?: Database["public"]["Enums"]["content_status"]
@@ -427,6 +429,7 @@ export type Database = {
           id?: string
           location?: string | null
           modality?: Database["public"]["Enums"]["work_modality"]
+          send_to_bot?: boolean | null
           seniority?: Database["public"]["Enums"]["seniority_level"]
           short_description?: string | null
           status?: Database["public"]["Enums"]["content_status"]
