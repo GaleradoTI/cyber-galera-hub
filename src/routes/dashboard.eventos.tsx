@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { downloadCSV } from "@/lib/csv";
+import { formatDateOnly } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/eventos")({ component: EventosAdminPage });
 
