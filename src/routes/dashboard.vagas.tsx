@@ -212,7 +212,7 @@ function VagasAdminPage() {
               <div className="sm:col-span-2"><Label>URL de candidatura</Label><Input value={editing.apply_url ?? ""} onChange={(e) => setEditing({ ...editing, apply_url: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Tecnologias (separadas por vírgula)</Label><Input value={(editing.technologies ?? []).join(", ")} onChange={(e) => setEditing({ ...editing, technologies: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} /></div>
               <div className="sm:col-span-2"><Label>Resumo</Label><Textarea rows={2} value={editing.short_description ?? ""} onChange={(e) => setEditing({ ...editing, short_description: e.target.value })} /></div>
-              <div className="sm:col-span-2"><Label>Descrição completa *</Label><Textarea rows={6} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Descrição completa * (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={8} /></div>
               <div>
                 <Label>Status</Label>
                 <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
@@ -242,7 +242,7 @@ function VagasAdminPage() {
           <div className="space-y-3 text-sm">
             <div className="flex flex-wrap gap-1">{viewing?.technologies?.map((t) => <Badge key={t} variant="outline">{t}</Badge>)}</div>
             {viewing?.short_description && <p className="text-muted-foreground">{viewing.short_description}</p>}
-            <p className="whitespace-pre-wrap">{viewing?.description}</p>
+            <MarkdownView>{viewing?.description ?? ""}</MarkdownView>
             {viewing?.apply_url && <a className="text-primary underline" href={viewing.apply_url} target="_blank" rel="noreferrer">Link de candidatura</a>}
           </div>
         </DialogContent>
