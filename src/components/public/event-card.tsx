@@ -1,11 +1,12 @@
 import { Calendar, ExternalLink, MapPin } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { parseDateOnly } from "@/lib/utils";
 
 export function EventCard({ event, onClick }: { event: any; onClick?: () => void }) {
   const { isAuthenticated } = useAuth();
   const date = event.event_date
-    ? new Date(event.event_date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+    ? parseDateOnly(event.event_date)?.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
     : null;
   const inner = (
     <>
