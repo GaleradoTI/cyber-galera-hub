@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { EventQA } from "./event-qa";
 import { ReportButton } from "@/components/dashboard/report-button";
 import { useQuery } from "@tanstack/react-query";
+import { MarkdownView } from "@/components/ui/markdown-editor";
 
 export function EventDetailDialog({ event, open, onOpenChange }: { event: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
@@ -37,6 +38,9 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
   const onlineLink = event.online_link || (isUrl ? event.location_or_link : null);
   const place = event.address || (!isUrl ? event.location_or_link : null);
   const speakers: any[] = Array.isArray(event.speakers) ? event.speakers : [];
+  const isCommunity = event.source === "comunidade";
+  // Comunidade: visitantes anônimos veem detalhes, mas não acessam link nem se inscrevem.
+  const hideExternalForAnon = !isAuthenticated && isCommunity;
 
   const toggle = async () => {
     if (!user) return;
@@ -104,7 +108,7 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
         )}
 
         {event.description && (
-          <div className="text-sm whitespace-pre-wrap leading-relaxed">{event.description}</div>
+          <MarkdownView className="text-sm leading-relaxed">{event.description}</MarkdownView>
         )}
 
         {speakers.length > 0 && (
@@ -123,7 +127,7 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
         )}
 
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
-          {onlineLink && (
+          {onlineLink && !hideExternalForAnon && (
             <a href={onlineLink} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[180px]">
               <Button variant="neon" className="w-full"><ExternalLink className="h-4 w-4 mr-2" /> Acessar evento</Button>
             </a>
@@ -133,6 +137,10 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
               <Heart className={`h-4 w-4 mr-2 ${interested ? "fill-current" : ""}`} />
               {interested ? "Inscrito" : waitlistPos ? `Lista de espera #${waitlistPos}` : "Tenho interesse"}
             </Button>
+          ) : isCommunity ? (
+            <Link to="/cadastro" className="flex-1 min-w-[200px]">
+              <Button variant="neon" className="w-full"><Heart className="h-4 w-4 mr-2" /> Inscrições só para membros — Cadastre-se</Button>
+            </Link>
           ) : (
             <Link to="/login"><Button variant="outline"><Heart className="h-4 w-4 mr-2" /> Entrar para se inscrever</Button></Link>
           )}
