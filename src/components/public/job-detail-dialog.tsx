@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ReportButton } from "@/components/dashboard/report-button";
+import { MarkdownView } from "@/components/ui/markdown-editor";
 
 export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
@@ -69,7 +70,7 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
 
         {job.short_description && <p className="text-sm text-muted-foreground">{job.short_description}</p>}
         {job.description && (
-          <div className="text-sm whitespace-pre-wrap leading-relaxed">{job.description}</div>
+          <MarkdownView className="text-sm leading-relaxed">{job.description}</MarkdownView>
         )}
 
         {(job.technologies ?? []).length > 0 && (

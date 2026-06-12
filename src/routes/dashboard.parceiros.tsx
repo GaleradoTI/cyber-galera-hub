@@ -7,7 +7,7 @@ import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashbo
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -121,7 +121,7 @@ function ParceirosAdminPage() {
           {editing && (
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2"><Label>Nome *</Label><Input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></div>
-              <div className="sm:col-span-2"><Label>Descrição curta</Label><Textarea rows={2} maxLength={500} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Descrição (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={4} maxLength={500} /></div>
               <div className="sm:col-span-2"><Label>Logo (URL)</Label><Input value={editing.logo_url ?? ""} onChange={(e) => setEditing({ ...editing, logo_url: e.target.value })} placeholder="https://…/logo.png" /></div>
               <div className="sm:col-span-2"><Label>Site oficial</Label><Input value={editing.website_url ?? ""} onChange={(e) => setEditing({ ...editing, website_url: e.target.value })} placeholder="https://…" /></div>
               <div><Label>Ordem de exibição</Label><Input type="number" value={editing.display_order ?? 0} onChange={(e) => setEditing({ ...editing, display_order: Number(e.target.value) })} /></div>

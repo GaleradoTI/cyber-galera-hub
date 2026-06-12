@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor, MarkdownView } from "@/components/ui/markdown-editor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -243,7 +244,7 @@ function EventosAdminPage() {
               )}
               <div className="sm:col-span-2"><Label>Imagem de capa (URL)</Label><Input value={editing.cover_url ?? ""} onChange={(e) => setEditing({ ...editing, cover_url: e.target.value })} placeholder="https://…" /></div>
               <div><Label>Limite de vagas</Label><Input type="number" min={1} value={editing.max_attendees ?? ""} onChange={(e) => setEditing({ ...editing, max_attendees: e.target.value ? Number(e.target.value) : null })} /></div>
-              <div className="sm:col-span-2"><Label>Descrição *</Label><Textarea rows={6} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
+              <div className="sm:col-span-2"><Label>Descrição * (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={8} /></div>
               <div>
                 <Label>Status</Label>
                 <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
@@ -291,7 +292,7 @@ function EventosAdminPage() {
             {viewing?.theme && <div><strong>Tema:</strong> {viewing.theme}</div>}
             {viewing?.online_link && <div><strong>Link:</strong> <a className="text-secondary underline break-all" href={viewing.online_link} target="_blank" rel="noreferrer">{viewing.online_link}</a></div>}
             {viewing?.address && <div><strong>Endereço:</strong> {viewing.address}</div>}
-            <p className="whitespace-pre-wrap">{viewing?.description}</p>
+            <MarkdownView>{viewing?.description ?? ""}</MarkdownView>
             {(viewing?.speakers ?? []).length > 0 && (
               <div>
                 <div className="font-semibold mb-2">Palestrantes</div>

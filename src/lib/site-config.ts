@@ -19,5 +19,6 @@ export const NAV_LINKS = [
   { to: "/vagas", label: "Vagas" },
   { to: "/projetos", label: "Projetos" },
   { to: "/eventos", label: "Eventos" },
+  { to: "/parceiros", label: "Parceiros" },
   { to: "/faq", label: "FAQ" },
 ] as const;

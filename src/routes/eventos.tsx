@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { EventDetailDialog } from "@/components/public/event-detail-dialog";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
-import { Lock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -117,13 +116,10 @@ function EventosPage() {
           </div>
         )}
         {!isAuthenticated && (
-          <div className="mt-10 glass rounded-xl p-5 border border-primary/30 flex items-center gap-3">
-            <Lock className="h-5 w-5 text-primary shrink-0" />
-            <div className="text-sm">
-              Eventos da <strong>comunidade</strong> são exclusivos para cadastrados.{" "}
-              <a href="/cadastro" className="text-primary underline">Crie sua conta</a> ou{" "}
-              <a href="/login" className="text-primary underline">entre</a> para vê-los.
-            </div>
+          <div className="mt-10 glass rounded-xl p-5 border border-primary/30 text-sm">
+            Para se inscrever em eventos da <strong>comunidade</strong>, você precisa ser membro.{" "}
+            <a href="/cadastro" className="text-primary underline">Cadastre-se</a> ou{" "}
+            <a href="/login" className="text-primary underline">entre</a>.
           </div>
         )}
         <EventDetailDialog event={selected} open={!!selected} onOpenChange={(v) => !v && setSelected(null)} />
