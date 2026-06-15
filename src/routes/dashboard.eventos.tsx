@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { downloadCSV } from "@/lib/csv";
 import { formatDateOnly } from "@/lib/utils";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export const Route = createFileRoute("/dashboard/eventos")({ component: EventosAdminPage });
 
@@ -243,7 +244,19 @@ function EventosAdminPage() {
               {(editing.modality === "presencial" || editing.modality === "hibrido") && (
                 <div className="sm:col-span-2"><Label>Endereço presencial</Label><Input value={editing.address ?? ""} onChange={(e) => setEditing({ ...editing, address: e.target.value })} placeholder="Rua, número, cidade…" /></div>
               )}
-              <div className="sm:col-span-2"><Label>Imagem de capa (URL)</Label><Input value={editing.cover_url ?? ""} onChange={(e) => setEditing({ ...editing, cover_url: e.target.value })} placeholder="https://…" /></div>
+              <div className="sm:col-span-2">
+                <ImageUploader
+                  bucket="project-covers"
+                  folder={`events/${editing.id ?? "novo"}`}
+                  value={editing.cover_url ?? null}
+                  onChange={(url) => setEditing({ ...editing, cover_url: url })}
+                  label="Banner / capa do evento"
+                  aspect="wide"
+                  resizeMax={1920}
+                  maxBytes={8 * 1024 * 1024}
+                  hint="JPG/PNG/WebP até 8MB · redimensionado para 1920px"
+                />
+              </div>
               <div><Label>Limite de vagas</Label><Input type="number" min={1} value={editing.max_attendees ?? ""} onChange={(e) => setEditing({ ...editing, max_attendees: e.target.value ? Number(e.target.value) : null })} /></div>
               <div className="sm:col-span-2"><Label>Descrição * (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={8} /></div>
               <div>
@@ -404,7 +417,7 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
             }}
           ><Download className="h-3 w-3 mr-1" /> Exportar CSV</Button>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Interesses</div><div className="text-2xl font-black text-gradient-neon">{data?.interests ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Check-ins</div><div className="text-2xl font-black text-gradient-neon">{data?.checkins ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Lista de espera</div><div className="text-2xl font-black text-gradient-neon">{data?.waitlist ?? "…"}</div></div>
