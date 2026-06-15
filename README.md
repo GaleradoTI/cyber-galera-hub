@@ -146,6 +146,61 @@ Privado — comunidade GALERA DO T.I.
 ### Logs de auditoria adicionados
 - `REPORT_RESOLVED` / `REPORT_DISMISSED` / `REPORT_UNPUBLISHED`
 
+## Rodada atual — Banners, Responsividade e Auditoria
+
+- **Banner/Capa de eventos** agora é upload (drag & enviar) em vez de URL, tanto no admin (`/dashboard/eventos`) quanto na sugestão de membros (`/dashboard/sugerir-evento`). Aceita JPG/PNG/WebP até 8MB e redimensiona para 1920px automaticamente. Imagens vão para o bucket `project-covers` (pasta `events/`).
+- **Sidebar do dashboard em modo modal no mobile/tablet**: em telas < 768px o menu desliza por cima do conteúdo com backdrop e fecha sozinho após clicar em qualquer link (igual a um modal). No desktop continua fixa e colapsável.
+- **Responsivo dos cards** (Projetos / Squads / métricas de evento) ajustado para não estourar largura em telas pequenas — grid de KPIs do evento vira 2 colunas no mobile, cards de projeto reduzem altura da capa e usam grid com `min-w-0` para truncar nomes longos.
+- **Triggers de auditoria novos** (todos visíveis em `/dashboard/logs`):
+  - Vagas: `JOB_CREATED` / `JOB_UPDATED` / `JOB_DELETED`
+  - Parceiros: `PARTNER_CREATED` / `PARTNER_UPDATED` / `PARTNER_DELETED`
+  - Projetos: `PROJECT_CREATED` / `PROJECT_UPDATED` / `PROJECT_DELETED`
+  - Squads: `SQUAD_CREATED` / `SQUAD_UPDATED` / `SQUAD_DELETED`
+  - Depoimentos: `TESTIMONIAL_APPROVED` / `TESTIMONIAL_REJECTED`
+  - Cargos: `ROLE_GRANTED` / `ROLE_REVOKED` (promoções e rebaixamentos)
+
+## Regras de negócio (resumo executivo)
+
+### Papéis e permissões
+| Papel | Pode |
+|---|---|
+| **MEMBRO** | Editar próprio perfil, salvar vagas, candidatar-se, inscrever-se em eventos, sugerir eventos (passa por aprovação), enviar depoimento (passa por moderação), participar de squads que foi adicionado, postar no mural do projeto, denunciar conteúdo. |
+| **RECRUTADOR** (verificado por SUPER_ADMIN) | Tudo de MEMBRO + criar/editar próprias vagas, ver lista de candidatos com filtros, abrir conversas diretas. |
+| **MODERADOR** | Aprovar/rejeitar depoimentos e sugestões de evento. |
+| **ADMIN** | Tudo acima + CRUD completo de vagas, eventos, parceiros, projetos, configurações do site, denúncias e usuários (bloquear/reativar/resetar senha). |
+| **SUPER_ADMIN** | Tudo de ADMIN + promover/rebaixar ADMINs, marcar recrutador como verificado, alterar política de senha e gerenciar squads (membros e líderes). |
+
+### Eventos
+- **Fonte** = `comunidade` (destaque na home, visível só para autenticados) ou `terceiros` (público; visitante anônimo vê CTA e clica direto no link externo).
+- Eventos sugeridos por MEMBRO/RECRUTADOR entram como `approval_status = pending` e `status = rascunho`; só ADMIN aprova/rejeita.
+- Ao aprovar, o evento vira `publicado` automaticamente.
+- **Limite de vagas** opcional: ao atingir o limite, novas inscrições entram em **lista de espera** ordenada. Quando alguém cancela, o próximo da fila é promovido e notificado.
+- Datas são armazenadas como `DATE` puro e renderizadas em horário local (sem drift de fuso horário).
+- Q&A por evento: perguntas dos inscritos passam por moderação; aprovadas viram públicas no dialog.
+
+### Vagas
+- Recrutador só edita as próprias vagas. ADMIN edita qualquer uma.
+- Candidatura cria notificação para o dono da vaga.
+- Visitante anônimo lê vagas mas precisa entrar para se candidatar/salvar.
+
+### Projetos & Squads
+- Um **projeto** agrupa um ou mais **squads**.
+- Mesmo usuário **não pode estar em dois squads do mesmo projeto** (trigger de banco).
+- Só **SUPER_ADMIN** gerencia membros e define líderes (`LIDER` / `MEMBRO`).
+- Projeto público gera página em `/projetos/<slug>` com banner próprio, mural de posts e lista de membros (Líder > Cargo > Nome).
+
+### Depoimentos
+- Qualquer MEMBRO envia. Entra como `pending`. Só ADMIN aprova/rejeita (com nota opcional). Apenas aprovados aparecem na home.
+
+### Denúncias
+- Qualquer autenticado pode denunciar vaga ou evento. ADMIN resolve com: **Resolvida**, **Improcedente** ou **Despublicar** (move para rascunho). Em qualquer caso o autor do conteúdo recebe notificação.
+
+### LGPD
+- Cada usuário tem consentimento versionado em `lgpd_consents` (versão dos Termos e da Política de Privacidade), com `consent_origin` (cadastro / banner) e IP mascarado.
+
+### Política de senha
+- SUPER_ADMIN define a senha padrão de reset e validade (em dias) em `password_policy`.
+
 ### Pendente / próximas sugestões
 - Lembretes automáticos 24h/1h antes do evento (precisa configurar Lovable Emails ou push).
 - Página pública de parceiros (`/parceiros`) com grid completo, além do carrossel da home.
