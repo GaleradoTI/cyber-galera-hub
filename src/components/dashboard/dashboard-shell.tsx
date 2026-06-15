@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { NotificationsBell } from "@/components/dashboard/notifications-bell";
 import { CommandPalette, useCommandPalette } from "@/components/dashboard/command-palette";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ROLE_META: Record<string, { label: string; icon: any; className: string }> = {
   SUPER_ADMIN: { label: "SUPER ADMIN", icon: Crown, className: "border-secondary text-secondary shadow-[0_0_20px_hsl(var(--secondary)/0.4)]" },
@@ -95,12 +96,18 @@ export function DashboardShell({ children, title, description }: { children: Rea
   const { loading, isAuthenticated } = useAuth();
   const { isAdmin, isSuperAdmin, isRecruiter, primary, profile, user } = useDashboardRoles();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const [open, setOpen] = useState(true);
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
   const palette = useCommandPalette();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate({ to: "/login" });
   }, [loading, isAuthenticated, navigate]);
+
+  // Open by default on desktop, closed on mobile.
+  useEffect(() => { setOpen(!isMobile); }, [isMobile]);
+  // Close overlay sidebar on route change when in modal mode.
+  useEffect(() => { if (isMobile) setOpen(false); }, [pathname, isMobile]);
 
   const sections: { heading?: string; items: { to: string; label: string; icon: any; show: boolean }[] }[] = [
     {
@@ -152,15 +159,32 @@ export function DashboardShell({ children, title, description }: { children: Rea
 
   return (
     <div className="min-h-screen flex w-full bg-background">
+      {/* Backdrop for mobile/overlay mode */}
+      {open && isMobile && (
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-40 bg-background/70 backdrop-blur-sm md:hidden"
+        />
+      )}
       <aside
         className={cn(
-          "shrink-0 border-r border-border/40 bg-background/95 backdrop-blur transition-[width] duration-300 sticky top-0 h-screen overflow-hidden",
-          open ? "w-[260px]" : "w-[68px]",
+          "border-r border-border/40 bg-background/95 backdrop-blur overflow-hidden",
+          isMobile
+            ? cn(
+                "fixed inset-y-0 left-0 z-50 h-screen w-[280px] shadow-2xl transition-transform duration-300",
+                open ? "translate-x-0" : "-translate-x-full",
+              )
+            : cn(
+                "shrink-0 sticky top-0 h-screen transition-[width] duration-300",
+                open ? "w-[260px]" : "w-[68px]",
+              ),
         )}
       >
         <div className="h-full flex flex-col p-3">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-border/40">
-            {open ? (
+            {(open || isMobile) ? (
               <div className="flex items-center gap-2">
                 <div className="h-9 w-9 rounded-lg bg-gradient-neon flex items-center justify-center font-black text-background text-sm">{"</>"}</div>
                 <div className="leading-none">
@@ -175,7 +199,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
               {open ? <ChevronLeft className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </Button>
           </div>
-          {open && (
+          {(open || isMobile) && (
             <div className="flex items-center gap-3 pb-3 mb-2 border-b border-border/40">
               <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-black text-background">
                 {(profile?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
@@ -191,9 +215,10 @@ export function DashboardShell({ children, title, description }: { children: Rea
             {sections.map((section, idx) => {
               const visible = section.items.filter((i) => i.show);
               if (visible.length === 0) return null;
+              const showLabels = open || isMobile;
               return (
                 <div key={idx} className="space-y-1">
-                  {open && section.heading && (
+                  {showLabels && section.heading && (
                     <div className="px-3 pt-1 pb-1 text-[9px] font-bold tracking-[0.25em] text-muted-foreground/70">
                       {section.heading}
                     </div>
@@ -211,11 +236,11 @@ export function DashboardShell({ children, title, description }: { children: Rea
                           active
                             ? "bg-primary/15 text-primary border border-primary/30"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/40",
-                          !open && "justify-center px-2",
+                          !showLabels && "justify-center px-2",
                         )}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
-                        {open && <span className="truncate">{i.label}</span>}
+                        {showLabels && <span className="truncate">{i.label}</span>}
                       </Link>
                     );
                   })}
@@ -226,19 +251,25 @@ export function DashboardShell({ children, title, description }: { children: Rea
           <Button
             variant="ghost"
             size="sm"
-            className={cn("mt-3 text-muted-foreground", open ? "justify-start" : "justify-center px-0")}
+            className={cn("mt-3 text-muted-foreground", (open || isMobile) ? "justify-start" : "justify-center px-0")}
             onClick={() => signOut().then(() => navigate({ to: "/login" }))}
           >
             <LogOut className="h-4 w-4" />
-            {open && <span className="ml-2">Sair</span>}
+            {(open || isMobile) && <span className="ml-2">Sair</span>}
           </Button>
         </div>
       </aside>
       <main className="flex-1 min-w-0">
-        <div className="container max-w-6xl mx-auto px-4 md:px-8 py-8">
-          <header className="mb-6 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gradient-neon">{title}</h1>
+        <div className="container max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8">
+          <header className="mb-6 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 md:gap-4">
+            {isMobile && (
+              <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Abrir menu">
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            {!isMobile && <span />}
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-gradient-neon truncate">{title}</h1>
               {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
             </div>
             <div className="shrink-0">
