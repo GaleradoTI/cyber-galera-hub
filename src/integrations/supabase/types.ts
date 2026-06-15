@@ -1132,6 +1132,7 @@ export type Database = {
       }
     }
     Functions: {
+      _audit_actor_name: { Args: { _uid: string }; Returns: string }
       get_lgpd_consents_admin: {
         Args: never
         Returns: {
