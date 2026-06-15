@@ -417,7 +417,7 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
             }}
           ><Download className="h-3 w-3 mr-1" /> Exportar CSV</Button>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Interesses</div><div className="text-2xl font-black text-gradient-neon">{data?.interests ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Check-ins</div><div className="text-2xl font-black text-gradient-neon">{data?.checkins ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Lista de espera</div><div className="text-2xl font-black text-gradient-neon">{data?.waitlist ?? "…"}</div></div>

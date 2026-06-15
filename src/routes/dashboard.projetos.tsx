@@ -218,14 +218,14 @@ function ProjetosAdminPage() {
         {projects.map((p) => {
           const squads = squadsByProject.get(p.id) ?? [];
           return (
-            <div key={p.id} className="glass rounded-xl p-5 border border-primary/20">
+            <div key={p.id} className="glass rounded-xl p-4 sm:p-5 border border-primary/20">
               {p.cover_url && (
-                <img src={p.cover_url} alt="" className="w-full h-32 object-cover rounded-md mb-3 border border-border/40" />
+                <img src={p.cover_url} alt="" className="w-full h-28 sm:h-32 object-cover rounded-md mb-3 border border-border/40" />
               )}
-              <div className="flex items-start justify-between gap-2">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-lg">{p.name}</h3>
+                    <h3 className="font-bold text-base sm:text-lg break-words">{p.name}</h3>
                     <Badge variant="outline" className="text-[10px]">{p.status}</Badge>
                     {p.is_public && (
                       <Badge variant="outline" className="text-[10px] border-secondary text-secondary">
