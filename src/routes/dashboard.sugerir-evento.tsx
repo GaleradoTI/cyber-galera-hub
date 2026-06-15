@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatDateOnly } from "@/lib/utils";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export const Route = createFileRoute("/dashboard/sugerir-evento")({ component: SugerirEventoPage });
 
@@ -120,7 +121,19 @@ function SugerirEventoPage() {
               )}
               <div><Label>Categoria</Label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="Workshop, Meetup…" /></div>
               <div><Label>Limite de vagas</Label><Input type="number" min={1} value={form.max_attendees} onChange={(e) => setForm({ ...form, max_attendees: e.target.value })} /></div>
-              <div className="sm:col-span-2"><Label>Imagem (URL)</Label><Input value={form.cover_url} onChange={(e) => setForm({ ...form, cover_url: e.target.value })} /></div>
+              <div className="sm:col-span-2">
+                <ImageUploader
+                  bucket="project-covers"
+                  folder={`events/sugestoes/${user?.id ?? "novo"}`}
+                  value={form.cover_url || null}
+                  onChange={(url) => setForm({ ...form, cover_url: url ?? "" })}
+                  label="Banner / capa do evento"
+                  aspect="wide"
+                  resizeMax={1920}
+                  maxBytes={8 * 1024 * 1024}
+                  hint="JPG/PNG/WebP até 8MB · redimensionado para 1920px"
+                />
+              </div>
               <div className="sm:col-span-2"><Label>Descrição * (Markdown)</Label><MarkdownEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} rows={6} /></div>
               <div className="sm:col-span-2">
                 <div className="flex items-center justify-between mb-2">
