@@ -1,74 +1,74 @@
-## Onda 4 — escopo grande, separado por blocos
+# Plano — Próxima rodada
 
-### Bloco A — Vitrine pública de projetos (corrige feedback)
-- Nova rota `/projetos` (listagem) no menu público do site (junto de Vagas, Eventos, Canais, FAQ).
-- Card por projeto público: capa, nome, descrição curta, tech_stack, link → `/projetos/$slug`.
-- Refinar `/projetos/$slug`: hero com capa, animação de entrada suave, skeletons enquanto carrega, layout 100% responsivo (mobile-first), botões de compartilhar.
-- Adicionar link "Projetos" no `NAV_LINKS` (site-config) e no footer.
+## 1. Página de Auditoria com filtros e exportação CSV
+Reescrever `/dashboard/logs`:
+- Filtros: usuário (autocomplete por nome/email), ação (select com todas as ações distintas), entidade (select), intervalo de datas, busca textual na descrição.
+- Tabela com paginação (50 por página) + botão **"Ver detalhes"** que abre Dialog mostrando `metadata` JSON, `entity_id`, `user_id`, link para o recurso quando aplicável.
+- Botão **"Exportar CSV"** respeita filtros aplicados; preview mostra contagem antes do download.
 
-### Bloco B — Dashboard Home renovado (fechando Onda 3, feature 4)
-- `/dashboard` (`dashboard.index.tsx`) por perfil:
-  - **Membro**: vagas casadas (match por tech_tags), candidaturas em andamento, próximos eventos.
-  - **Recrutador**: funil (enviadas/em análise/contratado/rejeitada), candidatos novos na semana, atalho criar vaga.
-  - **Admin/Super**: KPIs (usuários ativos, vagas publicadas, projetos ativos, eventos próximos).
-- Cards com skeleton loading, animação fade-in.
+## 2. Triggers de auditoria faltantes
+Migração SQL adicionando triggers/INSERTs em `audit_logs` para:
+- `project_posts` (post mural): `PROJECT_POST_CREATED/DELETED`
+- `post_comments`: `POST_COMMENT_CREATED/DELETED`
+- `squad_members`: `SQUAD_MEMBER_ADDED/REMOVED/ROLE_CHANGED`
+- `squad_events` (metas — nova tabela abaixo): `SQUAD_GOAL_CREATED/UPDATED/COMPLETED`
+- `channels`, `faqs`, `lgpd_consents` (consent registrado)
+- `project_join_requests` (nova tabela): `PROJECT_JOIN_REQUESTED/APPROVED/REJECTED`
+- Páginas públicas relevantes: log de visualização não — apenas ações (denúncia já existe, candidatura já existe). Adicionar `JOB_APPLIED` e `EVENT_INTEREST_REGISTERED` que hoje não geram log.
 
-### Bloco C — Feature 5: Exportação CSV de candidatos
-- Botão "Exportar CSV" em `/dashboard/candidatos`.
-- Gera CSV client-side com nome, email, vaga, status, data. Respeita filtro atual.
+## 3. Upload de banner — UX e correção do erro
+- Investigar bucket/policy: `project-covers` precisa permitir `INSERT` para `authenticated` na pasta `events/` (criar/ajustar policy de storage caso esteja faltando — provavelmente é a causa do erro).
+- Em `ImageUploader`:
+  - Barra de progresso real (XHR upload event) com %.
+  - Toast inicial "Validando…" → "Enviando X%…" → sucesso/erro.
+  - Mensagens explícitas: "Formato inválido — aceitos: JPG, PNG, WebP. Recebido: <tipo>" e "Arquivo de 12MB excede o limite de 8MB."
+  - Hint padrão visível em **todos os usos** (avatar, capa projeto, banner projeto, banner evento) listando extensões + tamanho máximo + dimensões recomendadas.
+  - Exibir erro do Supabase Storage de forma legível (status 403/413 → mensagem amigável).
 
-### Bloco D — Feature 6: Match inteligente
-- Em `/vagas` e detalhe da vaga: para usuário logado com `tech_tags`, calcular % de aderência (intersecção / union × 100).
-- Badge "85% match" colorido por faixa (verde >70, amarelo 40–70, cinza <40).
-- Em `/dashboard/candidatos`: mostrar % match do candidato com a vaga.
+## 4. Metas (squad goals) com prazo
+Nova tabela `squad_goals`:
+- Campos de domínio: `project_id`, `squad_id` (nullable = meta do projeto todo), `title`, `description`, `due_date`, `order_index`, `created_by`.
+- Tabela `squad_goal_completions`: `goal_id`, `squad_id`, `completed_by`, `completed_at`, `note`.
+- RLS: admin/super criam/editam/excluem; líder do squad e membros marcam conclusão do **próprio** squad; todos os membros do projeto leem.
+- UI Admin: aba **"Metas"** em `/dashboard/projetos` (modal por projeto) — criar/editar/reordenar metas com prazo, ver status por squad (matriz squads × metas com ✅/⏳/⚠ atrasada).
+- UI Membro: card em `/dashboard/meus-projetos` listando metas do squad com botão "Marcar como concluída".
 
-### Bloco E — Feature 7: Eventos por squad
-- Nova migração: `squad_events` (squad_id, name, description, event_date, event_time, location_or_link, created_by). RLS: só membros do squad e admins veem; líder do squad cria/edita.
-- UI em `/dashboard/meus-projetos` (aba "Eventos do squad") para listar/criar.
+## 5. Projetos públicos + solicitação de entrada
+- Página `/projetos` pública (já existe `projetos.index.tsx` — revisar) listando todos os projetos `is_public=true` com status (`em_andamento`, `pausado`, `concluido`) e badge **"Vagas abertas"** ou **"Lista de espera"**.
+- Cada squad ganha flag `recruiting_status` (`open` | `closed` | `waitlist`) — campo novo em `squads`.
+- Nova tabela `project_join_requests`: `project_id`, `squad_id` (opcional — usuário escolhe ou fica "qualquer squad"), `user_id`, `status` (`pending`/`approved`/`rejected`/`waitlist`), `message`, `decided_by`, `decided_at`.
+- Página pública do projeto mostra botão **"Solicitar entrada"** (ou "Entrar na lista de espera") por squad — abre dialog com mensagem opcional.
+- Notificação enviada ao **líder do squad escolhido** (e admins como fallback).
 
-### Bloco F — Feature 9: Busca global (Ctrl+K)
-- Componente `CommandPalette` usando `cmdk` (já existe `command.tsx`).
-- Atalho `Ctrl/Cmd+K` no shell do dashboard.
-- Indexa: vagas (publicadas), projetos (membro), usuários (admin), eventos.
+## 6. Líder do squad aprova entrada
+- Em `/dashboard/meus-projetos`, líderes veem aba **"Solicitações"** com pedidos pendentes do(s) seu(s) squad(s).
+- Ações: **Aprovar** (cria `squad_members` com role MEMBRO; respeita trigger anti-duplicação), **Rejeitar** (com motivo opcional), **Mover para lista de espera**.
+- Admin/super veem todas as solicitações em `/dashboard/projetos`.
+- Função RPC `approve_join_request(_request_id)` faz tudo atomicamente + log + notificação ao solicitante.
 
-### Bloco G — Feature 14: AI helper (Lovable AI Gateway)
-- Server fn `ai-helper.functions.ts` usando `LOVABLE_API_KEY` (já em secrets) com modelo `google/gemini-2.5-flash`.
-- Botão "✨ Gerar com IA" em:
-  - `/dashboard/vagas` editor → gera descrição a partir de título + tech.
-  - `/dashboard/perfil` → sugere `tech_tags` a partir da bio.
-- Streaming opcional — versão inicial sem stream (resposta completa).
-
-### Bloco H — Segurança e privacidade
-1. **Senhas no banco**: confirmar que o app NÃO armazena senha em tabela própria — autenticação é 100% via Supabase Auth (`auth.users`, gerenciado pela plataforma). Documentar em `security memory`.
-2. **JSON / colunas sensíveis**:
-   - `profiles` hoje tem RLS bem restrita (dono, admin, recrutador-quando-looking) — OK. Mas o select padrão expõe `email` para recrutador. Vou criar view `public_profiles` sem `email/social_links/is_blocked` e atualizar a página pública do projeto e listagens públicas para usar a view.
-   - `/projetos/$slug`: hoje busca `profiles.*` direto via JS — limitar a `display_name, avatar_url` via view pública.
-   - `audit_logs`, `lgpd_consents`, `user_roles` — já restritos a admin/dono, OK.
-3. **Validação de input** (Zod) nos server fns novos (AI helper, exportação).
-4. **Rate limit leve** no AI helper (1 req / 5s por usuário, em memória do worker — best effort).
-
----
+## 7. README + logs
+- Atualizar `README.md` documentando: nova auditoria, metas, projetos públicos, fluxo de solicitação, política de upload.
+- Listar todas as novas ações de log em uma tabela.
 
 ## Detalhes técnicos
 
-- TanStack Router (rotas em `src/routes/`), Supabase JS, Tailwind tokens.
-- Página pública usa client supabase (anon) + RLS já permite (`is_public=true`).
-- AI Helper via `https://ai.gateway.lovable.dev/v1/chat/completions` com header `Authorization: Bearer ${LOVABLE_API_KEY}` em server fn.
-- CSV: blob client-side, sem servidor.
-- Match: calculado client-side (sem custo extra de query).
+```text
+Tabelas novas
+├── squad_goals (project_id, squad_id?, title, description, due_date, order_index)
+├── squad_goal_completions (goal_id, squad_id, completed_by, completed_at, note)
+└── project_join_requests (project_id, squad_id?, user_id, status, message, decided_by)
 
----
+Alterações
+├── squads + recruiting_status enum
+└── audit_logs novos triggers
+```
 
-## Sugestões pós-entrega
+Stack: TanStack server fns para mutações sensíveis (aprovar/rejeitar entrada via `requireSupabaseAuth`); RPC SQL `approve_join_request` para atomicidade. Exportação CSV reaproveita `src/lib/csv.ts`.
 
-- **Compartilhamento social**: og:image dinâmico por projeto público.
-- **Convites por e-mail** (recrutador convida candidato direto pra vaga).
-- **Histórico de conversas** persistido com search por palavra-chave.
-- **Modo escuro/claro** (hoje só dark).
-- **Onboarding guiado** no primeiro login.
-- **Webhook Discord/Slack** quando vaga é publicada.
+## Ordem de execução
+1. Migração SQL única (tabelas + triggers + RPC + policies de storage).
+2. Server fns + atualização de tipos.
+3. UI: Auditoria → Upload → Metas → Projetos públicos → Solicitações.
+4. README.
 
----
-
-## Ordem
-Faço tudo numa sequência só: migração (squad_events + view public_profiles) → frontend dos blocos A–G → segurança/limpeza no final. Confirma?
+Posso seguir?
