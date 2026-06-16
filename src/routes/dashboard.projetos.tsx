@@ -614,6 +614,40 @@ function ProjetosAdminPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Goals dialog */}
+      <Dialog open={!!goalsProject} onOpenChange={(o) => !o && setGoalsProject(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Metas — {goalsProject?.name}</DialogTitle>
+            <DialogDescription>Defina entregáveis com prazo. Cada squad marca a própria conclusão.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            {goalsForProject.map((g) => (
+              <div key={g.id} className="flex items-start justify-between gap-2 rounded-md bg-muted/10 p-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm">{g.title}</div>
+                  {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
+                  {g.due_date && <div className="text-[10px] text-muted-foreground mt-1">Prazo: {new Date(g.due_date).toLocaleDateString("pt-BR")}</div>}
+                </div>
+                <Button size="sm" variant="ghost" className="text-destructive shrink-0" onClick={() => removeGoal(g.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+            {goalsForProject.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhuma meta ainda.</p>}
+          </div>
+
+          <div className="border-t border-border/40 pt-3 space-y-2">
+            <div className="text-[10px] font-bold tracking-widest text-muted-foreground/70">NOVA META</div>
+            <Input placeholder="Título" value={newGoal.title ?? ""} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
+            <Textarea rows={2} placeholder="Descrição (opcional)" value={newGoal.description ?? ""} onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })} />
+            <Input type="date" value={newGoal.due_date ?? ""} onChange={(e) => setNewGoal({ ...newGoal, due_date: e.target.value })} />
+            <Button onClick={addGoal} className="w-full"><Plus className="h-3 w-3 mr-1" /> Adicionar meta</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardShell>
   );
 }
