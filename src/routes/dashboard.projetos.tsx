@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, Layers, Globe, X, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Users as UsersIcon, Crown, Layers, Globe, X, ExternalLink, Target, Check, Clock, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -18,9 +18,11 @@ import { ImageUploader } from "@/components/ui/image-uploader";
 export const Route = createFileRoute("/dashboard/projetos")({ component: ProjetosAdminPage });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; banner_url: string | null; status: string; created_at: string; is_public: boolean; tech_stack: string[] };
-type Squad = { id: string; project_id: string; name: string; description: string | null };
+type Squad = { id: string; project_id: string; name: string; description: string | null; recruiting_status: "open" | "closed" | "waitlist" };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; email: string };
+type Goal = { id: string; project_id: string; squad_id: string | null; title: string; description: string | null; due_date: string | null; order_index: number };
+type JoinRequest = { id: string; project_id: string; squad_id: string | null; user_id: string; status: string; message: string | null; created_at: string };
 
 const slugify = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "").slice(0, 60);
@@ -37,6 +39,8 @@ function ProjetosAdminPage() {
   const [newMemberId, setNewMemberId] = useState("");
   const [newMemberRole, setNewMemberRole] = useState("MEMBRO");
   const [memberSearch, setMemberSearch] = useState("");
+  const [goalsProject, setGoalsProject] = useState<Project | null>(null);
+  const [newGoal, setNewGoal] = useState<Partial<Goal>>({ title: "", description: "", due_date: "" });
   // All squad-member rows for the current project, used to filter the
   // "add member" list and enforce the 1-squad-per-project rule on the client.
   const { data: projectMemberships = [] } = useQuery({
@@ -90,6 +94,28 @@ function ProjetosAdminPage() {
       const { data, error } = await supabase.from("squad_members").select("*").eq("squad_id", managingSquad!.id);
       if (error) throw error;
       return (data ?? []) as SquadMember[];
+    },
+  });
+
+  // Admin: todas as solicitações pendentes
+  const { data: allRequests = [] } = useQuery({
+    queryKey: ["admin-join-requests"],
+    enabled: isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("project_join_requests").select("*")
+        .in("status", ["pending", "waitlist"]).order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as JoinRequest[];
+    },
+  });
+
+  const { data: goalsForProject = [] } = useQuery({
+    queryKey: ["admin-goals", goalsProject?.id],
+    enabled: !!goalsProject?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("squad_goals").select("*").eq("project_id", goalsProject!.id).order("order_index");
+      if (error) throw error;
+      return (data ?? []) as Goal[];
     },
   });
 
@@ -203,8 +229,82 @@ function ProjetosAdminPage() {
     qc.invalidateQueries({ queryKey: ["squad-members", managingSquad!.id] });
   };
 
+  const updateRecruiting = async (s: Squad, status: "open" | "closed" | "waitlist") => {
+    const { error } = await supabase.from("squads").update({ recruiting_status: status }).eq("id", s.id);
+    if (error) return toast.error(error.message);
+    toast.success("Recrutamento atualizado");
+    qc.invalidateQueries({ queryKey: ["all-squads"] });
+  };
+
+  const addGoal = async () => {
+    if (!goalsProject || !newGoal.title) return toast.error("Título obrigatório");
+    const { error } = await supabase.from("squad_goals").insert({
+      project_id: goalsProject.id,
+      title: newGoal.title,
+      description: newGoal.description || null,
+      due_date: newGoal.due_date || null,
+      order_index: goalsForProject.length,
+      created_by: null,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Meta criada");
+    setNewGoal({ title: "", description: "", due_date: "" });
+    qc.invalidateQueries({ queryKey: ["admin-goals"] });
+    qc.invalidateQueries({ queryKey: ["my-project-goals"] });
+  };
+
+  const removeGoal = async (id: string) => {
+    if (!confirm("Excluir meta?")) return;
+    const { error } = await supabase.from("squad_goals").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["admin-goals"] });
+    qc.invalidateQueries({ queryKey: ["my-project-goals"] });
+  };
+
+  const decideRequest = async (id: string, action: "approved" | "rejected" | "waitlist", squadId?: string) => {
+    if (action === "approved" && squadId) {
+      await supabase.from("project_join_requests").update({ squad_id: squadId }).eq("id", id);
+    }
+    const { error } = await (supabase as any).rpc("decide_join_request", { _id: id, _action: action, _note: null });
+    if (error) return toast.error(error.message);
+    toast.success("Solicitação processada");
+    qc.invalidateQueries({ queryKey: ["admin-join-requests"] });
+    qc.invalidateQueries({ queryKey: ["squad-members"] });
+  };
+
   return (
     <DashboardShell title="Projetos / Squads" description="Cada projeto pode ter vários squads. Squads têm líderes e membros.">
+      {isAdmin && allRequests.length > 0 && (
+        <div className="glass rounded-xl border border-secondary/40 p-4 mb-4">
+          <div className="text-[10px] font-bold tracking-[0.25em] text-secondary mb-2 flex items-center gap-1">
+            <UserPlus className="h-3 w-3" /> SOLICITAÇÕES DE ENTRADA ({allRequests.length})
+          </div>
+          <div className="space-y-2">
+            {allRequests.map((r) => {
+              const proj = projects.find((p) => p.id === r.project_id);
+              const squad = allSquads.find((s) => s.id === r.squad_id);
+              const requester = profileById.get(r.user_id);
+              return (
+                <div key={r.id} className="rounded-md bg-muted/10 p-3 flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0 text-sm">
+                    <div className="font-semibold">{requester?.display_name ?? r.user_id}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {proj?.name} · {squad?.name ?? "sem squad"} · {r.status}
+                    </div>
+                    {r.message && <p className="text-xs italic text-muted-foreground mt-1">"{r.message}"</p>}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" onClick={() => decideRequest(r.id, "approved", r.squad_id ?? undefined)}><Check className="h-3 w-3 mr-1" />Aceitar</Button>
+                    <Button size="sm" variant="outline" onClick={() => decideRequest(r.id, "waitlist")}><Clock className="h-3 w-3" /></Button>
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => decideRequest(r.id, "rejected")}>X</Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">{projects.length} projeto(s)</p>
         <Button onClick={() => setEditing({ name: "", slug: "", description: "", status: "ativo" })}>
@@ -250,6 +350,7 @@ function ProjetosAdminPage() {
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => setGoalsProject(p)} title="Metas"><Target className="h-3 w-3" /></Button>
                   {isSuperAdmin && (
                     <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeProject(p)}><Trash2 className="h-3 w-3" /></Button>
                   )}
@@ -281,6 +382,17 @@ function ProjetosAdminPage() {
                             <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeSquad(s)}><Trash2 className="h-3 w-3" /></Button>
                           </div>
                         )}
+                      </div>
+                      <div className="mt-2">
+                        <Label className="text-[10px] tracking-widest text-muted-foreground/70">RECRUTAMENTO</Label>
+                        <Select value={s.recruiting_status ?? "closed"} onValueChange={(v) => updateRecruiting(s, v as any)}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">Vagas abertas</SelectItem>
+                            <SelectItem value="waitlist">Lista de espera</SelectItem>
+                            <SelectItem value="closed">Fechado</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <Button size="sm" variant="outline" className="mt-2 w-full" onClick={() => setManagingSquad(s)}>
                         <UsersIcon className="h-3 w-3 mr-1" /> Membros
@@ -499,6 +611,40 @@ function ProjetosAdminPage() {
               );
             })}
             {squadMembers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum membro ainda.</p>}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Goals dialog */}
+      <Dialog open={!!goalsProject} onOpenChange={(o) => !o && setGoalsProject(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Metas — {goalsProject?.name}</DialogTitle>
+            <DialogDescription>Defina entregáveis com prazo. Cada squad marca a própria conclusão.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+            {goalsForProject.map((g) => (
+              <div key={g.id} className="flex items-start justify-between gap-2 rounded-md bg-muted/10 p-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-sm">{g.title}</div>
+                  {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
+                  {g.due_date && <div className="text-[10px] text-muted-foreground mt-1">Prazo: {new Date(g.due_date).toLocaleDateString("pt-BR")}</div>}
+                </div>
+                <Button size="sm" variant="ghost" className="text-destructive shrink-0" onClick={() => removeGoal(g.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+            {goalsForProject.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhuma meta ainda.</p>}
+          </div>
+
+          <div className="border-t border-border/40 pt-3 space-y-2">
+            <div className="text-[10px] font-bold tracking-widest text-muted-foreground/70">NOVA META</div>
+            <Input placeholder="Título" value={newGoal.title ?? ""} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
+            <Textarea rows={2} placeholder="Descrição (opcional)" value={newGoal.description ?? ""} onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })} />
+            <Input type="date" value={newGoal.due_date ?? ""} onChange={(e) => setNewGoal({ ...newGoal, due_date: e.target.value })} />
+            <Button onClick={addGoal} className="w-full"><Plus className="h-3 w-3 mr-1" /> Adicionar meta</Button>
           </div>
         </DialogContent>
       </Dialog>

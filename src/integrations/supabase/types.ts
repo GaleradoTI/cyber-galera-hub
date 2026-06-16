@@ -692,6 +692,63 @@ export type Database = {
         }
         Relationships: []
       }
+      project_join_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          id: string
+          message: string | null
+          project_id: string
+          squad_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          message?: string | null
+          project_id: string
+          squad_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          message?: string | null
+          project_id?: string
+          squad_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_join_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_join_requests_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_posts: {
         Row: {
           content: string
@@ -939,6 +996,102 @@ export type Database = {
         }
         Relationships: []
       }
+      squad_goal_completions: {
+        Row: {
+          completed_at: string
+          completed_by: string | null
+          goal_id: string
+          id: string
+          note: string | null
+          squad_id: string
+        }
+        Insert: {
+          completed_at?: string
+          completed_by?: string | null
+          goal_id: string
+          id?: string
+          note?: string | null
+          squad_id: string
+        }
+        Update: {
+          completed_at?: string
+          completed_by?: string | null
+          goal_id?: string
+          id?: string
+          note?: string | null
+          squad_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_goal_completions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "squad_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_goal_completions_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_goals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          order_index: number
+          project_id: string
+          squad_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_index?: number
+          project_id: string
+          squad_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          order_index?: number
+          project_id?: string
+          squad_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_goals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_goals_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_members: {
         Row: {
           created_at: string
@@ -978,6 +1131,7 @@ export type Database = {
           id: string
           name: string
           project_id: string
+          recruiting_status: Database["public"]["Enums"]["recruiting_status"]
           updated_at: string
         }
         Insert: {
@@ -986,6 +1140,7 @@ export type Database = {
           id?: string
           name: string
           project_id: string
+          recruiting_status?: Database["public"]["Enums"]["recruiting_status"]
           updated_at?: string
         }
         Update: {
@@ -994,6 +1149,7 @@ export type Database = {
           id?: string
           name?: string
           project_id?: string
+          recruiting_status?: Database["public"]["Enums"]["recruiting_status"]
           updated_at?: string
         }
         Relationships: [
@@ -1133,6 +1289,10 @@ export type Database = {
     }
     Functions: {
       _audit_actor_name: { Args: { _uid: string }; Returns: string }
+      decide_join_request: {
+        Args: { _action: string; _id: string; _note?: string }
+        Returns: undefined
+      }
       get_lgpd_consents_admin: {
         Args: never
         Returns: {
@@ -1199,6 +1359,7 @@ export type Database = {
       app_role: "SUPER_ADMIN" | "ADMIN" | "MEMBRO" | "RECRUTADOR"
       content_status: "rascunho" | "publicado" | "pausado" | "encerrado"
       event_modality: "online" | "presencial" | "hibrido"
+      recruiting_status: "open" | "closed" | "waitlist"
       seniority_level:
         | "estagio"
         | "junior"
@@ -1336,6 +1497,7 @@ export const Constants = {
       app_role: ["SUPER_ADMIN", "ADMIN", "MEMBRO", "RECRUTADOR"],
       content_status: ["rascunho", "publicado", "pausado", "encerrado"],
       event_modality: ["online", "presencial", "hibrido"],
+      recruiting_status: ["open", "closed", "waitlist"],
       seniority_level: ["estagio", "junior", "pleno", "senior", "especialista"],
       work_modality: ["remoto", "hibrido", "presencial"],
     },

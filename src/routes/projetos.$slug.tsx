@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Crown, Layers, ArrowLeft, Globe, Share2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { Crown, Layers, ArrowLeft, Globe, Share2, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PublicLayout } from "@/components/public/public-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/projetos/$slug")({
@@ -18,12 +22,17 @@ export const Route = createFileRoute("/projetos/$slug")({
 });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; banner_url: string | null; status: string; is_public: boolean; tech_stack: string[] };
-type Squad = { id: string; name: string; description: string | null; project_id: string };
+type Squad = { id: string; name: string; description: string | null; project_id: string; recruiting_status: "open" | "closed" | "waitlist" };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; avatar_url: string | null };
 
 function PublicProjectPage() {
   const { slug } = Route.useParams();
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [joinSquad, setJoinSquad] = useState<Squad | null>(null);
+  const [joinMessage, setJoinMessage] = useState("");
+  const [sending, setSending] = useState(false);
 
   const { data: project, isLoading, error } = useQuery({
     queryKey: ["public-project", slug],
@@ -45,7 +54,33 @@ function PublicProjectPage() {
     },
   });
 
+  const { data: myRequest } = useQuery({
+    queryKey: ["my-join-req", project?.id, user?.id],
+    enabled: !!project?.id && !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("project_join_requests").select("*")
+        .eq("project_id", project!.id).eq("user_id", user!.id)
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      return data;
+    },
+  });
+
   const squadIds = squads.map((s) => s.id);
+  const submitJoin = async () => {
+    if (!user) { toast.info("Entre para solicitar participação"); return; }
+    if (!joinSquad || !project) return;
+    setSending(true);
+    const status = joinSquad.recruiting_status === "waitlist" ? "waitlist" : "pending";
+    const { error } = await supabase.from("project_join_requests").insert({
+      project_id: project.id, squad_id: joinSquad.id, user_id: user.id, message: joinMessage.trim() || null, status,
+    });
+    setSending(false);
+    if (error) return toast.error(error.message);
+    toast.success(status === "waitlist" ? "Você entrou na lista de espera" : "Solicitação enviada");
+    setJoinSquad(null); setJoinMessage("");
+    qc.invalidateQueries({ queryKey: ["my-join-req"] });
+  };
 
   const { data: members = [] } = useQuery({
     queryKey: ["public-squad-members", squadIds.join(",")],
@@ -179,9 +214,13 @@ function PublicProjectPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
           {squads.map((s) => {
             const ms = members.filter((m) => m.squad_id === s.id).sort(sortMembers);
+            const canRequest = !myRequest && user;
             return (
               <div key={s.id} className="glass rounded-xl p-4 md:p-5 border border-primary/20">
-                <h3 className="font-bold">{s.name}</h3>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold">{s.name}</h3>
+                  <SquadRecruitingBadge status={s.recruiting_status} />
+                </div>
                 {s.description && <p className="text-xs text-muted-foreground mt-1">{s.description}</p>}
                 <div className="mt-3 space-y-1">
                   {ms.map((m) => {
@@ -208,12 +247,58 @@ function PublicProjectPage() {
                   })}
                   {ms.length === 0 && <p className="text-xs text-muted-foreground">Sem membros ainda.</p>}
                 </div>
+                {s.recruiting_status !== "closed" && (
+                  <Button
+                    size="sm" variant="outline" className="mt-3 w-full"
+                    disabled={!canRequest}
+                    onClick={() => canRequest ? setJoinSquad(s) : toast.info(user ? "Você já tem uma solicitação ativa" : "Entre para solicitar")}
+                  >
+                    <UserPlus className="h-3 w-3 mr-1" />
+                    {s.recruiting_status === "waitlist" ? "Entrar na lista de espera" : "Solicitar entrada"}
+                  </Button>
+                )}
               </div>
             );
           })}
           {squads.length === 0 && <p className="text-sm text-muted-foreground">Sem squads cadastrados ainda.</p>}
         </div>
+        {myRequest && (
+          <div className="mt-6 glass rounded-xl border border-primary/30 p-4 text-sm">
+            <span className="text-[10px] font-bold tracking-widest text-secondary">SUA SOLICITAÇÃO</span>
+            <p className="mt-1">Status: <strong>{myRequest.status}</strong>{myRequest.decision_note ? ` — ${myRequest.decision_note}` : ""}</p>
+          </div>
+        )}
       </article>
+
+      <Dialog open={!!joinSquad} onOpenChange={(o) => !o && setJoinSquad(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Solicitar entrada — {joinSquad?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              {joinSquad?.recruiting_status === "waitlist"
+                ? "Este squad está com vagas fechadas. Você entrará na lista de espera."
+                : "O líder do squad vai analisar sua solicitação."}
+            </p>
+            <Textarea
+              rows={4}
+              placeholder="Conte por que você quer participar (opcional)…"
+              value={joinMessage} onChange={(e) => setJoinMessage(e.target.value)}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setJoinSquad(null)}>Cancelar</Button>
+            <Button onClick={submitJoin} disabled={sending}>{sending ? "Enviando…" : "Enviar"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PublicLayout>
   );
+}
+
+function SquadRecruitingBadge({ status }: { status: "open" | "closed" | "waitlist" }) {
+  if (status === "open") return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">ABERTO</span>;
+  if (status === "waitlist") return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40">ESPERA</span>;
+  return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted/40 text-muted-foreground border border-border/40">FECHADO</span>;
 }

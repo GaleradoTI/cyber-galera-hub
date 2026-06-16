@@ -207,3 +207,42 @@ Privado — comunidade GALERA DO T.I.
 - Página `/membros/:handle` com perfil público, badges e participação.
 - Pesquisa pós-evento (NPS) para inscritos com check-in.
 - Editor rico (markdown) para descrição de evento/vaga.
+
+## Rodada atual — Auditoria avançada, Metas, Projetos públicos com solicitação de entrada
+
+### Auditoria (`/dashboard/logs`)
+Página reescrita com filtros (usuário, ação, entidade, intervalo de datas, busca textual), paginação (50/página), modal de detalhes e exportação CSV respeitando os filtros aplicados (até 5000 linhas).
+
+### Novos triggers de auditoria
+| Ação | Origem |
+|---|---|
+| `PROJECT_POST_CREATED/DELETED` | mural de projeto |
+| `POST_COMMENT_CREATED/DELETED` | comentários do mural |
+| `SQUAD_MEMBER_ADDED/REMOVED/ROLE_CHANGED` | gestão de squads |
+| `CHANNEL_CREATED/UPDATED/DELETED` | canais |
+| `FAQ_CREATED/UPDATED/DELETED` | FAQ |
+| `LGPD_CONSENT_RECORDED` | aceite de termos |
+| `SQUAD_GOAL_CREATED/UPDATED/DELETED` | metas (admin) |
+| `SQUAD_GOAL_COMPLETED/UNCOMPLETED` | conclusão por squad |
+| `JOB_APPLIED` | candidatura a vaga |
+| `EVENT_INTEREST_REGISTERED` | inscrição em evento |
+| `JOIN_REQUEST_CREATED/APPROVED/REJECTED/WAITLIST` | solicitações de entrada |
+
+### Upload de imagens (corrigido)
+- Storage policy adicionada para `project-covers/events/*` (membros podem subir banner de evento — antes dava erro de RLS).
+- `ImageUploader` agora mostra **progresso**, toasts "Processando → Otimizando → Enviando → Concluído" e mensagens claras: formato inválido informa o tipo recebido, arquivo grande mostra o tamanho real x limite, erros de permissão/MIME/tamanho do servidor são traduzidos.
+- Hint padrão exibe extensões aceitas + tamanho máximo em todos os pontos (avatar, capa/banner de projeto, banner de evento).
+
+### Metas com prazo (squad goals)
+- Tabelas: `squad_goals` (admin cria) e `squad_goal_completions` (squad marca).
+- Admin: botão "Metas" (ícone alvo) em cada projeto em `/dashboard/projetos` — criar/excluir metas com prazo.
+- Membro: card "Metas" em `/dashboard/meus-projetos` mostra status por squad, com botão para marcar conclusão. Metas atrasadas ficam destacadas em vermelho.
+
+### Projetos públicos + Solicitação de entrada
+- `squads` ganhou `recruiting_status` (`open` / `waitlist` / `closed`). Admin define no card do squad em `/dashboard/projetos`.
+- `/projetos` (público) mostra badge **VAGAS ABERTAS / LISTA DE ESPERA / FECHADO** por projeto.
+- `/projetos/<slug>` (público) mostra status por squad e botão **"Solicitar entrada"** ou **"Entrar na lista de espera"** com mensagem opcional.
+- Nova tabela `project_join_requests` (status pending/approved/rejected/waitlist).
+- Líder do squad alvo recebe notificação e vê o pedido em `/dashboard/meus-projetos` (seção "Solicitações de entrada"). Pode **Aceitar**, **Mover para espera** ou **Rejeitar** — aprovar cria o `squad_member` automaticamente.
+- Admin/super veem todas as solicitações pendentes no topo de `/dashboard/projetos` e também podem decidir.
+- Função RPC `decide_join_request(_id, _action, _note)` faz a transição atômica + log + notificação ao solicitante.
