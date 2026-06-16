@@ -20,7 +20,8 @@ export const Route = createFileRoute("/projetos/")({
   component: ProjetosIndex,
 });
 
-type PublicProject = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; tech_stack: string[] };
+type PublicProject = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; tech_stack: string[]; status: string };
+type SquadLite = { id: string; project_id: string; recruiting_status: "open" | "closed" | "waitlist" };
 
 function ProjetosIndex() {
   const [q, setQ] = useState("");
@@ -30,13 +31,36 @@ function ProjetosIndex() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("projects")
-        .select("id,name,slug,description,cover_url,tech_stack")
+        .select("id,name,slug,description,cover_url,tech_stack,status")
         .eq("is_public", true)
         .order("name");
       if (error) throw error;
       return (data ?? []) as PublicProject[];
     },
   });
+
+  const { data: squads = [] } = useQuery({
+    queryKey: ["public-projects-squads", projects.map((p) => p.id).join(",")],
+    enabled: projects.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("squads")
+        .select("id,project_id,recruiting_status")
+        .in("project_id", projects.map((p) => p.id));
+      if (error) throw error;
+      return (data ?? []) as SquadLite[];
+    },
+  });
+  const recruitingByProject = useMemo(() => {
+    const m = new Map<string, "open" | "waitlist" | "closed">();
+    squads.forEach((s) => {
+      const cur = m.get(s.project_id);
+      if (s.recruiting_status === "open") m.set(s.project_id, "open");
+      else if (s.recruiting_status === "waitlist" && cur !== "open") m.set(s.project_id, "waitlist");
+      else if (!cur) m.set(s.project_id, "closed");
+    });
+    return m;
+  }, [squads]);
 
   const techOptions = useMemo(() => {
     const set = new Set<string>();
@@ -107,7 +131,11 @@ function ProjetosIndex() {
                   )}
                 </div>
                 <div className="p-5 flex-1 flex flex-col">
-                  <h3 className="font-bold text-lg">{p.name}</h3>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-bold text-lg">{p.name}</h3>
+                    <RecruitingBadge status={recruitingByProject.get(p.id) ?? "closed"} />
+                  </div>
+                  <div className="text-[10px] tracking-widest text-muted-foreground/70 mt-1">{labelStatus(p.status)}</div>
                   {p.description && (
                     <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-1">{p.description}</p>
                   )}
@@ -132,4 +160,13 @@ function ProjetosIndex() {
       </section>
     </PublicLayout>
   );
+}
+
+function labelStatus(s: string) {
+  return s === "em_andamento" ? "EM ANDAMENTO" : s === "concluido" ? "CONCLUÍDO" : s === "pausado" ? "PAUSADO" : s.toUpperCase();
+}
+function RecruitingBadge({ status }: { status: "open" | "closed" | "waitlist" }) {
+  if (status === "open") return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shrink-0">VAGAS ABERTAS</span>;
+  if (status === "waitlist") return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 shrink-0">LISTA DE ESPERA</span>;
+  return <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted/40 text-muted-foreground border border-border/40 shrink-0">FECHADO</span>;
 }
