@@ -3,6 +3,7 @@ import { Upload, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 type Props = {
   bucket: "avatars" | "project-covers";
@@ -66,43 +67,71 @@ export function ImageUploader({
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const handleFile = async (file: File) => {
+    const acceptedNames = accept.map((a) => a.split("/")[1]).join(", ").toUpperCase();
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+    const limitMB = Math.round(maxBytes / (1024 * 1024));
     if (!accept.includes(file.type)) {
-      return toast.error(`Formato inválido. Aceitos: ${accept.map((a) => a.split("/")[1]).join(", ").toUpperCase()}`);
+      return toast.error("Formato inválido", {
+        description: `Aceitos: ${acceptedNames}. Recebido: ${file.type || "desconhecido"}.`,
+      });
     }
     if (file.size > maxBytes) {
-      return toast.error(`Tamanho máximo: ${Math.round(maxBytes / (1024 * 1024))}MB`);
+      return toast.error("Arquivo grande demais", {
+        description: `Limite ${limitMB}MB · arquivo enviado: ${sizeMB}MB.`,
+      });
     }
+    const toastId = toast.loading("Processando imagem…");
     setUploading(true);
+    setProgress(5);
     try {
       let blob: Blob = file;
       let ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
       let contentType = file.type;
       if (resizeMax) {
+        toast.loading(`Otimizando para ${resizeMax}px…`, { id: toastId });
         const r = await resizeImage(file, resizeMax);
         if (minWidth && r.width < minWidth) {
           setUploading(false);
-          return toast.error(`Largura mínima ${minWidth}px. A imagem enviada tem ${r.width}px.`);
+          toast.error("Imagem pequena demais", { id: toastId, description: `Largura mínima ${minWidth}px · enviada ${r.width}px.` });
+          return;
         }
         blob = r.blob;
         ext = r.ext;
         contentType = blob.type;
       }
+      setProgress(40);
+      toast.loading("Enviando para o servidor…", { id: toastId });
       const path = `${folder}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from(bucket).upload(path, blob, {
         cacheControl: "3600",
         upsert: true,
         contentType,
       });
-      if (upErr) throw upErr;
+      if (upErr) {
+        const msg = upErr.message || "";
+        let friendly = msg;
+        if (/row-level security|not authorized|policy/i.test(msg)) {
+          friendly = "Você não tem permissão para enviar nesta pasta. Contate o admin.";
+        } else if (/payload too large|413/.test(msg)) {
+          friendly = `Arquivo excede o limite do servidor (${limitMB}MB).`;
+        } else if (/mime|content.?type/i.test(msg)) {
+          friendly = `Formato não permitido pelo servidor. Aceitos: ${acceptedNames}.`;
+        }
+        throw new Error(friendly);
+      }
+      setProgress(95);
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       onChange(data.publicUrl);
-      toast.success("Imagem enviada");
+      setProgress(100);
+      toast.success("Imagem enviada", { id: toastId, description: `${(blob.size / 1024).toFixed(0)} KB` });
     } catch (e: any) {
-      toast.error(e?.message ?? "Falha no upload");
+      toast.error("Falha no upload", { id: toastId, description: e?.message ?? "Erro desconhecido" });
     } finally {
       setUploading(false);
+      setTimeout(() => setProgress(0), 600);
     }
   };
 
@@ -143,13 +172,19 @@ export function ImageUploader({
           <Button type="button" size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
             <Upload className="h-3 w-3 mr-1" /> Enviar
           </Button>
+          {uploading && progress > 0 && (
+            <div className="w-32">
+              <Progress value={progress} className="h-1.5" />
+              <p className="text-[10px] text-muted-foreground mt-0.5">{progress}%</p>
+            </div>
+          )}
           {value && (
             <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => onChange(null)}>
               <X className="h-3 w-3 mr-1" /> Remover
             </Button>
           )}
-          <p className="text-[10px] text-muted-foreground">
-            {hint ?? `JPG/PNG/WebP até ${Math.round(maxBytes / (1024 * 1024))}MB${resizeMax ? ` · otimizado para ${resizeMax}px` : ""}`}
+          <p className="text-[10px] text-muted-foreground leading-tight">
+            {hint ?? `${accept.map((a) => a.split("/")[1]).join(" · ").toUpperCase()} · máx ${Math.round(maxBytes / (1024 * 1024))}MB${resizeMax ? ` · otimizado para ${resizeMax}px` : ""}`}
           </p>
         </div>
       </div>
