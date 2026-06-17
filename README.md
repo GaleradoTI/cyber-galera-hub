@@ -246,3 +246,26 @@ Página reescrita com filtros (usuário, ação, entidade, intervalo de datas, b
 - Líder do squad alvo recebe notificação e vê o pedido em `/dashboard/meus-projetos` (seção "Solicitações de entrada"). Pode **Aceitar**, **Mover para espera** ou **Rejeitar** — aprovar cria o `squad_member` automaticamente.
 - Admin/super veem todas as solicitações pendentes no topo de `/dashboard/projetos` e também podem decidir.
 - Função RPC `decide_join_request(_id, _action, _note)` faz a transição atômica + log + notificação ao solicitante.
+
+## Atualizações recentes (jun/2026)
+
+### Dashboard › Explorar Projetos (`/dashboard/explorar-projetos`)
+Qualquer membro logado vê todos os projetos e seus squads, com badge de recrutamento (`open` / `waitlist` / `closed`).
+Solicitações de entrada criadas por aqui ficam marcadas com `source = 'dashboard'`; já as feitas em `/projetos/$slug` (página pública) ficam com `source = 'public_page'`. Ambas geram log `JOIN_REQUEST_CREATED` na auditoria com a origem na descrição.
+
+### Logs de auditoria com filtros no URL
+Todos os filtros de `/dashboard/logs` (ação, entidade, usuário, busca, período, página) ficam serializados na query string. Basta copiar o link para refazer a mesma busca depois. A janela de detalhes mostra agora o **contexto da entidade** (nome do projeto, status da vaga, conteúdo do post etc.) — útil antes de exportar o CSV.
+
+### Toasts de aprovação/recusa
+O líder de squad recebe `toast.promise` (Aprovando… → Aprovado/Recusado/Espera) com o nome do solicitante e do squad.
+
+### Upload do banner de evento
+- Bucket: `project-covers`, pasta obrigatória: `events/...`.
+- Limites: JPG/PNG/WebP, máx 8 MB, otimização automática para 1600px.
+- Erros agora exibem detalhe técnico (bucket/folder + mensagem original do Supabase) em vez do genérico “fale com o admin”.
+
+### Configurações públicas (Sobre, Home, SEO…)
+A política `UPDATE` em `public_site_settings` ganhou `WITH CHECK (is_admin_or_super(auth.uid()))`, destravando a edição via `/dashboard/configuracoes` para admin/super.
+
+### Mobile
+Removido `background-attachment: fixed` no body abaixo de 1024 px — corrige o travamento do scroll vertical no iOS Safari na home.

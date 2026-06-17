@@ -73,7 +73,9 @@ function PublicProjectPage() {
     setSending(true);
     const status = joinSquad.recruiting_status === "waitlist" ? "waitlist" : "pending";
     const { error } = await supabase.from("project_join_requests").insert({
-      project_id: project.id, squad_id: joinSquad.id, user_id: user.id, message: joinMessage.trim() || null, status,
+      project_id: project.id, squad_id: joinSquad.id, user_id: user.id,
+      message: joinMessage.trim() || null, status,
+      source: "public_page",
     });
     setSending(false);
     if (error) return toast.error(error.message);

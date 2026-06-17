@@ -701,6 +701,7 @@ export type Database = {
           id: string
           message: string | null
           project_id: string
+          source: string
           squad_id: string | null
           status: string
           updated_at: string
@@ -714,6 +715,7 @@ export type Database = {
           id?: string
           message?: string | null
           project_id: string
+          source?: string
           squad_id?: string | null
           status?: string
           updated_at?: string
@@ -727,6 +729,7 @@ export type Database = {
           id?: string
           message?: string | null
           project_id?: string
+          source?: string
           squad_id?: string | null
           status?: string
           updated_at?: string

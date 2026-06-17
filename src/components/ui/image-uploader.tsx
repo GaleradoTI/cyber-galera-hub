@@ -114,7 +114,7 @@ export function ImageUploader({
         const msg = upErr.message || "";
         let friendly = msg;
         if (/row-level security|not authorized|policy/i.test(msg)) {
-          friendly = "Você não tem permissão para enviar nesta pasta. Contate o admin.";
+          friendly = `Sem permissão para enviar nesta pasta (${bucket}/${folder}). Verifique se você está autenticado e se o caminho começa com a pasta correta. Detalhe técnico: ${msg}`;
         } else if (/payload too large|413/.test(msg)) {
           friendly = `Arquivo excede o limite do servidor (${limitMB}MB).`;
         } else if (/mime|content.?type/i.test(msg)) {
