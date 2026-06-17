@@ -37,6 +37,7 @@ import { Route as DashboardMeusProjetosRouteImport } from './routes/dashboard.me
 import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meus-eventos'
 import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensagens'
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
+import { Route as DashboardExplorarProjetosRouteImport } from './routes/dashboard.explorar-projetos'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardDepoimentosRouteImport } from './routes/dashboard.depoimentos'
 import { Route as DashboardDenunciasRouteImport } from './routes/dashboard.denuncias'
@@ -185,6 +186,12 @@ const DashboardLogsRoute = DashboardLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardExplorarProjetosRoute =
+  DashboardExplorarProjetosRouteImport.update({
+    id: '/explorar-projetos',
+    path: '/explorar-projetos',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardEventosRoute = DashboardEventosRouteImport.update({
   id: '/eventos',
   path: '/eventos',
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
+  '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -279,6 +287,7 @@ export interface FileRoutesByTo {
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
+  '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -317,6 +326,7 @@ export interface FileRoutesById {
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
+  '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/eventos'
+    | '/dashboard/explorar-projetos'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -392,6 +403,7 @@ export interface FileRouteTypes {
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/eventos'
+    | '/dashboard/explorar-projetos'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -429,6 +441,7 @@ export interface FileRouteTypes {
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/eventos'
+    | '/dashboard/explorar-projetos'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -662,6 +675,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLogsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/explorar-projetos': {
+      id: '/dashboard/explorar-projetos'
+      path: '/explorar-projetos'
+      fullPath: '/dashboard/explorar-projetos'
+      preLoaderRoute: typeof DashboardExplorarProjetosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/eventos': {
       id: '/dashboard/eventos'
       path: '/eventos'
@@ -722,6 +742,7 @@ interface DashboardRouteChildren {
   DashboardDenunciasRoute: typeof DashboardDenunciasRoute
   DashboardDepoimentosRoute: typeof DashboardDepoimentosRoute
   DashboardEventosRoute: typeof DashboardEventosRoute
+  DashboardExplorarProjetosRoute: typeof DashboardExplorarProjetosRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMensagensRoute: typeof DashboardMensagensRoute
   DashboardMeusEventosRoute: typeof DashboardMeusEventosRoute
@@ -744,6 +765,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardDenunciasRoute: DashboardDenunciasRoute,
   DashboardDepoimentosRoute: DashboardDepoimentosRoute,
   DashboardEventosRoute: DashboardEventosRoute,
+  DashboardExplorarProjetosRoute: DashboardExplorarProjetosRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardMensagensRoute: DashboardMensagensRoute,
   DashboardMeusEventosRoute: DashboardMeusEventosRoute,
