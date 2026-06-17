@@ -1,6 +1,8 @@
+import { Fragment, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,7 +14,20 @@ import { Badge } from "@/components/ui/badge";
 import { Download, Eye, Filter, X } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
 
-export const Route = createFileRoute("/dashboard/logs")({ component: LogsPage });
+const searchSchema = z.object({
+  action: fallback(z.string(), "all").default("all"),
+  entity: fallback(z.string(), "all").default("all"),
+  user: fallback(z.string(), "").default(""),
+  q: fallback(z.string(), "").default(""),
+  from: fallback(z.string(), "").default(""),
+  to: fallback(z.string(), "").default(""),
+  page: fallback(z.number().int().min(0), 0).default(0),
+});
+
+export const Route = createFileRoute("/dashboard/logs")({
+  component: LogsPage,
+  validateSearch: zodValidator(searchSchema),
+});
 
 type Log = {
   id: string;
@@ -23,23 +38,25 @@ type Log = {
   entity: string;
   entity_id: string | null;
   description: string | null;
-  role?: string | null;
 };
+
+const PAGE_SIZE = 50;
 
 function LogsPage() {
   const navigate = useNavigate();
   const { isAdmin, rolesReady } = useDashboardRoles();
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
-  const [actionFilter, setActionFilter] = useState("all");
-  const [entityFilter, setEntityFilter] = useState("all");
-  const [userFilter, setUserFilter] = useState("");
-  const [search, setSearch] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [page, setPage] = useState(0);
+  const { action: actionFilter, entity: entityFilter, user: userFilter, q: search, from, to, page } = Route.useSearch();
+  const update = (patch: Partial<z.infer<typeof searchSchema>>) =>
+    navigate({
+      to: "/dashboard/logs",
+      search: (prev: any) => ({ ...prev, ...patch, page: "page" in patch ? patch.page ?? 0 : 0 }),
+    });
+  const setPage = (p: number) =>
+    navigate({ to: "/dashboard/logs", search: (prev: any) => ({ ...prev, page: p }) });
+
   const [detail, setDetail] = useState<Log | null>(null);
-  const PAGE_SIZE = 50;
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ["audit-logs", actionFilter, entityFilter, userFilter, search, from, to, page],
@@ -58,7 +75,6 @@ function LogsPage() {
     },
   });
 
-  // distintos para os selects (1000 últimos)
   const { data: distincts } = useQuery({
     queryKey: ["audit-distincts"],
     queryFn: async () => {
@@ -70,9 +86,8 @@ function LogsPage() {
     },
   });
 
-  const clearFilters = () => {
-    setActionFilter("all"); setEntityFilter("all"); setUserFilter(""); setSearch(""); setFrom(""); setTo(""); setPage(0);
-  };
+  const clearFilters = () =>
+    navigate({ to: "/dashboard/logs", search: { action: "all", entity: "all", user: "", q: "", from: "", to: "", page: 0 } });
 
   const exportCsv = async () => {
     let q = supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(5000);
@@ -96,28 +111,28 @@ function LogsPage() {
   };
 
   return (
-    <DashboardShell title="Logs de Auditoria" description="Filtre, inspecione detalhes e exporte como CSV.">
+    <DashboardShell title="Logs de Auditoria" description="Filtros salvos na URL — basta compartilhar/abrir o link para repetir a busca.">
       <div className="glass rounded-xl border border-primary/20 p-4 mb-4 space-y-3">
         <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-muted-foreground/70">
           <Filter className="h-3 w-3" /> FILTROS
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-2">
-          <Input placeholder="Usuário…" value={userFilter} onChange={(e) => { setUserFilter(e.target.value); setPage(0); }} />
-          <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(0); }}>
+          <Input placeholder="Usuário…" value={userFilter} onChange={(e) => update({ user: e.target.value })} />
+          <Select value={actionFilter} onValueChange={(v) => update({ action: v })}>
             <SelectTrigger><SelectValue placeholder="Ação" /></SelectTrigger>
             <SelectContent className="max-h-72"><SelectItem value="all">Todas as ações</SelectItem>
               {distincts?.actions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Select value={entityFilter} onValueChange={(v) => { setEntityFilter(v); setPage(0); }}>
+          <Select value={entityFilter} onValueChange={(v) => update({ entity: v })}>
             <SelectTrigger><SelectValue placeholder="Entidade" /></SelectTrigger>
             <SelectContent className="max-h-72"><SelectItem value="all">Todas as entidades</SelectItem>
               {distincts?.entities.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(0); }} />
-          <Input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(0); }} />
-          <Input placeholder="Buscar descrição…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} />
+          <Input type="date" value={from} onChange={(e) => update({ from: e.target.value })} />
+          <Input type="date" value={to} onChange={(e) => update({ to: e.target.value })} />
+          <Input placeholder="Buscar descrição…" value={search} onChange={(e) => update({ q: e.target.value })} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">{logs.length} resultado(s) nesta página</p>
@@ -158,9 +173,9 @@ function LogsPage() {
       </div>
 
       <div className="flex items-center justify-between mt-3">
-        <Button size="sm" variant="ghost" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>← Anterior</Button>
+        <Button size="sm" variant="ghost" disabled={page === 0} onClick={() => setPage(Math.max(0, page - 1))}>← Anterior</Button>
         <span className="text-xs text-muted-foreground">Página {page + 1}</span>
-        <Button size="sm" variant="ghost" disabled={logs.length < PAGE_SIZE} onClick={() => setPage((p) => p + 1)}>Próxima →</Button>
+        <Button size="sm" variant="ghost" disabled={logs.length < PAGE_SIZE} onClick={() => setPage(page + 1)}>Próxima →</Button>
       </div>
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
@@ -178,6 +193,7 @@ function LogsPage() {
                 <div className="text-[10px] tracking-widest text-muted-foreground/70 mb-1">DESCRIÇÃO</div>
                 <div className="rounded bg-muted/30 p-2 text-xs whitespace-pre-wrap">{detail.description ?? "—"}</div>
               </div>
+              <EntityContext entity={detail.entity} entityId={detail.entity_id} />
             </div>
           )}
         </DialogContent>
@@ -191,6 +207,67 @@ function Row({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
     <div className="flex items-start gap-3">
       <div className="text-[10px] tracking-widest text-muted-foreground/70 w-24 pt-1">{k.toUpperCase()}</div>
       <div className={`flex-1 ${mono ? "font-mono text-xs" : "text-sm"}`}>{v}</div>
+    </div>
+  );
+}
+
+/** Mostra os campos relevantes da entidade afetada antes de exportar. */
+function EntityContext({ entity, entityId }: { entity: string; entityId: string | null }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["audit-context", entity, entityId],
+    enabled: !!entityId,
+    queryFn: async () => {
+      const map: Record<string, { table: string; cols: string; key?: string }> = {
+        projects: { table: "projects", cols: "id,name,slug,status,is_public,description" },
+        squads: { table: "squads", cols: "id,name,project_id,recruiting_status,description" },
+        squad_members: { table: "squad_members", cols: "id,squad_id,user_id,role_in_squad" },
+        squad_goals: { table: "squad_goals", cols: "id,project_id,squad_id,title,due_date" },
+        squad_goal_completions: { table: "squad_goal_completions", cols: "id,goal_id,squad_id,completed_by,note" },
+        project_join_requests: { table: "project_join_requests", cols: "id,project_id,squad_id,user_id,status,source,message,decision_note" },
+        project_posts: { table: "project_posts", cols: "id,project_id,user_id,content,created_at" },
+        post_comments: { table: "post_comments", cols: "id,post_id,user_id,content" },
+        events: { table: "events", cols: "id,name,slug,status,approval_status,event_date,source" },
+        jobs: { table: "jobs", cols: "id,title,status,created_by" },
+        job_applications: { table: "job_applications", cols: "id,job_id,user_id,status" },
+        partners: { table: "partners", cols: "id,name,website,is_active" },
+        channels: { table: "channels", cols: "id,name,kind,url,is_active" },
+        faqs: { table: "faqs", cols: "id,question,category,is_active" },
+        testimonials: { table: "testimonials", cols: "id,user_id,content,status" },
+        public_site_settings: { table: "public_site_settings", cols: "setting_key,description,updated_at", key: "setting_key" },
+        site_settings_history: { table: "site_settings_history", cols: "id,setting_key,changed_by_name,created_at" },
+      };
+      const conf = map[entity];
+      if (!conf || !entityId) return null;
+      const filterCol = conf.key ?? "id";
+      const { data, error } = await (supabase as any)
+        .from(conf.table).select(conf.cols).eq(filterCol, entityId).maybeSingle();
+      if (error) return { _error: error.message };
+      return data;
+    },
+  });
+
+  if (!entityId) return null;
+  return (
+    <div>
+      <div className="text-[10px] tracking-widest text-muted-foreground/70 mb-1">CONTEXTO ({entity})</div>
+      {isLoading ? (
+        <div className="rounded bg-muted/20 p-2 text-xs text-muted-foreground">Carregando contexto…</div>
+      ) : !data ? (
+        <div className="rounded bg-muted/20 p-2 text-xs text-muted-foreground">
+          Registro não encontrado (pode ter sido removido) ou entidade sem contexto detalhado.
+        </div>
+      ) : (data as any)._error ? (
+        <div className="rounded bg-destructive/15 p-2 text-xs text-destructive">Falha ao buscar contexto: {(data as any)._error}</div>
+      ) : (
+        <div className="rounded bg-muted/20 p-2 text-xs grid grid-cols-[140px_1fr] gap-x-2 gap-y-1">
+          {Object.entries(data as Record<string, any>).map(([k, v]) => (
+            <Fragment key={k}>
+              <span className="text-muted-foreground/70 truncate">{k}</span>
+              <span className="font-mono break-words">{v === null || v === undefined ? "—" : typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
+            </Fragment>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
