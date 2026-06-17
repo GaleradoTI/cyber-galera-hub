@@ -156,10 +156,15 @@
     background-image:
       radial-gradient(ellipse 50% 40% at 15% 0%, oklch(0.30 0.18 305 / 0.35), transparent 60%),
       radial-gradient(ellipse 40% 30% at 85% 10%, oklch(0.30 0.20 200 / 0.25), transparent 60%);
-    background-attachment: fixed;
     color: var(--color-foreground);
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* background-attachment: fixed quebra o scroll no iOS/Safari mobile.
+     Aplicamos só em telas largas. */
+  @media (min-width: 1024px) {
+    body { background-attachment: fixed; }
   }
 
   html {

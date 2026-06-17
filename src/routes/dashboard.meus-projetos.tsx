@@ -256,14 +256,29 @@ function MeusProjetosPage() {
   };
 
   const decideRequest = async (id: string, action: "approved" | "rejected" | "waitlist") => {
-    const { error } = await (supabase as any).rpc("decide_join_request", { _id: id, _action: action, _note: null });
-    if (error) return toast.error(error.message);
-    toast.success(action === "approved" ? "Membro adicionado ao squad" : action === "rejected" ? "Solicitação rejeitada" : "Movido para lista de espera");
+    const req = pendingRequests.find((r) => r.id === id);
+    const reqName = req ? (requesterById.get(req.user_id)?.display_name ?? requesterById.get(req.user_id)?.email ?? "membro") : "membro";
+    const squadName = req ? (squads.find((s) => s.id === req.squad_id)?.name ?? "squad") : "squad";
+    const labels: Record<typeof action, { loading: string; success: string }> = {
+      approved: { loading: `Aprovando ${reqName}…`, success: `${reqName} foi adicionado(a) ao squad "${squadName}"` },
+      rejected: { loading: `Rejeitando solicitação de ${reqName}…`, success: `Solicitação de ${reqName} rejeitada` },
+      waitlist: { loading: `Movendo ${reqName} para a espera…`, success: `${reqName} entrou na lista de espera de "${squadName}"` },
+    };
+    await toast.promise(
+      (async () => {
+        const { error } = await (supabase as any).rpc("decide_join_request", { _id: id, _action: action, _note: null });
+        if (error) throw error;
+      })(),
+      {
+        loading: labels[action].loading,
+        success: labels[action].success,
+        error: (e: any) => `Não foi possível concluir: ${e?.message ?? "erro desconhecido"}`,
+      },
+    );
     qc.invalidateQueries({ queryKey: ["pending-join-requests"] });
-    refreshAll?.();
     qc.invalidateQueries({ queryKey: ["my-squads-members"] });
+    qc.invalidateQueries({ queryKey: ["my-squad-membership"] });
   };
-  const refreshAll = () => {};
 
   return (
     <DashboardShell title="Meus Projetos" description="Projetos e squads em que você participa.">
