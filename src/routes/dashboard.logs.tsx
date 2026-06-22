@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Download, Eye, Filter, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Eye, Filter, X } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
 
 const searchSchema = z.object({
@@ -22,6 +22,8 @@ const searchSchema = z.object({
   from: fallback(z.string(), "").default(""),
   to: fallback(z.string(), "").default(""),
   page: fallback(z.number().int().min(0), 0).default(0),
+  sortBy: fallback(z.enum(["created_at", "action", "entity", "user_name"]), "created_at").default("created_at"),
+  sortDir: fallback(z.enum(["asc", "desc"]), "desc").default("desc"),
 });
 
 export const Route = createFileRoute("/dashboard/logs")({
@@ -47,7 +49,7 @@ function LogsPage() {
   const { isAdmin, rolesReady } = useDashboardRoles();
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
-  const { action: actionFilter, entity: entityFilter, user: userFilter, q: search, from, to, page } = Route.useSearch();
+  const { action: actionFilter, entity: entityFilter, user: userFilter, q: search, from, to, page, sortBy, sortDir } = Route.useSearch();
   const update = (patch: Partial<z.infer<typeof searchSchema>>) =>
     navigate({
       to: "/dashboard/logs",
@@ -55,13 +57,19 @@ function LogsPage() {
     });
   const setPage = (p: number) =>
     navigate({ to: "/dashboard/logs", search: (prev: any) => ({ ...prev, page: p }) });
+  const toggleSort = (col: "created_at" | "action" | "entity" | "user_name") => {
+    if (sortBy === col) update({ sortDir: sortDir === "asc" ? "desc" : "asc" });
+    else update({ sortBy: col, sortDir: "desc" });
+  };
+  const SortIcon = ({ col }: { col: string }) =>
+    sortBy === col ? (sortDir === "asc" ? <ArrowUp className="inline h-3 w-3 ml-1" /> : <ArrowDown className="inline h-3 w-3 ml-1" />) : null;
 
   const [detail, setDetail] = useState<Log | null>(null);
 
   const { data: logs = [], isLoading } = useQuery({
-    queryKey: ["audit-logs", actionFilter, entityFilter, userFilter, search, from, to, page],
+    queryKey: ["audit-logs", actionFilter, entityFilter, userFilter, search, from, to, page, sortBy, sortDir],
     queryFn: async () => {
-      let q = supabase.from("audit_logs").select("*").order("created_at", { ascending: false });
+      let q = supabase.from("audit_logs").select("*").order(sortBy, { ascending: sortDir === "asc" });
       if (actionFilter !== "all") q = q.eq("action", actionFilter);
       if (entityFilter !== "all") q = q.eq("entity", entityFilter);
       if (userFilter.trim()) q = q.ilike("user_name", `%${userFilter.trim()}%`);
@@ -87,10 +95,10 @@ function LogsPage() {
   });
 
   const clearFilters = () =>
-    navigate({ to: "/dashboard/logs", search: { action: "all", entity: "all", user: "", q: "", from: "", to: "", page: 0 } });
+    navigate({ to: "/dashboard/logs", search: { action: "all", entity: "all", user: "", q: "", from: "", to: "", page: 0, sortBy: "created_at", sortDir: "desc" } });
 
   const exportCsv = async () => {
-    let q = supabase.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(5000);
+    let q = supabase.from("audit_logs").select("*").order(sortBy, { ascending: sortDir === "asc" }).limit(5000);
     if (actionFilter !== "all") q = q.eq("action", actionFilter);
     if (entityFilter !== "all") q = q.eq("entity", entityFilter);
     if (userFilter.trim()) q = q.ilike("user_name", `%${userFilter.trim()}%`);
@@ -99,15 +107,56 @@ function LogsPage() {
     if (to) q = q.lte("created_at", `${to}T23:59:59`);
     const { data, error } = await q;
     if (error) return;
+    // Buscar contexto por entidade em batches usando o mesmo mapa do EntityContext.
+    const ENTITY_MAP: Record<string, { table: string; cols: string; key?: string }> = {
+      projects: { table: "projects", cols: "id,name,slug,status,is_public" },
+      squads: { table: "squads", cols: "id,name,project_id,recruiting_status" },
+      squad_members: { table: "squad_members", cols: "id,squad_id,user_id,role_in_squad" },
+      squad_goals: { table: "squad_goals", cols: "id,project_id,squad_id,title,due_date" },
+      project_join_requests: { table: "project_join_requests", cols: "id,project_id,squad_id,user_id,status,source" },
+      project_posts: { table: "project_posts", cols: "id,project_id,user_id,created_at" },
+      events: { table: "events", cols: "id,name,slug,status,approval_status,event_date" },
+      jobs: { table: "jobs", cols: "id,title,status" },
+      partners: { table: "partners", cols: "id,name,website,is_active" },
+      channels: { table: "channels", cols: "id,name,kind,is_active" },
+      faqs: { table: "faqs", cols: "id,question,category,is_active" },
+      public_site_settings: { table: "public_site_settings", cols: "setting_key,description,updated_at", key: "setting_key" },
+      drops: { table: "drops", cols: "id,title,status,price_cents,launch_date" },
+      drop_interests: { table: "drop_interests", cols: "id,drop_id,full_name,email" },
+    };
+    const byEntity = new Map<string, string[]>();
+    (data ?? []).forEach((l: any) => {
+      if (!l.entity_id || !ENTITY_MAP[l.entity]) return;
+      const arr = byEntity.get(l.entity) ?? [];
+      arr.push(l.entity_id);
+      byEntity.set(l.entity, arr);
+    });
+    const ctxMap = new Map<string, Record<string, any>>(); // key: `${entity}:${id}`
+    await Promise.all(
+      Array.from(byEntity.entries()).map(async ([entity, ids]) => {
+        const conf = ENTITY_MAP[entity];
+        const filterCol = conf.key ?? "id";
+        const { data: rows } = await (supabase as any).from(conf.table).select(conf.cols).in(filterCol, Array.from(new Set(ids)));
+        (rows ?? []).forEach((r: any) => ctxMap.set(`${entity}:${r[filterCol]}`, r));
+      }),
+    );
     downloadCSV(`auditoria-${new Date().toISOString().slice(0, 10)}.csv`,
-      (data ?? []).map((l: any) => ({
-        data: new Date(l.created_at).toLocaleString("pt-BR"),
-        usuario: l.user_name ?? "",
-        acao: l.action,
-        entidade: l.entity,
-        entity_id: l.entity_id ?? "",
-        descricao: l.description ?? "",
-      })));
+      (data ?? []).map((l: any) => {
+        const ctx = (l.entity_id && ctxMap.get(`${l.entity}:${l.entity_id}`)) || {};
+        const ctxCols: Record<string, any> = {};
+        Object.entries(ctx).forEach(([k, v]) => {
+          ctxCols[`ctx_${k}`] = v === null || v === undefined ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+        });
+        return {
+          data: new Date(l.created_at).toLocaleString("pt-BR"),
+          usuario: l.user_name ?? "",
+          acao: l.action,
+          entidade: l.entity,
+          entity_id: l.entity_id ?? "",
+          descricao: l.description ?? "",
+          ...ctxCols,
+        };
+      }));
   };
 
   return (
