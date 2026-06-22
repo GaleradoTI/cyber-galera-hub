@@ -677,8 +677,80 @@ function ProjetosAdminPage() {
             <Input placeholder="Título" value={newGoal.title ?? ""} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
             <Textarea rows={2} placeholder="Descrição (opcional)" value={newGoal.description ?? ""} onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })} />
             <Input type="date" value={newGoal.due_date ?? ""} onChange={(e) => setNewGoal({ ...newGoal, due_date: e.target.value })} />
+            <div className="space-y-1">
+              <div className="text-[10px] tracking-widest text-muted-foreground/70">TASKS (CHECKLIST)</div>
+              {(newGoal.tasks ?? []).map((t, i) => (
+                <div key={t.id} className="flex items-center gap-2">
+                  <span className="text-xs flex-1 truncate">• {t.title}</span>
+                  <Button size="sm" variant="ghost" className="text-destructive h-6 px-2" onClick={() => setNewGoal({ ...newGoal, tasks: (newGoal.tasks ?? []).filter((_, idx) => idx !== i) })}><X className="h-3 w-3" /></Button>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <Input placeholder="Nova task" value={newTaskInput} onChange={(e) => setNewTaskInput(e.target.value)} onKeyDown={(e) => {
+                  if (e.key === "Enter" && newTaskInput.trim()) {
+                    e.preventDefault();
+                    setNewGoal({ ...newGoal, tasks: [...(newGoal.tasks ?? []), { id: crypto.randomUUID(), title: newTaskInput.trim(), done: false }] });
+                    setNewTaskInput("");
+                  }
+                }} />
+                <Button type="button" variant="outline" size="sm" onClick={() => {
+                  if (!newTaskInput.trim()) return;
+                  setNewGoal({ ...newGoal, tasks: [...(newGoal.tasks ?? []), { id: crypto.randomUUID(), title: newTaskInput.trim(), done: false }] });
+                  setNewTaskInput("");
+                }}>Add</Button>
+              </div>
+            </div>
             <Button onClick={addGoal} className="w-full"><Plus className="h-3 w-3 mr-1" /> Adicionar meta</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingGoal} onOpenChange={(o) => !o && setEditingGoal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar meta</DialogTitle>
+            <DialogDescription>Atualize título, descrição, prazo e tasks. Apenas líderes marcam tasks como concluídas.</DialogDescription>
+          </DialogHeader>
+          {editingGoal && (
+            <div className="space-y-3">
+              <div><Label>Título</Label><Input value={editingGoal.title} onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })} /></div>
+              <div><Label>Descrição</Label><Textarea rows={3} value={editingGoal.description ?? ""} onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })} /></div>
+              <div><Label>Prazo</Label><Input type="date" value={editingGoal.due_date ?? ""} onChange={(e) => setEditingGoal({ ...editingGoal, due_date: e.target.value })} /></div>
+              <div>
+                <Label>Tasks</Label>
+                <div className="space-y-1 mt-1">
+                  {editingGoal.tasks.map((t, i) => (
+                    <div key={t.id} className="flex items-center gap-2">
+                      <Input value={t.title} onChange={(e) => {
+                        const tasks = [...editingGoal.tasks];
+                        tasks[i] = { ...tasks[i], title: e.target.value };
+                        setEditingGoal({ ...editingGoal, tasks });
+                      }} className="text-xs h-8" />
+                      <Button size="sm" variant="ghost" className="text-destructive h-8 px-2" onClick={() => setEditingGoal({ ...editingGoal, tasks: editingGoal.tasks.filter((_, idx) => idx !== i) })}><X className="h-3 w-3" /></Button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <Input placeholder="Nova task" value={editTaskInput} onChange={(e) => setEditTaskInput(e.target.value)} onKeyDown={(e) => {
+                      if (e.key === "Enter" && editTaskInput.trim()) {
+                        e.preventDefault();
+                        setEditingGoal({ ...editingGoal, tasks: [...editingGoal.tasks, { id: crypto.randomUUID(), title: editTaskInput.trim(), done: false }] });
+                        setEditTaskInput("");
+                      }
+                    }} className="text-xs h-8" />
+                    <Button type="button" variant="outline" size="sm" onClick={() => {
+                      if (!editTaskInput.trim()) return;
+                      setEditingGoal({ ...editingGoal, tasks: [...editingGoal.tasks, { id: crypto.randomUUID(), title: editTaskInput.trim(), done: false }] });
+                      setEditTaskInput("");
+                    }}>Add</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingGoal(null)}>Cancelar</Button>
+            <Button onClick={saveEditingGoal}>Salvar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardShell>
