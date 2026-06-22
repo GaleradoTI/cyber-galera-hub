@@ -21,7 +21,17 @@ type Project = { id: string; name: string; slug: string; description: string | n
 type Squad = { id: string; project_id: string; name: string; description: string | null; recruiting_status: "open" | "closed" | "waitlist" };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; email: string };
-type Goal = { id: string; project_id: string; squad_id: string | null; title: string; description: string | null; due_date: string | null; order_index: number };
+type GoalTask = { id: string; title: string; done: boolean; done_by?: string | null; done_at?: string | null };
+type Goal = {
+  id: string;
+  project_id: string;
+  squad_id: string | null;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  order_index: number;
+  tasks: GoalTask[];
+};
 type JoinRequest = { id: string; project_id: string; squad_id: string | null; user_id: string; status: string; message: string | null; created_at: string };
 
 const slugify = (s: string) =>
@@ -40,7 +50,10 @@ function ProjetosAdminPage() {
   const [newMemberRole, setNewMemberRole] = useState("MEMBRO");
   const [memberSearch, setMemberSearch] = useState("");
   const [goalsProject, setGoalsProject] = useState<Project | null>(null);
-  const [newGoal, setNewGoal] = useState<Partial<Goal>>({ title: "", description: "", due_date: "" });
+  const [newGoal, setNewGoal] = useState<Partial<Goal> & { tasks?: GoalTask[] }>({ title: "", description: "", due_date: "", tasks: [] });
+  const [newTaskInput, setNewTaskInput] = useState("");
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editTaskInput, setEditTaskInput] = useState("");
   // All squad-member rows for the current project, used to filter the
   // "add member" list and enforce the 1-squad-per-project rule on the client.
   const { data: projectMemberships = [] } = useQuery({
@@ -245,10 +258,26 @@ function ProjetosAdminPage() {
       due_date: newGoal.due_date || null,
       order_index: goalsForProject.length,
       created_by: null,
+      tasks: (newGoal.tasks ?? []) as any,
     });
     if (error) return toast.error(error.message);
     toast.success("Meta criada");
-    setNewGoal({ title: "", description: "", due_date: "" });
+    setNewGoal({ title: "", description: "", due_date: "", tasks: [] });
+    qc.invalidateQueries({ queryKey: ["admin-goals"] });
+    qc.invalidateQueries({ queryKey: ["my-project-goals"] });
+  };
+
+  const saveEditingGoal = async () => {
+    if (!editingGoal) return;
+    const { error } = await supabase.from("squad_goals").update({
+      title: editingGoal.title,
+      description: editingGoal.description || null,
+      due_date: editingGoal.due_date || null,
+      tasks: (editingGoal.tasks ?? []) as any,
+    }).eq("id", editingGoal.id);
+    if (error) return toast.error(error.message);
+    toast.success("Meta atualizada");
+    setEditingGoal(null);
     qc.invalidateQueries({ queryKey: ["admin-goals"] });
     qc.invalidateQueries({ queryKey: ["my-project-goals"] });
   };
