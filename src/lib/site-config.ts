@@ -18,6 +18,7 @@ export const NAV_LINKS = [
   { to: "/canais", label: "Canais" },
   { to: "/vagas", label: "Vagas" },
   { to: "/projetos", label: "Projetos" },
+  { to: "/drops", label: "Drops" },
   { to: "/eventos", label: "Eventos" },
   { to: "/parceiros", label: "Parceiros" },
   { to: "/faq", label: "FAQ" },
