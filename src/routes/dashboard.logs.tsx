@@ -284,6 +284,8 @@ function EntityContext({ entity, entityId }: { entity: string; entityId: string 
         testimonials: { table: "testimonials", cols: "id,user_id,content,status" },
         public_site_settings: { table: "public_site_settings", cols: "setting_key,description,updated_at", key: "setting_key" },
         site_settings_history: { table: "site_settings_history", cols: "id,setting_key,changed_by_name,created_at" },
+        drops: { table: "drops", cols: "id,title,status,price_cents,launch_date" },
+        drop_interests: { table: "drop_interests", cols: "id,drop_id,full_name,email,phone" },
       };
       const conf = map[entity];
       if (!conf || !entityId) return null;
