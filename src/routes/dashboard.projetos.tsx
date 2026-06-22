@@ -659,10 +659,14 @@ function ProjetosAdminPage() {
                   <div className="font-semibold text-sm">{g.title}</div>
                   {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
                   {g.due_date && <div className="text-[10px] text-muted-foreground mt-1">Prazo: {new Date(g.due_date).toLocaleDateString("pt-BR")}</div>}
+                  {g.tasks?.length > 0 && (
+                    <div className="text-[10px] text-muted-foreground mt-1">{g.tasks.filter((t) => t.done).length}/{g.tasks.length} tasks</div>
+                  )}
                 </div>
-                <Button size="sm" variant="ghost" className="text-destructive shrink-0" onClick={() => removeGoal(g.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => setEditingGoal({ ...g, tasks: [...(g.tasks ?? [])] })}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeGoal(g.id)}><Trash2 className="h-3 w-3" /></Button>
+                </div>
               </div>
             ))}
             {goalsForProject.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhuma meta ainda.</p>}
