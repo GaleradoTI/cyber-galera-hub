@@ -116,6 +116,95 @@ export type Database = {
         }
         Relationships: []
       }
+      drop_interests: {
+        Row: {
+          created_at: string
+          drop_id: string
+          email: string
+          full_name: string
+          id: string
+          note: string | null
+          phone: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          drop_id: string
+          email: string
+          full_name: string
+          id?: string
+          note?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          drop_id?: string
+          email?: string
+          full_name?: string
+          id?: string
+          note?: string | null
+          phone?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_interests_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drops: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          id: string
+          images: string[]
+          launch_date: string | null
+          payment_methods: string[]
+          pix_key: string | null
+          price_cents: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          launch_date?: string | null
+          payment_methods?: string[]
+          pix_key?: string | null
+          price_cents?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          images?: string[]
+          launch_date?: string | null
+          payment_methods?: string[]
+          pix_key?: string | null
+          price_cents?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       event_checkins: {
         Row: {
           checked_in_at: string
@@ -1051,6 +1140,7 @@ export type Database = {
           order_index: number
           project_id: string
           squad_id: string | null
+          tasks: Json
           title: string
           updated_at: string
         }
@@ -1063,6 +1153,7 @@ export type Database = {
           order_index?: number
           project_id: string
           squad_id?: string | null
+          tasks?: Json
           title: string
           updated_at?: string
         }
@@ -1075,6 +1166,7 @@ export type Database = {
           order_index?: number
           project_id?: string
           squad_id?: string | null
+          tasks?: Json
           title?: string
           updated_at?: string
         }
@@ -1351,6 +1443,10 @@ export type Database = {
       register_event_interest: { Args: { _event_id: string }; Returns: Json }
       resolve_report: {
         Args: { _action: string; _note: string; _report_id: string }
+        Returns: undefined
+      }
+      toggle_goal_task: {
+        Args: { _done: boolean; _goal_id: string; _task_id: string }
         Returns: undefined
       }
       users_share_project: {
