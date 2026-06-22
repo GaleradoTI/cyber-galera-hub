@@ -1,67 +1,62 @@
-## Escopo
 
-Vou atacar em uma única leva os 10 pontos que você listou. Cada bloco abaixo é independente e pode ser revisado separadamente.
+## 1. Metas dos projetos com tasks (descrição + checklist)
 
-### 1. Projetos visíveis para membros + solicitar entrada (dentro do dashboard)
-- Criar nova rota `src/routes/dashboard.explorar-projetos.tsx` mostrando **todos** os projetos (independentemente de ser membro), com:
-  - Status do projeto, lista de squads com badge de `recruiting_status` (aberto / lista de espera / fechado).
-  - Botão "Solicitar entrada" por squad — desabilitado quando `closed`, abre dialog com mensagem opcional, gravando em `project_join_requests` (já existe). Quando o usuário já é membro do squad, mostrar "Você já participa".
-- Adicionar item "Explorar projetos" no menu lateral (`dashboard-shell.tsx`) visível para todos os papéis.
+**SQL (migration)**
+- Adicionar colunas em `squad_goals`: `description text`, `tasks jsonb default '[]'` (cada task: `{id, title, done, done_by, done_at}`).
+- Função `toggle_goal_task(_goal_id uuid, _task_id text, _done bool)`:
+  - Permite apenas líder do squad (ou admin/super) marcar/desmarcar.
+  - Atualiza `tasks` no `squad_goals`, dispara `audit_logs` (`SQUAD_GOAL_TASK_TOGGLED`).
 
-### 2. Filtros de `/dashboard/logs` no URL
-- Migrar a página para `validateSearch` com `zodValidator` (action, entity, user, search, from, to, page).
-- Ler estado de `Route.useSearch()` e atualizar via `navigate({ search: ... })` em vez de `useState` — assim recarregar/voltar mantém a busca.
+**Frontend**
+- Em `dashboard.meus-projetos.tsx`: editor de meta agora aceita descrição e lista de tasks (add/remover título). Líder vê checkboxes interativos; membros veem somente leitura com progresso (`x/y tasks`).
+- Mesma visualização (read-only) em `dashboard.explorar-projetos.tsx` e no detalhe de projeto público.
 
-### 3. Detalhes do log por entidade
-- Reescrever o `Dialog` de detalhes para renderizar painel específico por `entity`:
-  - `projects` / `squads` / `squad_members` / `project_join_requests`: buscar o registro relacionado (nome do projeto, squad, papel, status) via `supabase.from(...).select(...).eq('id', entity_id)`.
-  - `events`, `jobs`, `partners`, `channels`, `faqs`, `testimonials`: mostrar título, status e link para a entidade.
-  - `public_site_settings`: comparar `site_settings_history` (versão anterior x atual).
-  - Fallback genérico para entidades sem handler.
+## 2. CSV de auditoria com contexto por entidade
 
-### 4. Toast para líder ao aprovar/recusar entrada
-- Em `dashboard.meus-projetos.tsx` envolver a chamada de `decide_join_request` com `toast.promise` mostrando "Aprovando…" → "Aprovado: <usuário> entrou em <squad>" / "Recusado". Refetch da lista após sucesso.
-- Mesma melhoria no painel admin em `dashboard.projetos.tsx`.
+- Em `dashboard.logs.tsx`, no `exportCsv`:
+  - Para cada log exportado, buscar o "contexto" usando o mesmo mapa do componente `EntityContext` (projetos, squads, project_join_requests, public_site_settings…).
+  - Achatar em colunas `ctx_<campo>` (ex.: `ctx_name`, `ctx_slug`, `ctx_status`).
+  - Limite 5000 linhas, batch por entidade (group by entity → 1 query por entidade com `.in('id', ids)`).
 
-### 5. Logs nas páginas públicas `/projetos` e `/projetos/$slug`
-- A entrada já é gravada pelo trigger `log_join_request_insert` (entity = `project_join_requests`). Vou adicionar `metadata` opcional indicando origem (`public_page` vs `dashboard`) usando uma coluna nova `source text` em `project_join_requests` para diferenciar — e ajustar o trigger para incluir essa origem na descrição.
-- Garantir que o botão público em `projetos.index.tsx` e `projetos.$slug.tsx` envia `source: 'public_page'`.
+## 3. URL persistente em /dashboard/logs (paginação + ordenação)
 
-### 6. Upload do banner do evento dando erro "fale com admin"
-- A mensagem genérica vem do `ImageUploader` quando o Supabase retorna RLS error. Hoje a policy do bucket `project-covers` exige caminho `events/...` mas o uploader em `dashboard.sugerir-evento.tsx`/`dashboard.eventos.tsx` está passando `folder` diferente. Vou:
-  - Padronizar o `folder` para `events/{user_id}` nesses dois lugares.
-  - Revisar a policy de INSERT/UPDATE em `storage.objects` para `project-covers` aceitando `(storage.foldername(name))[1] = 'events'` para `authenticated`.
-  - Exibir o erro real (`upErr.message`) no toast quando não bater nenhum padrão conhecido, em vez de só "fale com admin".
+- Estender `searchSchema` com:
+  - `sortBy: 'created_at' | 'action' | 'entity' | 'user_name'` (default `created_at`)
+  - `sortDir: 'asc' | 'desc'` (default `desc`)
+- Headers da tabela viram botões: clique alterna sortBy/sortDir, atualiza URL via `navigate({search})`.
+- Query usa `.order(sortBy, { ascending: sortDir === 'asc' })`.
+- `page` já está na URL — manter botões anterior/próxima escrevendo no search.
 
-### 7. Edição da área pública (sobre, home, seo) não salva
-- A tabela `public_site_settings` só permite update para admin/super. Vou:
-  - Auditar policies — provavelmente falta `WITH CHECK` no UPDATE ou está restringindo por `setting_key`.
-  - Conferir a página de configurações; se estiver chamando `.upsert()` sem `onConflict: 'setting_key'`, ajustar.
-  - Garantir que o trigger `log_site_setting_change` não falha por NULL em `auth.uid()` durante SSR.
+## 4. Feature "Drops" (loja interna de itens)
 
-### 8. README + lista de actions de log
-- Atualizar `README.md` com:
-  - Nova rota "Explorar projetos".
-  - Nova coluna `source` em join requests.
-  - Fluxo correto de upload de banner.
-  - Como editar conteúdo público (rota, papéis necessários).
+**Tabelas (migration, com GRANTS + RLS)**
+- `drops`: `id, title, description, price_cents, currency default 'BRL', launch_date, status ('draft'|'published'|'closed'), pix_key, payment_methods text[], images text[], created_by, created_at, updated_at`.
+- `drop_interests`: `id, drop_id, user_id (nullable se logado), full_name, email, phone, note, created_at`. Único `(drop_id, user_id)` quando user_id não nulo.
+- RLS:
+  - `drops` SELECT: público (qualquer pessoa) quando `status='published'`; admins veem tudo. INSERT/UPDATE/DELETE: somente `is_admin_or_super(auth.uid())`.
+  - `drop_interests` SELECT: admins. INSERT: público (mas se autenticado, força `user_id = auth.uid()`).
+- Triggers `log_drop_changes` e `log_drop_interest` → `audit_logs` (entidades `drops`, `drop_interests`).
+- Bucket `project-covers` já existe → reaproveitar para imagens dos drops (folder `drops/{user_id}`).
 
-### 9. Scroll travado no mobile (home)
-- Investigar `src/routes/index.tsx`, `hero.tsx`, `stats-section.tsx`. Provável causa: `overflow-hidden` no body/`<main>` ou seção com `100vh` + `overflow-hidden` capturando o gesto. Corrigir removendo `overflow-hidden` no wrapper externo e garantindo `min-h-screen` em vez de `h-screen`.
+**Rotas**
+- Pública `/drops` (lista cards) + modal de detalhes com galeria, preço, data, formas de pagamento, botão "Tenho interesse" (form com nome/email/telefone — pré-preenchido pelo profile do usuário autenticado).
+- Dashboard `/dashboard/drops` (apenas admin/super): CRUD com `ImageUploader`, status, lista de interessados (export CSV).
+- Item no menu lateral (admin) + link no navbar público.
 
-### 10. "Ajustar os erros"
-- Rodar `tsc`/build após cada bloco; consertar imports quebrados, tipos do `types.ts` desatualizados depois das migrações e qualquer warning aparente em `console`. Como esta linha é genérica, vou focar nos erros que surgirem durante as mudanças acima — se você tiver um erro específico em mente (mensagem, página), me diga que eu trato dedicado.
+**Validações**
+- Zod no formulário público (nome, email, telefone com máscara, max 100/255/20 chars).
+- Toasts de sucesso/erro.
 
-## Migrações SQL necessárias
-1. `ALTER TABLE public.project_join_requests ADD COLUMN source text DEFAULT 'dashboard';`
-2. Atualizar `log_join_request_insert` para incluir `source` na descrição.
-3. Policies do bucket `project-covers` (INSERT/UPDATE) para `authenticated` na pasta `events/`.
-4. Revisar/ajustar policies de UPDATE em `public_site_settings`.
+## 5. README + erros
+
+- README: nova seção "Drops", nota sobre tasks em metas, sort/paginação por URL em logs, CSV com contexto.
+- Rodar `tsc`/build após cada bloco e corrigir.
 
 ## Ordem de execução
-1. Migração SQL (ponto 5, 6, 7).
-2. Frontend: explorar projetos, logs com URL, detalhes ricos, toasts, upload, configurações públicas.
-3. Mobile home.
+
+1. Migrations (squad_goals.tasks + drops + drop_interests + triggers + RLS + grants).
+2. Aguardar regen do types.ts.
+3. Frontend (metas/tasks → CSV com contexto → sort URL → rotas drops).
 4. README + verificação de build.
 
-Confirma que posso seguir nessa ordem? Se quiser priorizar/recortar (por exemplo: só os pontos 6, 7 e 9 primeiro porque estão bloqueando), me diga antes de eu rodar a migração.
+Quer que eu prossiga com as migrations nessa ordem?
