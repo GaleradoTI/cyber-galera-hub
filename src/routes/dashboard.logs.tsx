@@ -196,10 +196,10 @@ function LogsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Quando</TableHead>
-              <TableHead>Usuário</TableHead>
-              <TableHead>Ação</TableHead>
-              <TableHead>Entidade</TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("created_at")}>Quando<SortIcon col="created_at" /></TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("user_name")}>Usuário<SortIcon col="user_name" /></TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("action")}>Ação<SortIcon col="action" /></TableHead>
+              <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("entity")}>Entidade<SortIcon col="entity" /></TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead></TableHead>
             </TableRow>
