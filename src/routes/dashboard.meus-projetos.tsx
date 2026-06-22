@@ -31,7 +31,8 @@ type Profile = {
   social_links: Record<string, string> | null;
 };
 type Post = { id: string; project_id: string; user_id: string; content: string; created_at: string };
-type Goal = { id: string; project_id: string; squad_id: string | null; title: string; description: string | null; due_date: string | null; order_index: number };
+type GoalTask = { id: string; title: string; done: boolean; done_by?: string | null; done_at?: string | null };
+type Goal = { id: string; project_id: string; squad_id: string | null; title: string; description: string | null; due_date: string | null; order_index: number; tasks: GoalTask[] };
 type Completion = { id: string; goal_id: string; squad_id: string; completed_by: string | null; completed_at: string; note: string | null };
 type JoinRequest = { id: string; project_id: string; squad_id: string | null; user_id: string; status: string; message: string | null; created_at: string };
 
@@ -137,7 +138,7 @@ function MeusProjetosPage() {
         .from("squad_goals").select("*").in("project_id", myProjectIds)
         .order("order_index", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Goal[];
+      return ((data ?? []) as any[]).map((g) => ({ ...g, tasks: Array.isArray(g.tasks) ? g.tasks : [] })) as Goal[];
     },
   });
 
