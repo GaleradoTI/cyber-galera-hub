@@ -256,6 +256,14 @@ function MeusProjetosPage() {
     qc.invalidateQueries({ queryKey: ["my-goal-completions"] });
   };
 
+  const toggleTask = async (goal: Goal, task: GoalTask) => {
+    const { error } = await (supabase as any).rpc("toggle_goal_task", {
+      _goal_id: goal.id, _task_id: task.id, _done: !task.done,
+    });
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["my-project-goals"] });
+  };
+
   const decideRequest = async (id: string, action: "approved" | "rejected" | "waitlist") => {
     const req = pendingRequests.find((r) => r.id === id);
     const reqName = req ? (requesterById.get(req.user_id)?.display_name ?? requesterById.get(req.user_id)?.email ?? "membro") : "membro";
