@@ -29,6 +29,7 @@ import {
   Handshake,
   Flag,
   Briefcase as BriefcaseIcon,
+  ShoppingBag,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -148,6 +149,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/parceiros", label: "Parceiros", icon: Handshake, show: isAdmin },
         { to: "/dashboard/denuncias", label: "Denúncias", icon: Flag, show: isAdmin },
         { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
+        { to: "/dashboard/drops", label: "Drops", icon: ShoppingBag, show: isAdmin },
         { to: "/dashboard/logs", label: "Logs de Auditoria", icon: FileText, show: isAdmin },
       ],
     },

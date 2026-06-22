@@ -31,7 +31,8 @@ type Profile = {
   social_links: Record<string, string> | null;
 };
 type Post = { id: string; project_id: string; user_id: string; content: string; created_at: string };
-type Goal = { id: string; project_id: string; squad_id: string | null; title: string; description: string | null; due_date: string | null; order_index: number };
+type GoalTask = { id: string; title: string; done: boolean; done_by?: string | null; done_at?: string | null };
+type Goal = { id: string; project_id: string; squad_id: string | null; title: string; description: string | null; due_date: string | null; order_index: number; tasks: GoalTask[] };
 type Completion = { id: string; goal_id: string; squad_id: string; completed_by: string | null; completed_at: string; note: string | null };
 type JoinRequest = { id: string; project_id: string; squad_id: string | null; user_id: string; status: string; message: string | null; created_at: string };
 
@@ -137,7 +138,7 @@ function MeusProjetosPage() {
         .from("squad_goals").select("*").in("project_id", myProjectIds)
         .order("order_index", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Goal[];
+      return ((data ?? []) as any[]).map((g) => ({ ...g, tasks: Array.isArray(g.tasks) ? g.tasks : [] })) as Goal[];
     },
   });
 
@@ -255,6 +256,14 @@ function MeusProjetosPage() {
     qc.invalidateQueries({ queryKey: ["my-goal-completions"] });
   };
 
+  const toggleTask = async (goal: Goal, task: GoalTask) => {
+    const { error } = await (supabase as any).rpc("toggle_goal_task", {
+      _goal_id: goal.id, _task_id: task.id, _done: !task.done,
+    });
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["my-project-goals"] });
+  };
+
   const decideRequest = async (id: string, action: "approved" | "rejected" | "waitlist") => {
     const req = pendingRequests.find((r) => r.id === id);
     const reqName = req ? (requesterById.get(req.user_id)?.display_name ?? requesterById.get(req.user_id)?.email ?? "membro") : "membro";
@@ -362,6 +371,9 @@ function MeusProjetosPage() {
                   <div className="space-y-2">
                     {projectGoals.map((g) => {
                       const overdue = g.due_date && new Date(g.due_date) < new Date() && !completions.some((c) => c.goal_id === g.id);
+                      const canManage =
+                        projectSquads.some((s) => isSquadLeader(s.id));
+                      const doneCount = g.tasks.filter((t) => t.done).length;
                       return (
                         <div key={g.id} className="rounded-lg border border-border/40 p-3 bg-muted/10">
                           <div className="flex items-start justify-between gap-2">
@@ -375,6 +387,28 @@ function MeusProjetosPage() {
                               )}
                             </div>
                           </div>
+                          {g.tasks.length > 0 && (
+                            <div className="mt-2 space-y-1">
+                              <div className="text-[10px] tracking-widest text-muted-foreground/70">
+                                CHECKLIST — {doneCount}/{g.tasks.length}
+                              </div>
+                              {g.tasks.map((t) => (
+                                <label key={t.id} className={`flex items-center gap-2 text-xs ${canManage ? "cursor-pointer" : "cursor-default"}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={t.done}
+                                    disabled={!canManage}
+                                    onChange={() => toggleTask(g, t)}
+                                    className="accent-primary"
+                                  />
+                                  <span className={t.done ? "line-through text-muted-foreground" : ""}>{t.title}</span>
+                                </label>
+                              ))}
+                              {!canManage && (
+                                <p className="text-[10px] text-muted-foreground italic">Somente líderes marcam tasks.</p>
+                              )}
+                            </div>
+                          )}
                           <div className="flex flex-wrap gap-1 mt-2">
                             {projectSquads
                               .filter((s) => !g.squad_id || g.squad_id === s.id)

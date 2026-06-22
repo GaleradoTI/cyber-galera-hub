@@ -21,7 +21,17 @@ type Project = { id: string; name: string; slug: string; description: string | n
 type Squad = { id: string; project_id: string; name: string; description: string | null; recruiting_status: "open" | "closed" | "waitlist" };
 type SquadMember = { id: string; squad_id: string; user_id: string; role_in_squad: string };
 type Profile = { user_id: string; display_name: string; email: string };
-type Goal = { id: string; project_id: string; squad_id: string | null; title: string; description: string | null; due_date: string | null; order_index: number };
+type GoalTask = { id: string; title: string; done: boolean; done_by?: string | null; done_at?: string | null };
+type Goal = {
+  id: string;
+  project_id: string;
+  squad_id: string | null;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  order_index: number;
+  tasks: GoalTask[];
+};
 type JoinRequest = { id: string; project_id: string; squad_id: string | null; user_id: string; status: string; message: string | null; created_at: string };
 
 const slugify = (s: string) =>
@@ -40,7 +50,10 @@ function ProjetosAdminPage() {
   const [newMemberRole, setNewMemberRole] = useState("MEMBRO");
   const [memberSearch, setMemberSearch] = useState("");
   const [goalsProject, setGoalsProject] = useState<Project | null>(null);
-  const [newGoal, setNewGoal] = useState<Partial<Goal>>({ title: "", description: "", due_date: "" });
+  const [newGoal, setNewGoal] = useState<Partial<Goal> & { tasks?: GoalTask[] }>({ title: "", description: "", due_date: "", tasks: [] });
+  const [newTaskInput, setNewTaskInput] = useState("");
+  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
+  const [editTaskInput, setEditTaskInput] = useState("");
   // All squad-member rows for the current project, used to filter the
   // "add member" list and enforce the 1-squad-per-project rule on the client.
   const { data: projectMemberships = [] } = useQuery({
@@ -115,7 +128,7 @@ function ProjetosAdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("squad_goals").select("*").eq("project_id", goalsProject!.id).order("order_index");
       if (error) throw error;
-      return (data ?? []) as Goal[];
+      return ((data ?? []) as any[]).map((g) => ({ ...g, tasks: Array.isArray(g.tasks) ? g.tasks : [] })) as Goal[];
     },
   });
 
@@ -245,10 +258,26 @@ function ProjetosAdminPage() {
       due_date: newGoal.due_date || null,
       order_index: goalsForProject.length,
       created_by: null,
+      tasks: (newGoal.tasks ?? []) as any,
     });
     if (error) return toast.error(error.message);
     toast.success("Meta criada");
-    setNewGoal({ title: "", description: "", due_date: "" });
+    setNewGoal({ title: "", description: "", due_date: "", tasks: [] });
+    qc.invalidateQueries({ queryKey: ["admin-goals"] });
+    qc.invalidateQueries({ queryKey: ["my-project-goals"] });
+  };
+
+  const saveEditingGoal = async () => {
+    if (!editingGoal) return;
+    const { error } = await supabase.from("squad_goals").update({
+      title: editingGoal.title,
+      description: editingGoal.description || null,
+      due_date: editingGoal.due_date || null,
+      tasks: (editingGoal.tasks ?? []) as any,
+    }).eq("id", editingGoal.id);
+    if (error) return toast.error(error.message);
+    toast.success("Meta atualizada");
+    setEditingGoal(null);
     qc.invalidateQueries({ queryKey: ["admin-goals"] });
     qc.invalidateQueries({ queryKey: ["my-project-goals"] });
   };
@@ -630,10 +659,14 @@ function ProjetosAdminPage() {
                   <div className="font-semibold text-sm">{g.title}</div>
                   {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
                   {g.due_date && <div className="text-[10px] text-muted-foreground mt-1">Prazo: {new Date(g.due_date).toLocaleDateString("pt-BR")}</div>}
+                  {g.tasks?.length > 0 && (
+                    <div className="text-[10px] text-muted-foreground mt-1">{g.tasks.filter((t) => t.done).length}/{g.tasks.length} tasks</div>
+                  )}
                 </div>
-                <Button size="sm" variant="ghost" className="text-destructive shrink-0" onClick={() => removeGoal(g.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => setEditingGoal({ ...g, tasks: [...(g.tasks ?? [])] })}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => removeGoal(g.id)}><Trash2 className="h-3 w-3" /></Button>
+                </div>
               </div>
             ))}
             {goalsForProject.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhuma meta ainda.</p>}
@@ -644,8 +677,80 @@ function ProjetosAdminPage() {
             <Input placeholder="Título" value={newGoal.title ?? ""} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
             <Textarea rows={2} placeholder="Descrição (opcional)" value={newGoal.description ?? ""} onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })} />
             <Input type="date" value={newGoal.due_date ?? ""} onChange={(e) => setNewGoal({ ...newGoal, due_date: e.target.value })} />
+            <div className="space-y-1">
+              <div className="text-[10px] tracking-widest text-muted-foreground/70">TASKS (CHECKLIST)</div>
+              {(newGoal.tasks ?? []).map((t, i) => (
+                <div key={t.id} className="flex items-center gap-2">
+                  <span className="text-xs flex-1 truncate">• {t.title}</span>
+                  <Button size="sm" variant="ghost" className="text-destructive h-6 px-2" onClick={() => setNewGoal({ ...newGoal, tasks: (newGoal.tasks ?? []).filter((_, idx) => idx !== i) })}><X className="h-3 w-3" /></Button>
+                </div>
+              ))}
+              <div className="flex gap-2">
+                <Input placeholder="Nova task" value={newTaskInput} onChange={(e) => setNewTaskInput(e.target.value)} onKeyDown={(e) => {
+                  if (e.key === "Enter" && newTaskInput.trim()) {
+                    e.preventDefault();
+                    setNewGoal({ ...newGoal, tasks: [...(newGoal.tasks ?? []), { id: crypto.randomUUID(), title: newTaskInput.trim(), done: false }] });
+                    setNewTaskInput("");
+                  }
+                }} />
+                <Button type="button" variant="outline" size="sm" onClick={() => {
+                  if (!newTaskInput.trim()) return;
+                  setNewGoal({ ...newGoal, tasks: [...(newGoal.tasks ?? []), { id: crypto.randomUUID(), title: newTaskInput.trim(), done: false }] });
+                  setNewTaskInput("");
+                }}>Add</Button>
+              </div>
+            </div>
             <Button onClick={addGoal} className="w-full"><Plus className="h-3 w-3 mr-1" /> Adicionar meta</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingGoal} onOpenChange={(o) => !o && setEditingGoal(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar meta</DialogTitle>
+            <DialogDescription>Atualize título, descrição, prazo e tasks. Apenas líderes marcam tasks como concluídas.</DialogDescription>
+          </DialogHeader>
+          {editingGoal && (
+            <div className="space-y-3">
+              <div><Label>Título</Label><Input value={editingGoal.title} onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })} /></div>
+              <div><Label>Descrição</Label><Textarea rows={3} value={editingGoal.description ?? ""} onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })} /></div>
+              <div><Label>Prazo</Label><Input type="date" value={editingGoal.due_date ?? ""} onChange={(e) => setEditingGoal({ ...editingGoal, due_date: e.target.value })} /></div>
+              <div>
+                <Label>Tasks</Label>
+                <div className="space-y-1 mt-1">
+                  {editingGoal.tasks.map((t, i) => (
+                    <div key={t.id} className="flex items-center gap-2">
+                      <Input value={t.title} onChange={(e) => {
+                        const tasks = [...editingGoal.tasks];
+                        tasks[i] = { ...tasks[i], title: e.target.value };
+                        setEditingGoal({ ...editingGoal, tasks });
+                      }} className="text-xs h-8" />
+                      <Button size="sm" variant="ghost" className="text-destructive h-8 px-2" onClick={() => setEditingGoal({ ...editingGoal, tasks: editingGoal.tasks.filter((_, idx) => idx !== i) })}><X className="h-3 w-3" /></Button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <Input placeholder="Nova task" value={editTaskInput} onChange={(e) => setEditTaskInput(e.target.value)} onKeyDown={(e) => {
+                      if (e.key === "Enter" && editTaskInput.trim()) {
+                        e.preventDefault();
+                        setEditingGoal({ ...editingGoal, tasks: [...editingGoal.tasks, { id: crypto.randomUUID(), title: editTaskInput.trim(), done: false }] });
+                        setEditTaskInput("");
+                      }
+                    }} className="text-xs h-8" />
+                    <Button type="button" variant="outline" size="sm" onClick={() => {
+                      if (!editTaskInput.trim()) return;
+                      setEditingGoal({ ...editingGoal, tasks: [...editingGoal.tasks, { id: crypto.randomUUID(), title: editTaskInput.trim(), done: false }] });
+                      setEditTaskInput("");
+                    }}>Add</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingGoal(null)}>Cancelar</Button>
+            <Button onClick={saveEditingGoal}>Salvar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardShell>

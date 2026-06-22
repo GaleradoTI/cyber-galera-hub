@@ -19,6 +19,7 @@ import { Route as ParceirosRouteImport } from './routes/parceiros'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as DropsRouteImport } from './routes/drops'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -39,6 +40,7 @@ import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensa
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
 import { Route as DashboardExplorarProjetosRouteImport } from './routes/dashboard.explorar-projetos'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
+import { Route as DashboardDropsRouteImport } from './routes/dashboard.drops'
 import { Route as DashboardDepoimentosRouteImport } from './routes/dashboard.depoimentos'
 import { Route as DashboardDenunciasRouteImport } from './routes/dashboard.denuncias'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
@@ -94,6 +96,11 @@ const FaqRoute = FaqRouteImport.update({
 const EventosRoute = EventosRouteImport.update({
   id: '/eventos',
   path: '/eventos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DropsRoute = DropsRouteImport.update({
+  id: '/drops',
+  path: '/drops',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -197,6 +204,11 @@ const DashboardEventosRoute = DashboardEventosRouteImport.update({
   path: '/eventos',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardDropsRoute = DashboardDropsRouteImport.update({
+  id: '/drops',
+  path: '/drops',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardDepoimentosRoute = DashboardDepoimentosRouteImport.update({
   id: '/depoimentos',
   path: '/depoimentos',
@@ -233,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/drops': typeof DropsRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -249,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
+  '/dashboard/drops': typeof DashboardDropsRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -270,6 +284,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
+  '/drops': typeof DropsRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -286,6 +301,7 @@ export interface FileRoutesByTo {
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
+  '/dashboard/drops': typeof DashboardDropsRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -309,6 +325,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/drops': typeof DropsRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -325,6 +342,7 @@ export interface FileRoutesById {
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
+  '/dashboard/drops': typeof DashboardDropsRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/logs': typeof DashboardLogsRoute
@@ -349,6 +367,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/canais'
     | '/dashboard'
+    | '/drops'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -365,6 +384,7 @@ export interface FileRouteTypes {
     | '/dashboard/configuracoes'
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
+    | '/dashboard/drops'
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
     | '/dashboard/logs'
@@ -386,6 +406,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cadastro'
     | '/canais'
+    | '/drops'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -402,6 +423,7 @@ export interface FileRouteTypes {
     | '/dashboard/configuracoes'
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
+    | '/dashboard/drops'
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
     | '/dashboard/logs'
@@ -424,6 +446,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/canais'
     | '/dashboard'
+    | '/drops'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -440,6 +463,7 @@ export interface FileRouteTypes {
     | '/dashboard/configuracoes'
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
+    | '/dashboard/drops'
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
     | '/dashboard/logs'
@@ -463,6 +487,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   CanaisRoute: typeof CanaisRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  DropsRoute: typeof DropsRoute
   EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
@@ -547,6 +572,13 @@ declare module '@tanstack/react-router' {
       path: '/eventos'
       fullPath: '/eventos'
       preLoaderRoute: typeof EventosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drops': {
+      id: '/drops'
+      path: '/drops'
+      fullPath: '/drops'
+      preLoaderRoute: typeof DropsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -689,6 +721,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEventosRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/drops': {
+      id: '/dashboard/drops'
+      path: '/drops'
+      fullPath: '/dashboard/drops'
+      preLoaderRoute: typeof DashboardDropsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/depoimentos': {
       id: '/dashboard/depoimentos'
       path: '/depoimentos'
@@ -741,6 +780,7 @@ interface DashboardRouteChildren {
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
   DashboardDenunciasRoute: typeof DashboardDenunciasRoute
   DashboardDepoimentosRoute: typeof DashboardDepoimentosRoute
+  DashboardDropsRoute: typeof DashboardDropsRoute
   DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardExplorarProjetosRoute: typeof DashboardExplorarProjetosRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
@@ -764,6 +804,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
   DashboardDenunciasRoute: DashboardDenunciasRoute,
   DashboardDepoimentosRoute: DashboardDepoimentosRoute,
+  DashboardDropsRoute: DashboardDropsRoute,
   DashboardEventosRoute: DashboardEventosRoute,
   DashboardExplorarProjetosRoute: DashboardExplorarProjetosRoute,
   DashboardLogsRoute: DashboardLogsRoute,
@@ -789,6 +830,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   CanaisRoute: CanaisRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  DropsRoute: DropsRoute,
   EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
@@ -805,13 +847,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

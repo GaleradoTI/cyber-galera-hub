@@ -269,3 +269,21 @@ A política `UPDATE` em `public_site_settings` ganhou `WITH CHECK (is_admin_or_s
 
 ### Mobile
 Removido `background-attachment: fixed` no body abaixo de 1024 px — corrige o travamento do scroll vertical no iOS Safari na home.
+
+## Atualizações jun/2026 (parte 2)
+
+### Metas com checklist de tasks
+- `squad_goals` ganhou `description` (já existia) e **`tasks jsonb`** — cada item: `{id, title, done, done_by, done_at}`.
+- Admin/líder cria/edita metas em `/dashboard/projetos` (modal **Metas**) e gerencia a lista de tasks por meta.
+- Em `/dashboard/meus-projetos`, todos os membros do projeto veem a checklist e o progresso `x/y tasks`, mas **somente líderes do squad (ou admin/super) marcam/desmarcam**. O toggle passa pela RPC `toggle_goal_task(_goal_id, _task_id, _done)` que valida permissão e grava log `SQUAD_GOAL_TASK_DONE` / `_UNDONE`.
+
+### Logs de auditoria — sort + CSV com contexto
+- `/dashboard/logs` agora persiste **também `sortBy` e `sortDir`** no URL (além de filtros e paginação). Clique nos cabeçalhos `Quando / Usuário / Ação / Entidade` para alternar a ordenação.
+- O **CSV de exportação** carrega colunas `ctx_*` com o estado atual da entidade afetada (projetos, squads, eventos, vagas, drops, configurações públicas, etc.), buscadas em batch via `.in('id', ids)`.
+
+### Drops (lançamentos da comunidade)
+- Nova área pública `/drops` (no menu do navbar) com listagem de itens publicados, modal de detalhes (galeria, preço, data, formas de pagamento, chave Pix) e botão **"Tenho interesse"**.
+- Form de interesse aceita visitante anônimo ou logado; quando logado, pré-preenche nome/email/telefone do `profiles`. Validação Zod (nome ≥ 2, email válido, telefone 8–20 chars, nota ≤ 500).
+- Admin/super gerenciam tudo em `/dashboard/drops`: CRUD com `ImageUploader` (bucket `project-covers`, pasta `drops/{user_id}`, JPG/PNG/WebP, até 8 MB), status (`draft` / `published` / `closed`), múltiplas imagens, formas de pagamento (Pix/Crédito/Débito/Transferência/Dinheiro).
+- Lista de interessados (modal) com **export CSV** dedicado.
+- Tabelas: `drops` e `drop_interests`, ambas com RLS + GRANTs apropriados e triggers `log_drop_changes` / `log_drop_interest` populando `audit_logs` com as entidades `drops` e `drop_interests`.
