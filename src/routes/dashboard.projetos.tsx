@@ -128,7 +128,7 @@ function ProjetosAdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("squad_goals").select("*").eq("project_id", goalsProject!.id).order("order_index");
       if (error) throw error;
-      return (data ?? []) as Goal[];
+      return ((data ?? []) as any[]).map((g) => ({ ...g, tasks: Array.isArray(g.tasks) ? g.tasks : [] })) as Goal[];
     },
   });
 
