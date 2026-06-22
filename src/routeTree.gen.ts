@@ -19,6 +19,7 @@ import { Route as ParceirosRouteImport } from './routes/parceiros'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as DropsRouteImport } from './routes/drops'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
@@ -94,6 +95,11 @@ const FaqRoute = FaqRouteImport.update({
 const EventosRoute = EventosRouteImport.update({
   id: '/eventos',
   path: '/eventos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DropsRoute = DropsRouteImport.update({
+  id: '/drops',
+  path: '/drops',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/drops': typeof DropsRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
+  '/drops': typeof DropsRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -309,6 +317,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/drops': typeof DropsRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -349,6 +358,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/canais'
     | '/dashboard'
+    | '/drops'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cadastro'
     | '/canais'
+    | '/drops'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/canais'
     | '/dashboard'
+    | '/drops'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -463,6 +475,7 @@ export interface RootRouteChildren {
   CadastroRoute: typeof CadastroRoute
   CanaisRoute: typeof CanaisRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  DropsRoute: typeof DropsRoute
   EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
@@ -547,6 +560,13 @@ declare module '@tanstack/react-router' {
       path: '/eventos'
       fullPath: '/eventos'
       preLoaderRoute: typeof EventosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drops': {
+      id: '/drops'
+      path: '/drops'
+      fullPath: '/drops'
+      preLoaderRoute: typeof DropsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -789,6 +809,7 @@ const rootRouteChildren: RootRouteChildren = {
   CadastroRoute: CadastroRoute,
   CanaisRoute: CanaisRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  DropsRoute: DropsRoute,
   EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
