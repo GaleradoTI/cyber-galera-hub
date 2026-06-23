@@ -378,15 +378,22 @@ function MeusProjetosPage() {
                       return (
                         <div key={g.id} className="rounded-lg border border-border/40 p-3 bg-muted/10">
                           <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="text-sm font-semibold">{g.title}</div>
-                              {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
+                            <div className="min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => setOpenGoal(g)}
+                                className="text-sm font-semibold text-left hover:text-primary transition truncate"
+                              >
+                                {g.title}
+                              </button>
+                              {g.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{g.description}</p>}
                               {g.due_date && (
                                 <div className={`text-[10px] mt-1 ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
                                   Prazo: {new Date(g.due_date).toLocaleDateString("pt-BR")} {overdue && "(atrasado)"}
                                 </div>
                               )}
                             </div>
+                            <Button size="sm" variant="ghost" onClick={() => setOpenGoal(g)} className="shrink-0 h-7 text-[10px]">Detalhes</Button>
                           </div>
                           {g.tasks.length > 0 && (
                             <div className="mt-2 space-y-1">
