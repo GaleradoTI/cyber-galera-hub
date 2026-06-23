@@ -116,9 +116,15 @@ export function DashboardShell({ children, title, description }: { children: Rea
       items: [
         { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
         { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
+        { to: "/dashboard/mensagens", label: "Mensagens", icon: MessageSquare, show: true },
+      ],
+    },
+    {
+      heading: "COMUNIDADE",
+      items: [
         { to: "/dashboard/meus-projetos", label: "Meus Projetos", icon: FolderKanban, show: true },
         { to: "/dashboard/explorar-projetos", label: "Explorar Projetos", icon: Globe, show: true },
-        { to: "/dashboard/mensagens", label: "Mensagens", icon: MessageSquare, show: true },
+        { to: "/drops", label: "Drops", icon: ShoppingBag, show: true },
         { to: "/dashboard/depoimentos", label: "Depoimentos", icon: MessageSquareQuote, show: true },
       ],
     },
