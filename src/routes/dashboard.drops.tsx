@@ -274,6 +274,32 @@ function DropsAdminPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteOf} onOpenChange={(o) => !o && setDeleteOf(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir "{deleteOf?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>Esta ação não pode ser desfeita. O drop será removido do site público imediatamente.</p>
+                <p>
+                  <strong className="text-destructive">
+                    {deleteCount === null ? "Verificando interesses…" : `${deleteCount} interessado(s) cadastrado(s)`}
+                  </strong>{" "}
+                  serão removidos junto com o drop e perderemos o contato deles.
+                </p>
+                <p className="text-xs text-muted-foreground">Se quiser preservar o histórico, marque o drop como <em>Encerrado</em> em vez de excluir.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardShell>
   );
 }
