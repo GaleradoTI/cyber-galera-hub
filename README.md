@@ -287,3 +287,10 @@ Removido `background-attachment: fixed` no body abaixo de 1024 px — corrige o 
 - Admin/super gerenciam tudo em `/dashboard/drops`: CRUD com `ImageUploader` (bucket `project-covers`, pasta `drops/{user_id}`, JPG/PNG/WebP, até 8 MB), status (`draft` / `published` / `closed`), múltiplas imagens, formas de pagamento (Pix/Crédito/Débito/Transferência/Dinheiro).
 - Lista de interessados (modal) com **export CSV** dedicado.
 - Tabelas: `drops` e `drop_interests`, ambas com RLS + GRANTs apropriados e triggers `log_drop_changes` / `log_drop_interest` populando `audit_logs` com as entidades `drops` e `drop_interests`.
+
+### Ajustes (jun/2026 — continuação)
+- **Sidebar do dashboard reorganizada**: novo grupo `COMUNIDADE` agrupa Meus Projetos, Explorar Projetos, Drops e Depoimentos para todos os perfis. Drops agora aparece no menu de qualquer membro (visualização) e o painel admin permanece restrito em `ADMINISTRAÇÃO`.
+- **Modal de detalhes da meta** em `/dashboard/meus-projetos`: clique no título ou em "Detalhes" para abrir descrição completa, prazo e checklist. Líderes (e admins) marcam as tasks; membros só visualizam o progresso.
+- **Exclusão segura de Drops**: substituído `confirm()` por `AlertDialog` que mostra o número de interessados cadastrados que serão perdidos e sugere usar o status *Encerrado* como alternativa.
+- **Validações reforçadas em Drops**: preço ≥ 0, data de lançamento válida, chave Pix obrigatória quando "Pix" estiver entre as formas de pagamento, telefone do interesse com máscara `(DD) NNNNN-NNNN` e regex de caracteres permitidos.
+- **RLS revisada**: `drops` (admin escreve, público lê apenas publicados; admin vê tudo) e `drop_interests` (qualquer pessoa cria; usuário lê só os próprios; admin lê/edita/exclui todos) — sem alterações necessárias.
