@@ -42,9 +42,20 @@ type Drop = {
 const interestSchema = z.object({
   full_name: z.string().trim().min(2, "Nome muito curto").max(100),
   email: z.string().trim().email("Email inválido").max(255),
-  phone: z.string().trim().min(8, "Telefone inválido").max(20),
+  phone: z.string().trim()
+    .min(10, "Telefone deve ter DDD + número")
+    .max(20)
+    .regex(/^[\d\s()+-]+$/, "Use apenas números, espaços e ( ) + -"),
   note: z.string().trim().max(500).optional().or(z.literal("")),
 });
+
+const formatPhone = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
 
 const fmtPrice = (cents: number, currency = "BRL") =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(cents / 100);
@@ -220,7 +231,7 @@ function DropsPublicPage() {
           <div className="space-y-3">
             <div><Label>Nome completo</Label><Input maxLength={100} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
             <div><Label>Email</Label><Input type="email" maxLength={255} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Telefone</Label><Input maxLength={20} placeholder="(11) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div><Label>Telefone</Label><Input inputMode="tel" maxLength={20} placeholder="(11) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} /></div>
             <div><Label>Observação (opcional)</Label><Textarea rows={2} maxLength={500} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></div>
           </div>
           <DialogFooter>
