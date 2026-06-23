@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { downloadCSV } from "@/lib/csv";
@@ -39,6 +40,8 @@ function DropsAdminPage() {
   const { user, isAdmin, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Drop> | null>(null);
   const [interestsOf, setInterestsOf] = useState<Drop | null>(null);
+  const [deleteOf, setDeleteOf] = useState<Drop | null>(null);
+  const [deleteCount, setDeleteCount] = useState<number | null>(null);
 
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
@@ -67,6 +70,14 @@ function DropsAdminPage() {
   const save = async () => {
     if (!editing) return;
     if (!editing.title?.trim()) return toast.error("Título obrigatório");
+    if ((editing.price_cents ?? 0) < 0) return toast.error("Preço inválido");
+    if (editing.launch_date) {
+      const d = new Date(editing.launch_date);
+      if (Number.isNaN(d.getTime())) return toast.error("Data de lançamento inválida");
+    }
+    if ((editing.payment_methods ?? []).includes("Pix") && !editing.pix_key?.trim()) {
+      return toast.error("Informe a chave Pix quando o pagamento incluir Pix");
+    }
     const payload = {
       title: editing.title!.trim(),
       description: editing.description?.trim() || null,
@@ -89,11 +100,22 @@ function DropsAdminPage() {
     qc.invalidateQueries({ queryKey: ["public-drops"] });
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("Excluir drop?")) return;
-    const { error } = await supabase.from("drops").delete().eq("id", id);
+  const askRemove = async (d: Drop) => {
+    setDeleteOf(d);
+    setDeleteCount(null);
+    const { count } = await supabase
+      .from("drop_interests")
+      .select("id", { count: "exact", head: true })
+      .eq("drop_id", d.id);
+    setDeleteCount(count ?? 0);
+  };
+
+  const confirmRemove = async () => {
+    if (!deleteOf) return;
+    const { error } = await supabase.from("drops").delete().eq("id", deleteOf.id);
     if (error) return toast.error(error.message);
     toast.success("Drop excluído");
+    setDeleteOf(null);
     qc.invalidateQueries({ queryKey: ["admin-drops"] });
     qc.invalidateQueries({ queryKey: ["public-drops"] });
   };
@@ -150,7 +172,7 @@ function DropsAdminPage() {
               <div className="flex gap-1 mt-3">
                 <Button size="sm" variant="ghost" onClick={() => setInterestsOf(d)}><Eye className="h-3 w-3" /></Button>
                 <Button size="sm" variant="ghost" onClick={() => setEditing({ ...d })}><Pencil className="h-3 w-3" /></Button>
-                <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => remove(d.id)}><Trash2 className="h-3 w-3" /></Button>
+                <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => askRemove(d)}><Trash2 className="h-3 w-3" /></Button>
               </div>
             </div>
           </div>
@@ -252,6 +274,32 @@ function DropsAdminPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteOf} onOpenChange={(o) => !o && setDeleteOf(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir "{deleteOf?.title}"?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>Esta ação não pode ser desfeita. O drop será removido do site público imediatamente.</p>
+                <p>
+                  <strong className="text-destructive">
+                    {deleteCount === null ? "Verificando interesses…" : `${deleteCount} interessado(s) cadastrado(s)`}
+                  </strong>{" "}
+                  serão removidos junto com o drop e perderemos o contato deles.
+                </p>
+                <p className="text-xs text-muted-foreground">Se quiser preservar o histórico, marque o drop como <em>Encerrado</em> em vez de excluir.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemove} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir definitivamente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardShell>
   );
 }

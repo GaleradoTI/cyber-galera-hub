@@ -42,6 +42,7 @@ function MeusProjetosPage() {
   const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
   const [postText, setPostText] = useState<Record<string, string>>({});
   const [openMember, setOpenMember] = useState<{ profile: MemberProfile; role?: string; squadName?: string } | null>(null);
+  const [openGoal, setOpenGoal] = useState<Goal | null>(null);
 
   // squads I belong to
   const { data: mySquadMembership = [] } = useQuery({
@@ -377,15 +378,22 @@ function MeusProjetosPage() {
                       return (
                         <div key={g.id} className="rounded-lg border border-border/40 p-3 bg-muted/10">
                           <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="text-sm font-semibold">{g.title}</div>
-                              {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
+                            <div className="min-w-0">
+                              <button
+                                type="button"
+                                onClick={() => setOpenGoal(g)}
+                                className="text-sm font-semibold text-left hover:text-primary transition truncate"
+                              >
+                                {g.title}
+                              </button>
+                              {g.description && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{g.description}</p>}
                               {g.due_date && (
                                 <div className={`text-[10px] mt-1 ${overdue ? "text-destructive" : "text-muted-foreground"}`}>
                                   Prazo: {new Date(g.due_date).toLocaleDateString("pt-BR")} {overdue && "(atrasado)"}
                                 </div>
                               )}
                             </div>
+                            <Button size="sm" variant="ghost" onClick={() => setOpenGoal(g)} className="shrink-0 h-7 text-[10px]">Detalhes</Button>
                           </div>
                           {g.tasks.length > 0 && (
                             <div className="mt-2 space-y-1">
@@ -547,6 +555,56 @@ function MeusProjetosPage() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditingSquad(null)}>Cancelar</Button>
             <Button onClick={saveSquad}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!openGoal} onOpenChange={(o) => !o && setOpenGoal(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Target className="h-4 w-4 text-primary" /> {openGoal?.title}</DialogTitle>
+          </DialogHeader>
+          {openGoal && (
+            <div className="space-y-3">
+              {openGoal.description ? (
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{openGoal.description}</p>
+              ) : (
+                <p className="text-xs italic text-muted-foreground/70">Sem descrição.</p>
+              )}
+              {openGoal.due_date && (
+                <div className="text-xs"><span className="text-muted-foreground">Prazo:</span> {new Date(openGoal.due_date).toLocaleDateString("pt-BR")}</div>
+              )}
+              <div>
+                <div className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground/70 mb-2">
+                  CHECKLIST — {openGoal.tasks.filter((t) => t.done).length}/{openGoal.tasks.length}
+                </div>
+                {openGoal.tasks.length === 0 ? (
+                  <p className="text-xs italic text-muted-foreground/70">Nenhuma task cadastrada.</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {openGoal.tasks.map((t) => {
+                      const projectSquadIds = squads.filter((s) => s.project_id === openGoal.project_id).map((s) => s.id);
+                      const canManage = projectSquadIds.some((sid) => isSquadLeader(sid));
+                      return (
+                        <li key={t.id} className="flex items-start gap-2 text-xs">
+                          <input
+                            type="checkbox"
+                            checked={t.done}
+                            disabled={!canManage}
+                            onChange={() => toggleTask(openGoal, t)}
+                            className="accent-primary mt-0.5"
+                          />
+                          <span className={t.done ? "line-through text-muted-foreground" : ""}>{t.title}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpenGoal(null)}>Fechar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
