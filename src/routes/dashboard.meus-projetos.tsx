@@ -42,6 +42,7 @@ function MeusProjetosPage() {
   const [editingSquad, setEditingSquad] = useState<Squad | null>(null);
   const [postText, setPostText] = useState<Record<string, string>>({});
   const [openMember, setOpenMember] = useState<{ profile: MemberProfile; role?: string; squadName?: string } | null>(null);
+  const [openGoal, setOpenGoal] = useState<Goal | null>(null);
 
   // squads I belong to
   const { data: mySquadMembership = [] } = useQuery({
