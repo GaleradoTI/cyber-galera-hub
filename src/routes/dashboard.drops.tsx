@@ -16,6 +16,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { downloadCSV } from "@/lib/csv";
 
+const formatPhone = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 2) return d;
+  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+};
+
 export const Route = createFileRoute("/dashboard/drops")({ component: DropsAdminPage });
 
 type Drop = {
@@ -42,6 +50,7 @@ function DropsAdminPage() {
   const [interestsOf, setInterestsOf] = useState<Drop | null>(null);
   const [deleteOf, setDeleteOf] = useState<Drop | null>(null);
   const [deleteCount, setDeleteCount] = useState<number | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
@@ -69,15 +78,24 @@ function DropsAdminPage() {
 
   const save = async () => {
     if (!editing) return;
-    if (!editing.title?.trim()) return toast.error("Título obrigatório");
-    if ((editing.price_cents ?? 0) < 0) return toast.error("Preço inválido");
+    const errs: Record<string, string> = {};
+    if (!editing.title?.trim()) errs.title = "Título obrigatório";
+    else if (editing.title.trim().length < 3) errs.title = "Use ao menos 3 caracteres";
+    if ((editing.price_cents ?? 0) < 0) errs.price = "Preço não pode ser negativo";
+    if ((editing.price_cents ?? 0) > 99999999) errs.price = "Preço acima do máximo permitido";
     if (editing.launch_date) {
       const d = new Date(editing.launch_date);
-      if (Number.isNaN(d.getTime())) return toast.error("Data de lançamento inválida");
+      if (Number.isNaN(d.getTime())) errs.launch_date = "Data inválida";
     }
-    if ((editing.payment_methods ?? []).includes("Pix") && !editing.pix_key?.trim()) {
-      return toast.error("Informe a chave Pix quando o pagamento incluir Pix");
+    const methods = editing.payment_methods ?? [];
+    if (methods.length === 0) errs.payment = "Selecione ao menos uma forma de pagamento";
+    if (methods.includes("Pix")) {
+      const pix = (editing.pix_key ?? "").trim();
+      if (!pix) errs.pix_key = "Informe a chave Pix";
+      else if (pix.length < 4) errs.pix_key = "Chave Pix muito curta";
     }
+    setErrors(errs);
+    if (Object.keys(errs).length) return toast.error("Corrija os campos destacados");
     const payload = {
       title: editing.title!.trim(),
       description: editing.description?.trim() || null,
@@ -96,6 +114,7 @@ function DropsAdminPage() {
     if (error) return toast.error(error.message);
     toast.success(editing.id ? "Drop atualizado" : "Drop criado");
     setEditing(null);
+    setErrors({});
     qc.invalidateQueries({ queryKey: ["admin-drops"] });
     qc.invalidateQueries({ queryKey: ["public-drops"] });
   };
@@ -112,9 +131,10 @@ function DropsAdminPage() {
 
   const confirmRemove = async () => {
     if (!deleteOf) return;
+    const impact = deleteCount ?? 0;
     const { error } = await supabase.from("drops").delete().eq("id", deleteOf.id);
     if (error) return toast.error(error.message);
-    toast.success("Drop excluído");
+    toast.success(`Drop excluído · ${impact} interessado(s) removido(s)`);
     setDeleteOf(null);
     qc.invalidateQueries({ queryKey: ["admin-drops"] });
     qc.invalidateQueries({ queryKey: ["public-drops"] });
