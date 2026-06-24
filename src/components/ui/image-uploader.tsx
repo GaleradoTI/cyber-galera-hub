@@ -73,6 +73,17 @@ export function ImageUploader({
     const acceptedNames = accept.map((a) => a.split("/")[1]).join(", ").toUpperCase();
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
     const limitMB = Math.round(maxBytes / (1024 * 1024));
+    // Ensure we have an active session — Storage RLS depends on auth.uid()
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      await supabase.auth.refreshSession();
+      const { data: again } = await supabase.auth.getSession();
+      if (!again.session) {
+        return toast.error("Sessão expirada", {
+          description: "Faça login novamente para enviar imagens.",
+        });
+      }
+    }
     if (!accept.includes(file.type)) {
       return toast.error("Formato inválido", {
         description: `Aceitos: ${acceptedNames}. Recebido: ${file.type || "desconhecido"}.`,
@@ -113,8 +124,10 @@ export function ImageUploader({
       if (upErr) {
         const msg = upErr.message || "";
         let friendly = msg;
-        if (/row-level security|not authorized|policy/i.test(msg)) {
-          friendly = `Sem permissão para enviar nesta pasta (${bucket}/${folder}). Verifique se você está autenticado e se o caminho começa com a pasta correta. Detalhe técnico: ${msg}`;
+        if (/jwt|invalid.*token|unauthorized|not authenticated|aud claim/i.test(msg)) {
+          friendly = `Sessão inválida. Saia e entre novamente para reenviar a imagem. Detalhe: ${msg}`;
+        } else if (/row-level security|not authorized|policy/i.test(msg)) {
+          friendly = `Sem permissão para enviar em ${bucket}/${folder}. Apenas admin/super admin podem enviar imagens de drops. Detalhe: ${msg}`;
         } else if (/payload too large|413/.test(msg)) {
           friendly = `Arquivo excede o limite do servidor (${limitMB}MB).`;
         } else if (/mime|content.?type/i.test(msg)) {

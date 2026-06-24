@@ -66,6 +66,7 @@ function DropsPublicPage() {
   const [interestOpen, setInterestOpen] = useState<Drop | null>(null);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", note: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const { data: drops = [], isLoading } = useQuery({
     queryKey: ["public-drops"],
@@ -104,8 +105,15 @@ function DropsPublicPage() {
     if (!interestOpen) return;
     const parsed = interestSchema.safeParse(form);
     if (!parsed.success) {
-      return toast.error(parsed.error.issues[0].message);
+      const errs: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "form");
+        if (!errs[key]) errs[key] = issue.message;
+      }
+      setFieldErrors(errs);
+      return toast.error("Corrija os campos destacados");
     }
+    setFieldErrors({});
     setSubmitting(true);
     const { error } = await supabase.from("drop_interests").insert({
       drop_id: interestOpen.id,
@@ -120,6 +128,7 @@ function DropsPublicPage() {
     toast.success("Interesse registrado! Em breve entraremos em contato.");
     setInterestOpen(null);
     setForm({ full_name: "", email: "", phone: "", note: "" });
+    setFieldErrors({});
   };
 
   return (
@@ -229,10 +238,26 @@ function DropsPublicPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div><Label>Nome completo</Label><Input maxLength={100} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} /></div>
-            <div><Label>Email</Label><Input type="email" maxLength={255} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Telefone</Label><Input inputMode="tel" maxLength={20} placeholder="(11) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} /></div>
-            <div><Label>Observação (opcional)</Label><Textarea rows={2} maxLength={500} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></div>
+            <div>
+              <Label>Nome completo</Label>
+              <Input maxLength={100} value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+              {fieldErrors.full_name && <p className="text-xs text-destructive mt-1">{fieldErrors.full_name}</p>}
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input type="email" maxLength={255} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              {fieldErrors.email && <p className="text-xs text-destructive mt-1">{fieldErrors.email}</p>}
+            </div>
+            <div>
+              <Label>Telefone</Label>
+              <Input inputMode="tel" maxLength={20} placeholder="(11) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} />
+              {fieldErrors.phone && <p className="text-xs text-destructive mt-1">{fieldErrors.phone}</p>}
+            </div>
+            <div>
+              <Label>Observação (opcional)</Label>
+              <Textarea rows={2} maxLength={500} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              {fieldErrors.note && <p className="text-xs text-destructive mt-1">{fieldErrors.note}</p>}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setInterestOpen(null)}>Cancelar</Button>

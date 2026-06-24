@@ -42,6 +42,7 @@ function DropsAdminPage() {
   const [interestsOf, setInterestsOf] = useState<Drop | null>(null);
   const [deleteOf, setDeleteOf] = useState<Drop | null>(null);
   const [deleteCount, setDeleteCount] = useState<number | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
@@ -69,15 +70,24 @@ function DropsAdminPage() {
 
   const save = async () => {
     if (!editing) return;
-    if (!editing.title?.trim()) return toast.error("Título obrigatório");
-    if ((editing.price_cents ?? 0) < 0) return toast.error("Preço inválido");
+    const errs: Record<string, string> = {};
+    if (!editing.title?.trim()) errs.title = "Título obrigatório";
+    else if (editing.title.trim().length < 3) errs.title = "Use ao menos 3 caracteres";
+    if ((editing.price_cents ?? 0) < 0) errs.price = "Preço não pode ser negativo";
+    if ((editing.price_cents ?? 0) > 99999999) errs.price = "Preço acima do máximo permitido";
     if (editing.launch_date) {
       const d = new Date(editing.launch_date);
-      if (Number.isNaN(d.getTime())) return toast.error("Data de lançamento inválida");
+      if (Number.isNaN(d.getTime())) errs.launch_date = "Data inválida";
     }
-    if ((editing.payment_methods ?? []).includes("Pix") && !editing.pix_key?.trim()) {
-      return toast.error("Informe a chave Pix quando o pagamento incluir Pix");
+    const methods = editing.payment_methods ?? [];
+    if (methods.length === 0) errs.payment = "Selecione ao menos uma forma de pagamento";
+    if (methods.includes("Pix")) {
+      const pix = (editing.pix_key ?? "").trim();
+      if (!pix) errs.pix_key = "Informe a chave Pix";
+      else if (pix.length < 4) errs.pix_key = "Chave Pix muito curta";
     }
+    setErrors(errs);
+    if (Object.keys(errs).length) return toast.error("Corrija os campos destacados");
     const payload = {
       title: editing.title!.trim(),
       description: editing.description?.trim() || null,
@@ -96,6 +106,7 @@ function DropsAdminPage() {
     if (error) return toast.error(error.message);
     toast.success(editing.id ? "Drop atualizado" : "Drop criado");
     setEditing(null);
+    setErrors({});
     qc.invalidateQueries({ queryKey: ["admin-drops"] });
     qc.invalidateQueries({ queryKey: ["public-drops"] });
   };
@@ -112,9 +123,10 @@ function DropsAdminPage() {
 
   const confirmRemove = async () => {
     if (!deleteOf) return;
+    const impact = deleteCount ?? 0;
     const { error } = await supabase.from("drops").delete().eq("id", deleteOf.id);
     if (error) return toast.error(error.message);
-    toast.success("Drop excluído");
+    toast.success(`Drop excluído · ${impact} interessado(s) removido(s)`);
     setDeleteOf(null);
     qc.invalidateQueries({ queryKey: ["admin-drops"] });
     qc.invalidateQueries({ queryKey: ["public-drops"] });
@@ -188,11 +200,23 @@ function DropsAdminPage() {
           </DialogHeader>
           {editing && (
             <div className="space-y-3">
-              <div><Label>Título</Label><Input maxLength={120} value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></div>
+              <div>
+                <Label>Título</Label>
+                <Input maxLength={120} value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+                {errors.title && <p className="text-xs text-destructive mt-1">{errors.title}</p>}
+              </div>
               <div><Label>Descrição</Label><Textarea rows={4} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-2">
-                <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={((editing.price_cents ?? 0) / 100).toString()} onChange={(e) => setEditing({ ...editing, price_cents: Math.round((parseFloat(e.target.value) || 0) * 100) })} /></div>
-                <div><Label>Data de lançamento</Label><Input type="date" value={editing.launch_date ? String(editing.launch_date).slice(0, 10) : ""} onChange={(e) => setEditing({ ...editing, launch_date: e.target.value || null })} /></div>
+                <div>
+                  <Label>Preço (R$)</Label>
+                  <Input type="number" min={0} step="0.01" value={((editing.price_cents ?? 0) / 100).toString()} onChange={(e) => setEditing({ ...editing, price_cents: Math.round((parseFloat(e.target.value) || 0) * 100) })} />
+                  {errors.price && <p className="text-xs text-destructive mt-1">{errors.price}</p>}
+                </div>
+                <div>
+                  <Label>Data de lançamento</Label>
+                  <Input type="date" value={editing.launch_date ? String(editing.launch_date).slice(0, 10) : ""} onChange={(e) => setEditing({ ...editing, launch_date: e.target.value || null })} />
+                  {errors.launch_date && <p className="text-xs text-destructive mt-1">{errors.launch_date}</p>}
+                </div>
               </div>
               <div>
                 <Label>Status</Label>
@@ -205,7 +229,11 @@ function DropsAdminPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Chave Pix</Label><Input value={editing.pix_key ?? ""} onChange={(e) => setEditing({ ...editing, pix_key: e.target.value })} /></div>
+              <div>
+                <Label>Chave Pix {(editing.payment_methods ?? []).includes("Pix") && <span className="text-destructive">*</span>}</Label>
+                <Input placeholder="CPF, email, telefone ou chave aleatória" value={editing.pix_key ?? ""} onChange={(e) => setEditing({ ...editing, pix_key: e.target.value })} />
+                {errors.pix_key && <p className="text-xs text-destructive mt-1">{errors.pix_key}</p>}
+              </div>
               <div>
                 <Label>Formas de pagamento</Label>
                 <div className="flex flex-wrap gap-1 mt-1">
@@ -219,6 +247,7 @@ function DropsAdminPage() {
                     );
                   })}
                 </div>
+                {errors.payment && <p className="text-xs text-destructive mt-1">{errors.payment}</p>}
               </div>
               <div>
                 <Label>Imagens</Label>
