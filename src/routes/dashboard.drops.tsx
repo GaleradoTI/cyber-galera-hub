@@ -208,11 +208,23 @@ function DropsAdminPage() {
           </DialogHeader>
           {editing && (
             <div className="space-y-3">
-              <div><Label>Título</Label><Input maxLength={120} value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></div>
+              <div>
+                <Label>Título</Label>
+                <Input maxLength={120} value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+                {errors.title && <p className="text-xs text-destructive mt-1">{errors.title}</p>}
+              </div>
               <div><Label>Descrição</Label><Textarea rows={4} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></div>
               <div className="grid grid-cols-2 gap-2">
-                <div><Label>Preço (R$)</Label><Input type="number" step="0.01" value={((editing.price_cents ?? 0) / 100).toString()} onChange={(e) => setEditing({ ...editing, price_cents: Math.round((parseFloat(e.target.value) || 0) * 100) })} /></div>
-                <div><Label>Data de lançamento</Label><Input type="date" value={editing.launch_date ? String(editing.launch_date).slice(0, 10) : ""} onChange={(e) => setEditing({ ...editing, launch_date: e.target.value || null })} /></div>
+                <div>
+                  <Label>Preço (R$)</Label>
+                  <Input type="number" min={0} step="0.01" value={((editing.price_cents ?? 0) / 100).toString()} onChange={(e) => setEditing({ ...editing, price_cents: Math.round((parseFloat(e.target.value) || 0) * 100) })} />
+                  {errors.price && <p className="text-xs text-destructive mt-1">{errors.price}</p>}
+                </div>
+                <div>
+                  <Label>Data de lançamento</Label>
+                  <Input type="date" value={editing.launch_date ? String(editing.launch_date).slice(0, 10) : ""} onChange={(e) => setEditing({ ...editing, launch_date: e.target.value || null })} />
+                  {errors.launch_date && <p className="text-xs text-destructive mt-1">{errors.launch_date}</p>}
+                </div>
               </div>
               <div>
                 <Label>Status</Label>
@@ -225,7 +237,11 @@ function DropsAdminPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Chave Pix</Label><Input value={editing.pix_key ?? ""} onChange={(e) => setEditing({ ...editing, pix_key: e.target.value })} /></div>
+              <div>
+                <Label>Chave Pix {(editing.payment_methods ?? []).includes("Pix") && <span className="text-destructive">*</span>}</Label>
+                <Input placeholder="CPF, email, telefone ou chave aleatória" value={editing.pix_key ?? ""} onChange={(e) => setEditing({ ...editing, pix_key: e.target.value })} />
+                {errors.pix_key && <p className="text-xs text-destructive mt-1">{errors.pix_key}</p>}
+              </div>
               <div>
                 <Label>Formas de pagamento</Label>
                 <div className="flex flex-wrap gap-1 mt-1">
@@ -239,6 +255,7 @@ function DropsAdminPage() {
                     );
                   })}
                 </div>
+                {errors.payment && <p className="text-xs text-destructive mt-1">{errors.payment}</p>}
               </div>
               <div>
                 <Label>Imagens</Label>
