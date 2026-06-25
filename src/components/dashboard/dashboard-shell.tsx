@@ -30,6 +30,7 @@ import {
   Flag,
   Briefcase as BriefcaseIcon,
   ShoppingBag,
+  UploadCloud,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -163,6 +164,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
       heading: "SUPER ADMIN",
       items: [
         { to: "/dashboard/cargos", label: "Cargos / Badges", icon: Award, show: isSuperAdmin },
+        { to: "/dashboard/upload-config", label: "Config. de Upload", icon: UploadCloud, show: isSuperAdmin },
       ],
     },
   ];

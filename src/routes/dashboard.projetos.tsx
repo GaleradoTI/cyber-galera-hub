@@ -454,6 +454,7 @@ function ProjetosAdminPage() {
               onChange={(url) => setEditing({ ...editing!, cover_url: url })}
               label="Capa do projeto"
               aspect="video"
+              policyKey="project_covers"
             />
             <ImageUploader
               bucket="project-covers"
@@ -465,6 +466,7 @@ function ProjetosAdminPage() {
               resizeMax={1920}
               minWidth={1200}
               maxBytes={8 * 1024 * 1024}
+              policyKey="project_covers"
               hint="JPG/PNG/WebP até 8MB · redimensionado para 1920px · mínimo 1200px de largura"
             />
             <p className="text-[10px] text-muted-foreground -mt-1">
