@@ -1439,6 +1439,19 @@ export type Database = {
         Args: { _squad_id: string; _user_id: string }
         Returns: boolean
       }
+      log_drop_image_upload_attempt: {
+        Args: {
+          _bucket: string
+          _drop_id: string
+          _file_name?: string
+          _file_size?: number
+          _file_type?: string
+          _path: string
+          _reason?: string
+          _status: string
+        }
+        Returns: undefined
+      }
       promote_user_to_super_admin: { Args: { _email: string }; Returns: string }
       register_event_interest: { Args: { _event_id: string }; Returns: Json }
       resolve_report: {
