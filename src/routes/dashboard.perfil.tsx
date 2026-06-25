@@ -164,6 +164,7 @@ function PerfilPage() {
                 onChange={(url) => setForm({ ...form, avatar_url: url })}
                 label="Foto de perfil"
                 aspect="square"
+                policyKey="avatars"
               />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">

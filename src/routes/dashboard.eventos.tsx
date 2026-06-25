@@ -254,6 +254,7 @@ function EventosAdminPage() {
                   aspect="wide"
                   resizeMax={1920}
                   maxBytes={8 * 1024 * 1024}
+                  policyKey="event_banners"
                   hint="JPG/PNG/WebP até 8MB · redimensionado para 1920px"
                 />
               </div>

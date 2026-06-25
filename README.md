@@ -259,6 +259,31 @@ Todos os filtros de `/dashboard/logs` (ação, entidade, usuário, busca, perío
 ### Toasts de aprovação/recusa
 O líder de squad recebe `toast.promise` (Aprovando… → Aprovado/Recusado/Espera) com o nome do solicitante e do squad.
 
+## Rodada 25/06 — Upload de Drops, Diagnóstico RLS e Política Global de Upload
+
+### Upload de imagem de drop
+- O `ImageUploader` agora trata `403 / row-level security` com mensagem clara: indica o bucket + prefixo (`project-covers/drops/<user>/…`), confirma que é restrito a admin/super admin e sugere reenvio após verificar a sessão.
+- Toda tentativa de upload em `/dashboard/drops` (sucesso ou falha) gera um log no audit_logs com a função `log_drop_image_upload_attempt` (entidade `drop_image_uploads`, ações `DROP_IMAGE_UPLOAD_SUCCESS` / `DROP_IMAGE_UPLOAD_FAILED`). O motivo do erro, caminho, tamanho e tipo MIME ficam na descrição para conferir em `/dashboard/logs`.
+- Migração reforça a policy de storage (`Admin envia/atualiza/remove imagem de drop`) usando a função `is_admin_or_super` em todas as cláusulas (`USING` e `WITH CHECK`).
+
+### Tela de diagnóstico (admin)
+No editor de drops, ao lado de "Adicionar imagem", existe agora um botão **Diagnóstico** que mostra bucket, prefixo, caminho final esperado, tipos aceitos, tamanho máximo, resize ativo e a regra de RLS — útil para descobrir por que um upload pode estar sendo negado **antes** de tentar.
+
+### Política global de upload (SUPER_ADMIN)
+Nova página `/dashboard/upload-config` (visível só para SUPER_ADMIN) edita a chave `upload_policy` em `public_site_settings`. Define, por contexto (defaults, avatars, project_covers, event_banners, drop_images, favicon, documents):
+- Tamanho máximo (MB)
+- Tipos MIME aceitos (PDF/JPEG/PNG/WebP/SVG/ICO/GIF)
+- Resize automático (px)
+
+O `ImageUploader` busca esta política em runtime via React Query (chave `upload-policy`, stale 60s), aplicando os limites a avatar, capa/banner de projeto, banner de evento e drops. Mudanças se propagam ao salvar.
+
+### RLS adicional
+- `public_site_settings.UPDATE` ganhou condicional: a chave `upload_policy` só pode ser alterada por SUPER_ADMIN; demais settings continuam admin/super.
+- `audit_logs` recebeu policies/grants explícitos para INSERT por usuário autenticado (com `auth.uid() = user_id`).
+
+### Sidebar
+Item "Config. de Upload" adicionado na seção SUPER ADMIN do menu lateral.
+
 ### Upload do banner de evento
 - Bucket: `project-covers`, pasta obrigatória: `events/...`.
 - Limites: JPG/PNG/WebP, máx 8 MB, otimização automática para 1600px.

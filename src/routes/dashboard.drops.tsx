@@ -267,7 +267,11 @@ function DropsAdminPage() {
                     label="Adicionar imagem"
                     aspect="square"
                     maxBytes={8 * 1024 * 1024}
-                    hint="JPG/PNG/WebP até 8MB. Imagens em sequência viram a galeria."
+                    policyKey="drop_images"
+                    auditEntity="drop_image"
+                    auditEntityId={editing.id ?? null}
+                    showDiagnostics
+                    hint="Imagens em sequência viram a galeria. Veja Diagnóstico para política ativa."
                   />
                 </div>
               </div>

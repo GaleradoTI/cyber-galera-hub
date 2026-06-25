@@ -29,6 +29,7 @@ import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
 import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
 import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
 import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
+import { Route as DashboardUploadConfigRouteImport } from './routes/dashboard.upload-config'
 import { Route as DashboardSugerirEventoRouteImport } from './routes/dashboard.sugerir-evento'
 import { Route as DashboardProjetosRouteImport } from './routes/dashboard.projetos'
 import { Route as DashboardPerfilRouteImport } from './routes/dashboard.perfil'
@@ -146,6 +147,11 @@ const DashboardVagasRoute = DashboardVagasRouteImport.update({
 const DashboardUsuariosRoute = DashboardUsuariosRouteImport.update({
   id: '/usuarios',
   path: '/usuarios',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardUploadConfigRoute = DashboardUploadConfigRouteImport.update({
+  id: '/upload-config',
+  path: '/upload-config',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardSugerirEventoRoute = DashboardSugerirEventoRouteImport.update({
@@ -274,6 +280,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
   '/dashboard/sugerir-evento': typeof DashboardSugerirEventoRoute
+  '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
@@ -313,6 +320,7 @@ export interface FileRoutesByTo {
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
   '/dashboard/sugerir-evento': typeof DashboardSugerirEventoRoute
+  '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
@@ -354,6 +362,7 @@ export interface FileRoutesById {
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
   '/dashboard/sugerir-evento': typeof DashboardSugerirEventoRoute
+  '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
@@ -396,6 +405,7 @@ export interface FileRouteTypes {
     | '/dashboard/perfil'
     | '/dashboard/projetos'
     | '/dashboard/sugerir-evento'
+    | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
     | '/projetos/$slug'
@@ -435,6 +445,7 @@ export interface FileRouteTypes {
     | '/dashboard/perfil'
     | '/dashboard/projetos'
     | '/dashboard/sugerir-evento'
+    | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
     | '/projetos/$slug'
@@ -475,6 +486,7 @@ export interface FileRouteTypes {
     | '/dashboard/perfil'
     | '/dashboard/projetos'
     | '/dashboard/sugerir-evento'
+    | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
     | '/projetos/$slug'
@@ -644,6 +656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardUsuariosRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/upload-config': {
+      id: '/dashboard/upload-config'
+      path: '/upload-config'
+      fullPath: '/dashboard/upload-config'
+      preLoaderRoute: typeof DashboardUploadConfigRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/sugerir-evento': {
       id: '/dashboard/sugerir-evento'
       path: '/sugerir-evento'
@@ -792,6 +811,7 @@ interface DashboardRouteChildren {
   DashboardPerfilRoute: typeof DashboardPerfilRoute
   DashboardProjetosRoute: typeof DashboardProjetosRoute
   DashboardSugerirEventoRoute: typeof DashboardSugerirEventoRoute
+  DashboardUploadConfigRoute: typeof DashboardUploadConfigRoute
   DashboardUsuariosRoute: typeof DashboardUsuariosRoute
   DashboardVagasRoute: typeof DashboardVagasRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -816,6 +836,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardPerfilRoute: DashboardPerfilRoute,
   DashboardProjetosRoute: DashboardProjetosRoute,
   DashboardSugerirEventoRoute: DashboardSugerirEventoRoute,
+  DashboardUploadConfigRoute: DashboardUploadConfigRoute,
   DashboardUsuariosRoute: DashboardUsuariosRoute,
   DashboardVagasRoute: DashboardVagasRoute,
   DashboardIndexRoute: DashboardIndexRoute,
@@ -847,13 +868,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

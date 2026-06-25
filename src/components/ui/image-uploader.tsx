@@ -1,9 +1,11 @@
-import { useRef, useState } from "react";
-import { Upload, X, Loader2 } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Upload, X, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type Props = {
   bucket: "avatars" | "project-covers";
@@ -22,10 +24,33 @@ type Props = {
   minWidth?: number;
   /** Helper text shown under the buttons. */
   hint?: string;
+  /** Key in upload_policy (public_site_settings) used to override defaults at runtime. */
+  policyKey?: "avatars" | "project_covers" | "event_banners" | "drop_images" | "documents";
+  /** Record every attempt (success/failure) of this upload in audit_logs (used for drops). */
+  auditEntity?: "drop_image";
+  /** Optional entity id passed to the audit log (e.g. drop id). */
+  auditEntityId?: string | null;
+  /** When true, shows a small "i" button with bucket/path/policy diagnostics (admin only). */
+  showDiagnostics?: boolean;
 };
 
 const DEFAULT_MAX_BYTES = 4 * 1024 * 1024; // 4MB
 const DEFAULT_ACCEPT = ["image/jpeg", "image/png", "image/webp"];
+
+function useUploadPolicy() {
+  return useQuery({
+    queryKey: ["upload-policy"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("public_site_settings")
+        .select("setting_value")
+        .eq("setting_key", "upload_policy")
+        .maybeSingle();
+      return (data?.setting_value ?? null) as null | Record<string, { max_mb?: number; accept?: string[]; resize_max?: number }>;
+    },
+  });
+}
 
 async function resizeImage(file: File, maxEdge: number): Promise<{ blob: Blob; width: number; height: number; ext: string }> {
   const dataUrl: string = await new Promise((res, rej) => {
@@ -64,12 +89,51 @@ async function resizeImage(file: File, maxEdge: number): Promise<{ blob: Blob; w
 export function ImageUploader({
   bucket, folder, value, onChange, label = "Imagem", aspect = "square",
   maxBytes = DEFAULT_MAX_BYTES, accept = DEFAULT_ACCEPT, resizeMax, minWidth, hint,
+  policyKey, auditEntity, auditEntityId, showDiagnostics,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const { data: policy } = useUploadPolicy();
+
+  // Resolve effective accept/maxBytes from upload_policy when policyKey is provided.
+  const effective = useMemo(() => {
+    const ctx = policyKey ? policy?.[policyKey] : undefined;
+    const fallback = policy?.defaults as { max_mb?: number; accept?: string[]; resize_max?: number } | undefined;
+    const finalAccept = ctx?.accept ?? fallback?.accept ?? accept;
+    const finalMaxMb = ctx?.max_mb ?? fallback?.max_mb;
+    const finalMaxBytes = finalMaxMb ? Math.round(finalMaxMb * 1024 * 1024) : maxBytes;
+    const finalResize = resizeMax ?? ctx?.resize_max ?? fallback?.resize_max;
+    return { accept: finalAccept, maxBytes: finalMaxBytes, resizeMax: finalResize };
+  }, [policy, policyKey, accept, maxBytes, resizeMax]);
+
+  const recordAttempt = async (
+    status: "success" | "failed",
+    path: string,
+    reason: string | null,
+    file?: { name?: string; type?: string; size?: number },
+  ) => {
+    if (auditEntity !== "drop_image") return;
+    try {
+      await (supabase as any).rpc("log_drop_image_upload_attempt", {
+        _drop_id: auditEntityId ?? null,
+        _bucket: bucket,
+        _path: path,
+        _status: status,
+        _reason: reason,
+        _file_name: file?.name ?? null,
+        _file_type: file?.type ?? null,
+        _file_size: file?.size ?? null,
+      });
+    } catch {
+      /* logging is best-effort */
+    }
+  };
 
   const handleFile = async (file: File) => {
+    const accept = effective.accept;
+    const maxBytes = effective.maxBytes;
+    const resizeMax = effective.resizeMax;
     const acceptedNames = accept.map((a) => a.split("/")[1]).join(", ").toUpperCase();
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
     const limitMB = Math.round(maxBytes / (1024 * 1024));
@@ -79,17 +143,20 @@ export function ImageUploader({
       await supabase.auth.refreshSession();
       const { data: again } = await supabase.auth.getSession();
       if (!again.session) {
+        await recordAttempt("failed", `${folder}/<rejected>`, "Sessão expirada", file);
         return toast.error("Sessão expirada", {
           description: "Faça login novamente para enviar imagens.",
         });
       }
     }
     if (!accept.includes(file.type)) {
+      await recordAttempt("failed", `${folder}/<rejected>`, `Tipo não aceito: ${file.type}`, file);
       return toast.error("Formato inválido", {
         description: `Aceitos: ${acceptedNames}. Recebido: ${file.type || "desconhecido"}.`,
       });
     }
     if (file.size > maxBytes) {
+      await recordAttempt("failed", `${folder}/<rejected>`, `Arquivo ${sizeMB}MB excede limite ${limitMB}MB`, file);
       return toast.error("Arquivo grande demais", {
         description: `Limite ${limitMB}MB · arquivo enviado: ${sizeMB}MB.`,
       });
@@ -97,6 +164,7 @@ export function ImageUploader({
     const toastId = toast.loading("Processando imagem…");
     setUploading(true);
     setProgress(5);
+    let path = "";
     try {
       let blob: Blob = file;
       let ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -106,6 +174,7 @@ export function ImageUploader({
         const r = await resizeImage(file, resizeMax);
         if (minWidth && r.width < minWidth) {
           setUploading(false);
+          await recordAttempt("failed", `${folder}/<rejected>`, `Imagem ${r.width}px < mínimo ${minWidth}px`, file);
           toast.error("Imagem pequena demais", { id: toastId, description: `Largura mínima ${minWidth}px · enviada ${r.width}px.` });
           return;
         }
@@ -115,7 +184,7 @@ export function ImageUploader({
       }
       setProgress(40);
       toast.loading("Enviando para o servidor…", { id: toastId });
-      const path = `${folder}/${Date.now()}.${ext}`;
+      path = `${folder}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from(bucket).upload(path, blob, {
         cacheControl: "3600",
         upsert: true,
@@ -123,22 +192,32 @@ export function ImageUploader({
       });
       if (upErr) {
         const msg = upErr.message || "";
+        const statusCode = (upErr as any)?.statusCode ?? (upErr as any)?.status ?? "";
         let friendly = msg;
-        if (/jwt|invalid.*token|unauthorized|not authenticated|aud claim/i.test(msg)) {
+        if (/jwt|invalid.*token|aud claim|not authenticated/i.test(msg)) {
           friendly = `Sessão inválida. Saia e entre novamente para reenviar a imagem. Detalhe: ${msg}`;
-        } else if (/row-level security|not authorized|policy/i.test(msg)) {
-          friendly = `Sem permissão para enviar em ${bucket}/${folder}. Apenas admin/super admin podem enviar imagens de drops. Detalhe: ${msg}`;
+        } else if (
+          String(statusCode) === "403" ||
+          /row-level security|not authorized|unauthorized|policy/i.test(msg)
+        ) {
+          friendly =
+            `🔒 Permissão negada (RLS 403) ao enviar em ${bucket}/${path}. ` +
+            `Verifique se você ainda está logado como admin/super admin e tente novamente. ` +
+            `Se o erro persistir, peça a um SUPER_ADMIN para revisar a policy do bucket. ` +
+            `Detalhe: ${msg}`;
         } else if (/payload too large|413/.test(msg)) {
           friendly = `Arquivo excede o limite do servidor (${limitMB}MB).`;
         } else if (/mime|content.?type/i.test(msg)) {
           friendly = `Formato não permitido pelo servidor. Aceitos: ${acceptedNames}.`;
         }
+        await recordAttempt("failed", path, friendly, file);
         throw new Error(friendly);
       }
       setProgress(95);
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
       onChange(data.publicUrl);
       setProgress(100);
+      await recordAttempt("success", path, null, { name: file.name, type: file.type, size: blob.size });
       toast.success("Imagem enviada", { id: toastId, description: `${(blob.size / 1024).toFixed(0)} KB` });
     } catch (e: any) {
       toast.error("Falha no upload", { id: toastId, description: e?.message ?? "Erro desconhecido" });
@@ -150,7 +229,12 @@ export function ImageUploader({
 
   return (
     <div>
-      {label && <p className="text-sm font-medium mb-2">{label}</p>}
+      {label && (
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-medium">{label}</p>
+          {showDiagnostics && <DiagnosticsPopover bucket={bucket} folder={folder} effective={effective} policyKey={policyKey} />}
+        </div>
+      )}
       <div className="flex items-start gap-3">
         <div
           className={`relative shrink-0 rounded-lg border border-border/60 bg-muted/30 overflow-hidden ${
@@ -174,7 +258,7 @@ export function ImageUploader({
           <input
             ref={inputRef}
             type="file"
-            accept={accept.join(",")}
+            accept={effective.accept.join(",")}
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
@@ -197,10 +281,58 @@ export function ImageUploader({
             </Button>
           )}
           <p className="text-[10px] text-muted-foreground leading-tight">
-            {hint ?? `${accept.map((a) => a.split("/")[1]).join(" · ").toUpperCase()} · máx ${Math.round(maxBytes / (1024 * 1024))}MB${resizeMax ? ` · otimizado para ${resizeMax}px` : ""}`}
+            {hint ?? `${effective.accept.map((a) => a.split("/")[1]).join(" · ").toUpperCase()} · máx ${Math.round(effective.maxBytes / (1024 * 1024))}MB${effective.resizeMax ? ` · otimizado para ${effective.resizeMax}px` : ""}`}
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DiagnosticsPopover({
+  bucket,
+  folder,
+  effective,
+  policyKey,
+}: {
+  bucket: string;
+  folder: string;
+  effective: { accept: string[]; maxBytes: number; resizeMax?: number };
+  policyKey?: string;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs">
+          <Info className="h-3 w-3 mr-1" /> Diagnóstico
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 text-xs space-y-2">
+        <div className="font-bold text-sm">Configuração ativa</div>
+        <Row k="Bucket" v={bucket} />
+        <Row k="Prefixo (pasta)" v={folder} />
+        <Row k="Caminho final" v={`${bucket}/${folder}/<timestamp>.<ext>`} mono />
+        <Row k="Policy key" v={policyKey ?? "(usa default)"} />
+        <Row k="Tipos aceitos" v={effective.accept.join(", ")} />
+        <Row k="Tamanho máx" v={`${Math.round(effective.maxBytes / (1024 * 1024))} MB`} />
+        {effective.resizeMax && <Row k="Resize" v={`${effective.resizeMax}px`} />}
+        <div className="pt-2 border-t border-border/30">
+          <p className="text-[10px] text-muted-foreground leading-snug">
+            RLS: apenas <strong>ADMIN / SUPER_ADMIN</strong> (verificado em <code>user_roles</code>) pode escrever em
+            <code> {bucket}/{folder.split("/")[0]}/*</code>. Mudanças no tamanho/tipo são em
+            <code> /dashboard/upload-config</code>.
+          </p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function Row({ k, v, mono }: { k: string; v: string; mono?: boolean }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground/70 w-24 pt-0.5">{k}</div>
+      <div className={`flex-1 ${mono ? "font-mono text-[11px]" : "text-xs"} break-all`}>{v}</div>
     </div>
   );
 }
