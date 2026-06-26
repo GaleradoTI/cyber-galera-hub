@@ -408,6 +408,9 @@ function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
               aspect="square"
               policyKey="project_covers"
               resizeMax={1200}
+              auditEntity="mascot_image"
+              auditEntityId={item.placement ?? null}
+              showDiagnostics
               hint="JPG/PNG/WebP · use PNG com fundo transparente quando possível"
             />
             <div className="grid sm:grid-cols-2 gap-3">
@@ -431,6 +434,21 @@ function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
                 </Select>
               </Field>
               <div className="sm:col-span-2"><Field label="Legenda"><Input value={item.caption ?? ""} onChange={(e) => update(idx, { caption: e.target.value })} /></Field></div>
+              <div className="sm:col-span-2">
+                <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground mb-2">PRÉVIA</p>
+                <div className="rounded-lg border border-border/40 bg-background/40 p-3 flex items-center gap-3 min-h-24">
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.name || "Prévia do mascote"} className="h-20 w-20 object-contain" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                  ) : (
+                    <div className="h-20 w-20 rounded-md bg-muted/30 flex items-center justify-center text-[10px] text-muted-foreground text-center">Sem imagem</div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-bold text-sm truncate">{item.name || "Mascote sem nome"}</div>
+                    <div className="text-xs text-muted-foreground truncate">{item.placement || "home_hero"}</div>
+                    {item.caption && <div className="text-xs text-secondary mt-1 line-clamp-2">{item.caption}</div>}
+                  </div>
+                </div>
+              </div>
             </div>
             <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => setItems((list) => list.filter((_, i) => i !== idx))}>
               <Trash2 className="h-4 w-4" />

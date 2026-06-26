@@ -249,16 +249,22 @@ function PublicProjectPage() {
                   })}
                   {ms.length === 0 && <p className="text-xs text-muted-foreground">Sem membros ainda.</p>}
                 </div>
-                {s.recruiting_status !== "closed" && (
+                {s.recruiting_status !== "closed" && (user ? (
                   <Button
                     size="sm" variant="outline" className="mt-3 w-full"
                     disabled={!canRequest}
-                    onClick={() => canRequest ? setJoinSquad(s) : toast.info(user ? "Você já tem uma solicitação ativa" : "Entre para solicitar")}
+                    onClick={() => canRequest ? setJoinSquad(s) : toast.info("Você já tem uma solicitação ativa")}
                   >
                     <UserPlus className="h-3 w-3 mr-1" />
                     {s.recruiting_status === "waitlist" ? "Entrar na lista de espera" : "Solicitar entrada"}
                   </Button>
-                )}
+                ) : (
+                  <Button asChild size="sm" variant="outline" className="mt-3 w-full">
+                    <Link to="/login" search={{ redirect: `/projetos/${slug}` } as any}>
+                      <UserPlus className="h-3 w-3 mr-1" /> Entrar para solicitar
+                    </Link>
+                  </Button>
+                ))}
               </div>
             );
           })}

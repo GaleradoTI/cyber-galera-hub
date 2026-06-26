@@ -72,7 +72,7 @@ function VagasPage() {
             <p className="text-muted-foreground mt-2 max-w-2xl">Vagas publicadas pela equipe da comunidade.</p>
           </div>
           <Button asChild variant="neon-outline" size="sm">
-            <Link to="/login"><LogIn className="h-3.5 w-3.5 mr-1.5" /> Área do recrutador</Link>
+            <Link to="/login" search={{ redirect: "/dashboard/vagas" } as any}><LogIn className="h-3.5 w-3.5 mr-1.5" /> Área do recrutador</Link>
           </Button>
         </div>
 
