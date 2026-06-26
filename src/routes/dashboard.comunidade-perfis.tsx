@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +115,7 @@ function CommunityProfilesAdminPage() {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {rows.map((p) => (
             <div key={p.id} className="glass rounded-xl border border-primary/20 overflow-hidden">
-              {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-44 object-cover" /> : <div className="w-full h-44 bg-muted/20 flex items-center justify-center text-muted-foreground">Sem foto</div>}
+              {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-44 object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : <div className="w-full h-44 bg-muted/20 flex items-center justify-center text-muted-foreground">Sem foto</div>}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -137,7 +137,10 @@ function CommunityProfilesAdminPage() {
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing?.id ? "Editar perfil" : "Novo perfil público"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editing?.id ? "Editar perfil" : "Novo perfil público"}</DialogTitle>
+            <DialogDescription>Envie a foto, revise o diagnóstico se houver erro e salve para publicar no site.</DialogDescription>
+          </DialogHeader>
           {editing && <ProfileForm value={editing} onChange={setEditing} />}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
@@ -164,7 +167,7 @@ function ProfileForm({ value, onChange }: { value: Partial<Profile>; onChange: (
       <div><Label>Ordem</Label><Input type="number" value={value.display_order ?? 0} onChange={(e) => onChange({ ...value, display_order: Number(e.target.value) })} /></div>
       <div className="sm:col-span-2"><Label>Nome *</Label><Input value={value.name ?? ""} onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
       <div className="sm:col-span-2"><Label>Cargo / título profissional</Label><Input value={value.role_title ?? ""} onChange={(e) => onChange({ ...value, role_title: e.target.value })} /></div>
-      <div className="sm:col-span-2"><ImageUploader bucket="project-covers" folder="site/community-profiles" value={value.photo_url ?? null} onChange={(url) => onChange({ ...value, photo_url: url ?? "" })} label="Foto" aspect="square" policyKey="project_covers" resizeMax={1200} showDiagnostics /></div>
+      <div className="sm:col-span-2"><ImageUploader bucket="project-covers" folder="site/community-profiles" value={value.photo_url ?? null} onChange={(url) => onChange({ ...value, photo_url: url ?? "" })} label="Foto" aspect="square" policyKey="project_covers" resizeMax={1200} auditEntity="community_profile_photo" auditEntityId={value.id ?? value.profile_type ?? null} showDiagnostics /></div>
       <div className="sm:col-span-2"><Label>História profissional</Label><Textarea rows={5} value={value.professional_story ?? ""} onChange={(e) => onChange({ ...value, professional_story: e.target.value })} /></div>
       <div className="sm:col-span-2"><Label>O que faz na comunidade</Label><Input value={value.community_role ?? ""} onChange={(e) => onChange({ ...value, community_role: e.target.value })} /></div>
       <div className="sm:col-span-2 space-y-2">

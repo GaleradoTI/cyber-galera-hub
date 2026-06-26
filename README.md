@@ -17,7 +17,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 ### Área pública
 - Home com hero e CTA configuráveis; estatísticas públicas vêm dos totais reais do banco (`get_public_home_stats`)
 - Vagas, Eventos, Canais, FAQ, Sobre editável, Embaixadores, Administradores, Termos, Privacidade
-- Mascotes configuráveis para páginas públicas (home, sobre, embaixadores, administradores, vagas, eventos, projetos, drops, canais, FAQ e rodapé), com imagem e local de exibição
+- Mascotes configuráveis para páginas públicas (home, sobre, embaixadores, administradores, vagas, eventos, projetos, drops, canais, parceiros, FAQ e rodapé), com imagem e local de exibição
 - SEO por rota (head() com title/description/og:* e twitter:*) — preview ao
   vivo de Google, Open Graph e Twitter Card no dashboard, aplicado no
   `<head>` do site público
@@ -72,8 +72,9 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 ### Drops e uploads
 - Imagens de drops usam o bucket público `project-covers` no prefixo `drops/`.
 - Uploads de drops registram `DROP_IMAGE_UPLOAD_SUCCESS` ou `DROP_IMAGE_UPLOAD_FAILED` em `/dashboard/logs` com usuário, bucket, caminho, arquivo, tipo, tamanho e motivo.
-- Erro RLS 403 agora mostra bucket/prefixo exatos e o diagnóstico informa a política ativa antes do envio.
-- Imagens de configurações do site, mascotes, favicon e perfis públicos usam `project-covers/site/*`; somente ADMIN/SUPER_ADMIN podem gravar nesses caminhos.
+- Uploads de fotos de embaixadores/administradores e mascotes registram `IMAGE_UPLOAD_SUCCESS` ou `IMAGE_UPLOAD_FAILED` com contexto, caminho, tipo, tamanho e detalhe técnico do Supabase.
+- Erro RLS 403 agora mostra bucket/prefixo exatos e o diagnóstico consulta a policy real do Storage antes do envio.
+- Imagens de configurações do site, mascotes, favicon e perfis públicos usam `project-covers/site/*`; somente ADMIN/SUPER_ADMIN podem gravar nesses caminhos. O dashboard de mascotes tem prévia por item e fallback visual se a imagem quebrar.
 - Preço do drop usa máscara BRL e datas usam campo padronizado de calendário para evitar drift de fuso e formatos inválidos.
 
 ## Setup

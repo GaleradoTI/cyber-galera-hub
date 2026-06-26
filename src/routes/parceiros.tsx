@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ExternalLink, Handshake, Search } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
+import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { MarkdownView } from "@/components/ui/markdown-editor";
@@ -40,13 +41,18 @@ function ParceirosPublicPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">QUEM CAMINHA COM A GENTE</div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-3">
-          <Handshake className="h-9 w-9 text-primary" /> Parceiros
-        </h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">
-          Empresas, escolas e iniciativas que acreditam na nossa comunidade. Clique para acessar a página oficial de cada um.
-        </p>
+        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
+          <div>
+            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">QUEM CAMINHA COM A GENTE</div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-3">
+              <Handshake className="h-9 w-9 text-primary" /> Parceiros
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">
+              Empresas, escolas e iniciativas que acreditam na nossa comunidade. Clique para acessar a página oficial de cada um.
+            </p>
+          </div>
+          <PublicMascotSpot placement="partners" className="hidden lg:flex" />
+        </div>
 
         <div className="mt-8 relative max-w-md">
           <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

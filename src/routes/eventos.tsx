@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -124,8 +124,8 @@ function EventosPage() {
         {!isAuthenticated && (
           <div className="mt-10 glass rounded-xl p-5 border border-primary/30 text-sm">
             Para se inscrever em eventos da <strong>comunidade</strong>, você precisa ser membro.{" "}
-            <a href="/cadastro" className="text-primary underline">Cadastre-se</a> ou{" "}
-            <a href="/login" className="text-primary underline">entre</a>.
+            <Link to="/cadastro" className="text-primary underline">Cadastre-se</Link> ou{" "}
+            <Link to="/login" search={{ redirect: "/eventos" } as any} className="text-primary underline">entre</Link>.
           </div>
         )}
         <EventDetailDialog event={selected} open={!!selected} onOpenChange={(v) => !v && setSelected(null)} />

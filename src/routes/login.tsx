@@ -24,6 +24,13 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const getRedirectTo = () => {
+    if (typeof window === "undefined") return "/dashboard";
+    const redirect = new URL(window.location.href).searchParams.get("redirect");
+    if (!redirect || !redirect.startsWith("/") || redirect.startsWith("//") || redirect.startsWith("/login")) return "/dashboard";
+    return redirect;
+  };
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -31,7 +38,7 @@ function LoginPage() {
     setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/dashboard" });
+    navigate({ to: getRedirectTo() as "/dashboard" });
   }
 
   async function onForgot() {

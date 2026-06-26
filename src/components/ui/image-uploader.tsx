@@ -1,11 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Upload, X, Loader2, Info } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getStorageUploadDiagnostics } from "@/lib/upload-diagnostics.functions";
 
 type Props = {
   bucket: "avatars" | "project-covers";
@@ -27,7 +29,7 @@ type Props = {
   /** Key in upload_policy (public_site_settings) used to override defaults at runtime. */
   policyKey?: "avatars" | "project_covers" | "event_banners" | "drop_images" | "documents";
   /** Record every attempt (success/failure) of this upload in audit_logs (used for drops). */
-  auditEntity?: "drop_image";
+  auditEntity?: "drop_image" | "community_profile_photo" | "mascot_image" | "site_asset";
   /** Optional entity id passed to the audit log (e.g. drop id). */
   auditEntityId?: string | null;
   /** When true, shows a small "i" button with bucket/path/policy diagnostics (admin only). */
@@ -113,18 +115,31 @@ export function ImageUploader({
     reason: string | null,
     file?: { name?: string; type?: string; size?: number },
   ) => {
-    if (auditEntity !== "drop_image") return;
+    if (!auditEntity) return;
     try {
-      await (supabase as any).rpc("log_drop_image_upload_attempt", {
-        _drop_id: auditEntityId ?? null,
-        _bucket: bucket,
-        _path: path,
-        _status: status,
-        _reason: reason,
-        _file_name: file?.name ?? null,
-        _file_type: file?.type ?? null,
-        _file_size: file?.size ?? null,
-      });
+      if (auditEntity === "drop_image") {
+        await (supabase as any).rpc("log_drop_image_upload_attempt", {
+          _drop_id: auditEntityId ?? null,
+          _bucket: bucket,
+          _path: path,
+          _status: status,
+          _reason: reason,
+          _file_name: file?.name ?? null,
+          _file_type: file?.type ?? null,
+          _file_size: file?.size ?? null,
+        });
+      } else {
+        await (supabase as any).rpc("log_image_upload_attempt", {
+          _context: auditEntity,
+          _bucket: bucket,
+          _path: path,
+          _status: status,
+          _reason: reason,
+          _file_name: file?.name ?? null,
+          _file_type: file?.type ?? null,
+          _file_size: file?.size ?? null,
+        });
+      }
     } catch {
       /* logging is best-effort */
     }
@@ -242,7 +257,7 @@ export function ImageUploader({
           }`}
         >
           {value ? (
-            <img src={value} alt="" className="w-full h-full object-cover" />
+            <img src={value} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
           ) : (
             <div className="flex items-center justify-center w-full h-full text-muted-foreground text-xs">
               Sem imagem
@@ -300,16 +315,26 @@ function DiagnosticsPopover({
   effective: { accept: string[]; maxBytes: number; resizeMax?: number };
   policyKey?: string;
 }) {
+  const loadDiagnostics = useServerFn(getStorageUploadDiagnostics);
+  const { data: diagnostics, isFetching, error, refetch } = useQuery({
+    queryKey: ["storage-upload-diagnostics", bucket, folder],
+    enabled: false,
+    queryFn: () => loadDiagnostics({ data: { bucket: bucket as "avatars" | "project-covers", prefix: folder } }),
+  });
+  const info = diagnostics as any;
+  const policies = Array.isArray(info?.policies) ? info.policies : [];
+
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs">
+        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => refetch()}>
           <Info className="h-3 w-3 mr-1" /> Diagnóstico
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 text-xs space-y-2">
         <div className="font-bold text-sm">Configuração ativa</div>
         <Row k="Bucket" v={bucket} />
+        {info && <Row k="Bucket público" v={info.bucket_public ? "sim" : "não"} />}
         <Row k="Prefixo (pasta)" v={folder} />
         <Row k="Caminho final" v={`${bucket}/${folder}/<timestamp>.<ext>`} mono />
         <Row k="Policy key" v={policyKey ?? "(usa default)"} />
@@ -322,6 +347,22 @@ function DiagnosticsPopover({
             <code> {bucket}/{folder.split("/")[0]}/*</code>. Mudanças no tamanho/tipo são em
             <code> /dashboard/upload-config</code>.
           </p>
+        </div>
+        <div className="pt-2 border-t border-border/30 space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <strong>Policy RLS aplicada</strong>
+            {isFetching && <Loader2 className="h-3 w-3 animate-spin" />}
+          </div>
+          {error && <p className="text-destructive">{(error as Error).message}</p>}
+          {!error && !isFetching && policies.length === 0 && (
+            <p className="text-muted-foreground">Abra o diagnóstico para consultar as policies do Storage.</p>
+          )}
+          {policies.slice(0, 3).map((policy: any) => (
+            <div key={`${policy.name}-${policy.command}`} className="rounded-md bg-muted/20 p-2 space-y-1">
+              <div className="font-semibold">{policy.name} · {policy.command}</div>
+              <div className="break-all"><span className="text-muted-foreground">WITH CHECK:</span> {policy.with_check ?? "—"}</div>
+            </div>
+          ))}
         </div>
       </PopoverContent>
     </Popover>
