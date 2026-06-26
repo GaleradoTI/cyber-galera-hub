@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { FolderKanban, ArrowRight, Globe } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
+import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -78,13 +79,18 @@ function ProjetosIndex() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-12 md:py-16">
-        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2 flex items-center gap-2">
-          <Globe className="h-3 w-3" /> COMUNIDADE
+        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
+          <div>
+            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2 flex items-center gap-2">
+              <Globe className="h-3 w-3" /> COMUNIDADE
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight">Projetos da galera</h1>
+            <p className="text-muted-foreground mt-3 max-w-2xl">
+              Iniciativas abertas mantidas por squads da comunidade. Veja quem está construindo o quê e quais tecnologias estão sendo usadas.
+            </p>
+          </div>
+          <PublicMascotSpot placement="projects" className="hidden lg:flex" />
         </div>
-        <h1 className="text-3xl md:text-5xl font-black tracking-tight">Projetos da galera</h1>
-        <p className="text-muted-foreground mt-3 max-w-2xl">
-          Iniciativas abertas mantidas por squads da comunidade. Veja quem está construindo o quê e quais tecnologias estão sendo usadas.
-        </p>
 
         <div className="mt-6 grid md:grid-cols-3 gap-2 max-w-3xl">
           <Input className="md:col-span-2" placeholder="Buscar projeto..." value={q} onChange={(e) => setQ(e.target.value)} />

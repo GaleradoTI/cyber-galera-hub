@@ -17,7 +17,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 ### Área pública
 - Home com hero e CTA configuráveis; estatísticas públicas vêm dos totais reais do banco (`get_public_home_stats`)
 - Vagas, Eventos, Canais, FAQ, Sobre editável, Embaixadores, Administradores, Termos, Privacidade
-- Mascotes configuráveis para páginas públicas (home, sobre, embaixadores, administradores e rodapé), com imagem e local de exibição
+- Mascotes configuráveis para páginas públicas (home, sobre, embaixadores, administradores, vagas, eventos, projetos, drops, canais, FAQ e rodapé), com imagem e local de exibição
 - SEO por rota (head() com title/description/og:* e twitter:*) — preview ao
   vivo de Google, Open Graph e Twitter Card no dashboard, aplicado no
   `<head>` do site público
@@ -101,7 +101,9 @@ Tabelas principais: `profiles`, `user_roles`, `jobs`, `events`, `channels`, `faq
 `saved_jobs`, `user_event_interests`, `public_site_settings`, `audit_logs`, `lgpd_consents`,
 `community_profiles`, `member_feed_posts`.
 
-Funções: `is_admin_or_super`, `has_role`, `handle_new_user`, `promote_user_to_super_admin`.
+Funções: `is_admin_or_super`, `has_role`, `handle_new_user`, `promote_user_to_super_admin`, `recalculate_public_home_stats`.
+
+Tabela agregada pública: `public_home_stats` guarda somente totais da home e é atualizada por triggers.
 
 Papéis: `MEMBRO`, `MODERADOR`, `ADMIN`, `SUPER_ADMIN`.
 
