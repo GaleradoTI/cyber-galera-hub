@@ -428,6 +428,7 @@ function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
                     <SelectItem value="projects">Projetos</SelectItem>
                     <SelectItem value="drops">Drops</SelectItem>
                     <SelectItem value="channels">Canais</SelectItem>
+                    <SelectItem value="partners">Parceiros</SelectItem>
                     <SelectItem value="faq">FAQ</SelectItem>
                     <SelectItem value="footer">Rodapé</SelectItem>
                   </SelectContent>

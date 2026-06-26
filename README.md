@@ -17,7 +17,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 ### Área pública
 - Home com hero e CTA configuráveis; estatísticas públicas vêm dos totais reais do banco (`get_public_home_stats`)
 - Vagas, Eventos, Canais, FAQ, Sobre editável, Embaixadores, Administradores, Termos, Privacidade
-- Mascotes configuráveis para páginas públicas (home, sobre, embaixadores, administradores, vagas, eventos, projetos, drops, canais, FAQ e rodapé), com imagem e local de exibição
+- Mascotes configuráveis para páginas públicas (home, sobre, embaixadores, administradores, vagas, eventos, projetos, drops, canais, parceiros, FAQ e rodapé), com imagem e local de exibição
 - SEO por rota (head() com title/description/og:* e twitter:*) — preview ao
   vivo de Google, Open Graph e Twitter Card no dashboard, aplicado no
   `<head>` do site público
