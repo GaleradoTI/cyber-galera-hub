@@ -1520,6 +1520,10 @@ export type Database = {
           work_area: string
         }[]
       }
+      get_storage_upload_diagnostics: {
+        Args: { _bucket: string; _prefix: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1549,6 +1553,19 @@ export type Database = {
         Args: {
           _bucket: string
           _drop_id: string
+          _file_name?: string
+          _file_size?: number
+          _file_type?: string
+          _path: string
+          _reason?: string
+          _status: string
+        }
+        Returns: undefined
+      }
+      log_image_upload_attempt: {
+        Args: {
+          _bucket: string
+          _context: string
           _file_name?: string
           _file_size?: number
           _file_type?: string
