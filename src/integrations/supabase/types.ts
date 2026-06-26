@@ -89,6 +89,54 @@ export type Database = {
         }
         Relationships: []
       }
+      community_profiles: {
+        Row: {
+          community_role: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          photo_url: string | null
+          professional_story: string | null
+          profile_type: string
+          role_title: string | null
+          social_links: Json
+          updated_at: string
+        }
+        Insert: {
+          community_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          photo_url?: string | null
+          professional_story?: string | null
+          profile_type: string
+          role_title?: string | null
+          social_links?: Json
+          updated_at?: string
+        }
+        Update: {
+          community_role?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          photo_url?: string | null
+          professional_story?: string | null
+          profile_type?: string
+          role_title?: string | null
+          social_links?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       direct_messages: {
         Row: {
           content: string
@@ -585,6 +633,36 @@ export type Database = {
           id?: string
           label?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      member_feed_posts: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          links: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          links?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          links?: Json
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
