@@ -16,7 +16,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { downloadCSV } from "@/lib/csv";
 import { centsToMoneyInput, isValidDateOnly, moneyInputToCents } from "@/lib/formatters";
-import { formatDateOnly } from "@/lib/utils";
 import { DateField } from "@/components/ui/date-field";
 
 export const Route = createFileRoute("/dashboard/drops")({ component: DropsAdminPage });
