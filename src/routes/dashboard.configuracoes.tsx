@@ -376,6 +376,104 @@ function FaviconCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
   );
 }
 
+type MascotItem = { name?: string; image_url?: string; placement?: string; caption?: string };
+
+function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
+  const value = setting.setting_value ?? {};
+  const [items, setItems] = useState<MascotItem[]>(Array.isArray(value.items) ? value.items : []);
+  const [saving, setSaving] = useState(false);
+  const update = (idx: number, patch: MascotItem) => setItems((list) => list.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("public_site_settings").update({ setting_value: { items } }).eq("id", setting.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Mascotes atualizados.");
+    onSaved();
+  };
+
+  return (
+    <CardShell title="Mascotes das páginas" description="Adicione personagens para a home, sobre e chamadas públicas." badge="MASCOTES" saving={saving} onSave={save}>
+      <div className="space-y-4">
+        {items.map((item, idx) => (
+          <div key={idx} className="rounded-lg border border-border/40 p-3 bg-muted/10 grid lg:grid-cols-[220px_1fr_auto] gap-3 items-start">
+            <ImageUploader
+              bucket="project-covers"
+              folder="site/mascots"
+              value={item.image_url ?? null}
+              onChange={(url) => update(idx, { image_url: url ?? "" })}
+              label="Imagem"
+              aspect="square"
+              policyKey="project_covers"
+              resizeMax={1200}
+              hint="JPG/PNG/WebP · use PNG com fundo transparente quando possível"
+            />
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Field label="Nome"><Input value={item.name ?? ""} onChange={(e) => update(idx, { name: e.target.value })} /></Field>
+              <Field label="Local de exibição">
+                <Select value={item.placement ?? "home_hero"} onValueChange={(v) => update(idx, { placement: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="home_hero">Hero da home</SelectItem>
+                    <SelectItem value="about">Sobre</SelectItem>
+                    <SelectItem value="footer">Rodapé</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <div className="sm:col-span-2"><Field label="Legenda"><Input value={item.caption ?? ""} onChange={(e) => update(idx, { caption: e.target.value })} /></Field></div>
+            </div>
+            <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => setItems((list) => list.filter((_, i) => i !== idx))}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" onClick={() => setItems((list) => [...list, { name: "", image_url: "", placement: "home_hero", caption: "" }])}>
+          <Plus className="h-4 w-4 mr-1" /> Adicionar mascote
+        </Button>
+      </div>
+    </CardShell>
+  );
+}
+
+function SocialLinksCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
+  const value = setting.setting_value ?? {};
+  const [links, setLinks] = useState<{ label: string; url: string }[]>(
+    Object.entries(value).map(([label, url]) => ({ label, url: String(url ?? "") })),
+  );
+  const [saving, setSaving] = useState(false);
+  const update = (idx: number, patch: Partial<{ label: string; url: string }>) => setLinks((list) => list.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
+
+  const save = async () => {
+    const setting_value = Object.fromEntries(links.filter((l) => l.label.trim() && l.url.trim()).map((l) => [l.label.trim().toLowerCase(), l.url.trim()]));
+    setSaving(true);
+    const { error } = await supabase.from("public_site_settings").update({ setting_value }).eq("id", setting.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Redes sociais atualizadas.");
+    onSaved();
+  };
+
+  return (
+    <CardShell title="Redes e links públicos" description="Inclua Instagram, LinkedIn, Discord, GitHub, YouTube, site e outras redes." badge="SOCIAL" saving={saving} onSave={save}>
+      <div className="space-y-2">
+        {links.map((link, idx) => (
+          <div key={idx} className="grid sm:grid-cols-[180px_1fr_auto] gap-2 items-center">
+            <Input placeholder="Nome da rede" value={link.label} onChange={(e) => update(idx, { label: e.target.value })} />
+            <Input placeholder="https://..." value={link.url} onChange={(e) => update(idx, { url: e.target.value })} />
+            <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => setLinks((list) => list.filter((_, i) => i !== idx))}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={() => setLinks((list) => [...list, { label: "", url: "" }])}>
+          <Plus className="h-4 w-4 mr-1" /> Novo link
+        </Button>
+      </div>
+    </CardShell>
+  );
+}
+
 /* ---------------------- Friendly field ---------------------- */
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
