@@ -33,12 +33,18 @@ function FeedPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("member_feed_posts")
-        .select("*, profiles:author_id(display_name,avatar_url,email)")
+        .select("*")
         .neq("status", "deleted")
         .order("created_at", { ascending: false })
         .limit(80);
       if (error) throw error;
-      return (data ?? []) as FeedPost[];
+      const rows = (data ?? []) as FeedPost[];
+      const authors = Array.from(new Set(rows.map((p) => p.author_id)));
+      const { data: profiles } = authors.length
+        ? await supabase.from("profiles").select("user_id,display_name,avatar_url,email").in("user_id", authors)
+        : { data: [] as any[] };
+      const byUser = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
+      return rows.map((row) => ({ ...row, profiles: byUser.get(row.author_id) ?? null })) as FeedPost[];
     },
   });
 

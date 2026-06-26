@@ -31,6 +31,8 @@ import {
   Briefcase as BriefcaseIcon,
   ShoppingBag,
   UploadCloud,
+  Rss,
+  IdCard,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -118,6 +120,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, show: true },
         { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
         { to: "/dashboard/mensagens", label: "Mensagens", icon: MessageSquare, show: true },
+        { to: "/dashboard/feed", label: "Feed", icon: Rss, show: true },
       ],
     },
     {
@@ -154,6 +157,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAdmin },
         { to: "/dashboard/projetos", label: "Projetos / Squads", icon: FolderKanban, show: isAdmin },
         { to: "/dashboard/parceiros", label: "Parceiros", icon: Handshake, show: isAdmin },
+        { to: "/dashboard/comunidade-perfis", label: "Embaixadores/Admins", icon: IdCard, show: isAdmin },
         { to: "/dashboard/denuncias", label: "Denúncias", icon: Flag, show: isAdmin },
         { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
         { to: "/dashboard/drops", label: "Drops", icon: ShoppingBag, show: isAdmin },
