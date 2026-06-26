@@ -4,6 +4,7 @@ import { Logo } from "@/components/brand/logo";
 import { SITE_CONFIG } from "@/lib/site-config";
 import { ExternalLink, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 
 export function Footer() {
   const { data: socials = {} } = useQuery({
@@ -66,6 +67,7 @@ export function Footer() {
               <li><Link to="/termos" className="text-muted-foreground hover:text-secondary transition-colors">Termos de Uso</Link></li>
               <li><Link to="/privacidade" className="text-muted-foreground hover:text-secondary transition-colors">Privacidade</Link></li>
             </ul>
+            <PublicMascotSpot placement="footer" compact className="mt-5" />
           </div>
         </div>
 

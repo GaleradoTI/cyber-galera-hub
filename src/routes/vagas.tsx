@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -6,7 +6,7 @@ import { JobCard } from "@/components/public/job-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { LogIn, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { JobDetailDialog } from "@/components/public/job-detail-dialog";
 
@@ -65,9 +65,16 @@ function VagasPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">OPORTUNIDADES</div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight">Vagas tech</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">Vagas publicadas pela equipe da comunidade.</p>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">OPORTUNIDADES</div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight">Vagas tech</h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">Vagas publicadas pela equipe da comunidade.</p>
+          </div>
+          <Button asChild variant="neon-outline" size="sm">
+            <Link to="/login"><LogIn className="h-3.5 w-3.5 mr-1.5" /> Área do recrutador</Link>
+          </Button>
+        </div>
 
         <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-5 gap-2">
           <Input className="lg:col-span-2" placeholder="Buscar por cargo, empresa ou tecnologia..." value={q} onChange={(e) => setQ(e.target.value)} />
