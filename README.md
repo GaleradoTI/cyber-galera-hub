@@ -15,9 +15,9 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 ## Funcionalidades
 
 ### Área pública
-- Home com hero, estatísticas e CTA configuráveis
+- Home com hero e CTA configuráveis; estatísticas públicas vêm dos totais reais do banco (`get_public_home_stats`)
 - Vagas, Eventos, Canais, FAQ, Sobre editável, Embaixadores, Administradores, Termos, Privacidade
-- Mascotes configuráveis para páginas públicas, com imagem e local de exibição
+- Mascotes configuráveis para páginas públicas (home, sobre, embaixadores, administradores e rodapé), com imagem e local de exibição
 - SEO por rota (head() com title/description/og:* e twitter:*) — preview ao
   vivo de Google, Open Graph e Twitter Card no dashboard, aplicado no
   `<head>` do site público
@@ -53,7 +53,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   usuário em mais de um squad por projeto. Na página pública os membros
   aparecem ordenados por **Líder > Cargo no squad > Nome**.
 - Depoimentos: aprovar / rejeitar com observação
-- Configurações do Site: SEO (prévia Google, Open Graph e **Twitter Card** ao vivo), favicon com validação, histórico de versões com pré-visualização e reversão, hero, contact, about, stats, social_links, footer, newsletter, partners, cta_section, legal, password_policy
+- Configurações do Site: SEO (prévia Google, Open Graph e **Twitter Card** ao vivo), favicon com validação, histórico de versões com pré-visualização e reversão, hero, contact, about, stats, social_links, footer, newsletter, partners, cta_section, legal, password_policy e mascotes por página
 - Embaixadores/Admins (`/dashboard/comunidade-perfis`): CRUD de perfis públicos com foto, história profissional, redes e atuação na comunidade
 - Mascotes e links sociais podem ser editados em Configurações do Site; `home_content` controla textos das seções da home e `about` controla textos da página Sobre
 - **Logs de auditoria** preenchidos automaticamente: criação de usuário
@@ -73,6 +73,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 - Imagens de drops usam o bucket público `project-covers` no prefixo `drops/`.
 - Uploads de drops registram `DROP_IMAGE_UPLOAD_SUCCESS` ou `DROP_IMAGE_UPLOAD_FAILED` em `/dashboard/logs` com usuário, bucket, caminho, arquivo, tipo, tamanho e motivo.
 - Erro RLS 403 agora mostra bucket/prefixo exatos e o diagnóstico informa a política ativa antes do envio.
+- Imagens de configurações do site, mascotes, favicon e perfis públicos usam `project-covers/site/*`; somente ADMIN/SUPER_ADMIN podem gravar nesses caminhos.
 - Preço do drop usa máscara BRL e datas usam campo padronizado de calendário para evitar drift de fuso e formatos inválidos.
 
 ## Setup

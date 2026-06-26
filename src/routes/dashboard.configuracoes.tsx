@@ -395,7 +395,7 @@ function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
   };
 
   return (
-    <CardShell title="Mascotes das páginas" description="Adicione personagens para a home, sobre e chamadas públicas." badge="MASCOTES" saving={saving} onSave={save}>
+    <CardShell title="Mascotes das páginas" description="Adicione personagens para a home, sobre, embaixadores, administradores e rodapé." badge="MASCOTES" saving={saving} onSave={save}>
       <div className="space-y-4">
         {items.map((item, idx) => (
           <div key={idx} className="rounded-lg border border-border/40 p-3 bg-muted/10 grid lg:grid-cols-[220px_1fr_auto] gap-3 items-start">
@@ -418,6 +418,13 @@ function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
                   <SelectContent>
                     <SelectItem value="home_hero">Hero da home</SelectItem>
                     <SelectItem value="about">Sobre</SelectItem>
+                    <SelectItem value="ambassadors">Embaixadores</SelectItem>
+                    <SelectItem value="administrators">Administradores</SelectItem>
+                    <SelectItem value="jobs">Vagas</SelectItem>
+                    <SelectItem value="events">Eventos</SelectItem>
+                    <SelectItem value="projects">Projetos</SelectItem>
+                    <SelectItem value="drops">Drops</SelectItem>
+                    <SelectItem value="channels">Canais</SelectItem>
                     <SelectItem value="footer">Rodapé</SelectItem>
                   </SelectContent>
                 </Select>

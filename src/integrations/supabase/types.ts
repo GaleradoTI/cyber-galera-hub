@@ -1479,6 +1479,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_public_home_stats: { Args: never; Returns: Json }
       get_recruiter_candidates: {
         Args: never
         Returns: {

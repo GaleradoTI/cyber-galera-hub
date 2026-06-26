@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink, Users } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
+import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -47,9 +48,14 @@ function CommunityProfilesPage({ type, title, eyebrow, description }: { type: st
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">{eyebrow}</div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight">{title}</h1>
-        <p className="text-muted-foreground mt-3 max-w-2xl">{description}</p>
+        <div className="grid lg:grid-cols-[1fr_260px] gap-8 items-center">
+          <div>
+            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">{eyebrow}</div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight">{title}</h1>
+            <p className="text-muted-foreground mt-3 max-w-2xl">{description}</p>
+          </div>
+          <PublicMascotSpot placement="ambassadors" className="hidden lg:flex" />
+        </div>
 
         {isLoading ? (
           <p className="text-muted-foreground mt-10">Carregando…</p>
