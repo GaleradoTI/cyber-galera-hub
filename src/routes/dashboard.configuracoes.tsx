@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter } from "lucide-react";
+import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export const Route = createFileRoute("/dashboard/configuracoes")({ component: SettingsPage });
 
@@ -52,6 +53,7 @@ function SettingsPage() {
           <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/40 p-1">
             <TabsTrigger value="seo"><Search className="h-3.5 w-3.5 mr-1.5" /> SEO & Favicon</TabsTrigger>
             <TabsTrigger value="hero"><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Hero & Home</TabsTrigger>
+            <TabsTrigger value="mascotes"><ImageIcon className="h-3.5 w-3.5 mr-1.5" /> Mascotes</TabsTrigger>
             <TabsTrigger value="contato"><Globe className="h-3.5 w-3.5 mr-1.5" /> Contato & Social</TabsTrigger>
             <TabsTrigger value="avancado"><SettingsIcon className="h-3.5 w-3.5 mr-1.5" /> Avançado</TabsTrigger>
           </TabsList>
@@ -64,6 +66,7 @@ function SettingsPage() {
 
           <TabsContent value="hero" className="mt-5 space-y-5">
             {byKey.hero && <GenericCard setting={byKey.hero} onSaved={onSaved} title="Hero" />}
+            {byKey.home_content && <GenericCard setting={byKey.home_content} onSaved={onSaved} title="Textos do início" />}
             {byKey.cta_section && <GenericCard setting={byKey.cta_section} onSaved={onSaved} title="CTA da home" />}
             {byKey.newsletter && <GenericCard setting={byKey.newsletter} onSaved={onSaved} title="Newsletter" />}
             {byKey.stats && <GenericCard setting={byKey.stats} onSaved={onSaved} title="Estatísticas" />}
@@ -71,15 +74,19 @@ function SettingsPage() {
             {byKey.footer && <GenericCard setting={byKey.footer} onSaved={onSaved} title="Rodapé" />}
           </TabsContent>
 
+          <TabsContent value="mascotes" className="mt-5 space-y-5">
+            {byKey.mascots && <MascotsCard setting={byKey.mascots} onSaved={onSaved} />}
+          </TabsContent>
+
           <TabsContent value="contato" className="mt-5 space-y-5">
             {byKey.contact && <GenericCard setting={byKey.contact} onSaved={onSaved} title="Contato" />}
-            {byKey.social_links && <GenericCard setting={byKey.social_links} onSaved={onSaved} title="Redes sociais" />}
+            {byKey.social_links && <SocialLinksCard setting={byKey.social_links} onSaved={onSaved} />}
             {byKey.partners && <GenericCard setting={byKey.partners} onSaved={onSaved} title="Parceiros" />}
           </TabsContent>
 
           <TabsContent value="avancado" className="mt-5 space-y-5">
             {settings
-              .filter((s) => !["seo", "favicon", "hero", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners"].includes(s.setting_key))
+              .filter((s) => !["seo", "favicon", "hero", "home_content", "mascots", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners"].includes(s.setting_key))
               .map((s) => (
                 <GenericCard key={s.id} setting={s} onSaved={onSaved} />
               ))}
