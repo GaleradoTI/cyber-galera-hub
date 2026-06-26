@@ -1,15 +1,47 @@
 import { motion } from "framer-motion";
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SITE_CONFIG } from "@/lib/site-config";
+import { supabase } from "@/integrations/supabase/client";
+import mascotFallback from "@/assets/mascot-axolotl.png";
+
+type HeroSettings = {
+  title?: string;
+  subtitle?: string;
+  slogan?: string;
+  description?: string;
+  cta_primary?: string;
+  cta_secondary?: string;
+};
+
+type MascotSettings = {
+  items?: { name?: string; image_url?: string; placement?: string; caption?: string }[];
+};
 
 export function Hero() {
+  const { data } = useQuery({
+    queryKey: ["public-hero-settings"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("public_site_settings")
+        .select("setting_key,setting_value")
+        .in("setting_key", ["hero", "mascots"]);
+      return Object.fromEntries((data ?? []).map((s: any) => [s.setting_key, s.setting_value])) as {
+        hero?: HeroSettings;
+        mascots?: MascotSettings;
+      };
+    },
+  });
+  const hero = data?.hero ?? {};
+  const mascot = data?.mascots?.items?.find((m) => (m.placement ?? "home_hero") === "home_hero") ?? data?.mascots?.items?.[0];
+  const mascotUrl = mascot?.image_url || mascotFallback;
+
   return (
     <section className="relative overflow-hidden bg-hero">
       <div className="absolute inset-0 grid-bg opacity-40" />
-      <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px]" />
-      <div className="absolute -bottom-40 -left-40 h-[500px] w-[500px] rounded-full bg-secondary/20 blur-[120px]" />
 
       <div className="container relative mx-auto px-4 py-24 md:py-32 lg:py-40">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -21,31 +53,33 @@ export function Hero() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-xs font-medium text-secondary border-secondary/30">
               <Sparkles className="h-3.5 w-3.5" />
-              Comunidade Tech • Networking • Carreira
+              {hero.subtitle ?? "Comunidade Tech • Networking • Carreira"}
             </div>
 
             <h1 className="font-black tracking-tighter text-6xl md:text-7xl lg:text-8xl leading-[0.9]">
-              <span className="block text-foreground">GALERA</span>
-              <span className="block text-gradient-neon">DO T.I.</span>
+              {(hero.title ?? "GALERA DO T.I.").split(" ").slice(0, -2).join(" ") ? (
+                <span className="block text-foreground">{(hero.title ?? "GALERA DO T.I.").split(" ").slice(0, -2).join(" ")}</span>
+              ) : null}
+              <span className="block text-gradient-neon">{(hero.title ?? "GALERA DO T.I.").split(" ").slice(-2).join(" ")}</span>
             </h1>
 
             <p className="text-2xl md:text-3xl font-semibold text-foreground/90 max-w-xl">
-              {SITE_CONFIG.slogan}
+              {hero.slogan ?? SITE_CONFIG.slogan}
             </p>
 
             <p className="text-base md:text-lg text-muted-foreground max-w-lg">
-              {SITE_CONFIG.description}
+              {hero.description ?? SITE_CONFIG.description}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button asChild variant="neon" size="xl">
                 <Link to="/cadastro">
-                  Entrar na comunidade
+                  {hero.cta_primary ?? "Entrar na comunidade"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="neon-outline" size="xl">
-                <Link to="/canais">Conhecer canais</Link>
+                <Link to="/canais">{hero.cta_secondary ?? "Conhecer canais"}</Link>
               </Button>
             </div>
           </motion.div>
@@ -56,25 +90,14 @@ export function Hero() {
             transition={{ duration: 0.9, delay: 0.2 }}
             className="relative hidden lg:block"
           >
-            <div className="relative aspect-square max-w-md mx-auto">
-              <div className="absolute inset-8 rounded-full border border-secondary/30 grid-bg" />
-              <div className="absolute inset-16 rounded-full border border-primary/30" />
-              <div className="absolute inset-28 rounded-full bg-gradient-neon opacity-90 blur-2xl animate-pulse-glow" />
-              <div className="absolute inset-32 rounded-full bg-gradient-neon flex items-center justify-center">
-                <div className="text-6xl font-black text-white drop-shadow-[0_0_20px_rgba(0,240,255,0.8)]">
-                  {"</>"}
+            <div className="relative aspect-square max-w-lg mx-auto">
+              <div className="absolute inset-x-6 bottom-8 h-24 rounded-full bg-primary/25 blur-3xl" />
+              <img src={mascotUrl} alt={mascot?.name ?? "Mascote da GALERA DO T.I."} width={1024} height={1024} className="relative z-10 h-full w-full object-contain drop-shadow-[0_0_42px_oklch(0.65_0.30_0/0.45)]" />
+              {mascot?.caption && (
+                <div className="absolute bottom-8 left-8 right-8 z-20 glass rounded-lg px-4 py-2 text-xs font-semibold text-secondary border-secondary/30">
+                  {mascot.caption}
                 </div>
-              </div>
-
-              <div className="absolute top-4 right-8 glass px-3 py-1.5 rounded-md text-xs font-semibold text-primary border-primary/40 animate-float">
-                DEVELOPMENT
-              </div>
-              <div className="absolute bottom-12 left-4 glass px-3 py-1.5 rounded-md text-xs font-semibold text-secondary border-secondary/40 animate-float" style={{ animationDelay: "1s" }}>
-                GLOBAL TALENT HUB
-              </div>
-              <div className="absolute top-1/2 -right-2 glass px-3 py-1.5 rounded-md text-xs font-semibold text-[oklch(0.88_0.30_145)] border-[oklch(0.88_0.30_145)]/40 animate-float" style={{ animationDelay: "2s" }}>
-                DATA SCIENCE
-              </div>
+              )}
             </div>
           </motion.div>
         </div>
