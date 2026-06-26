@@ -2,6 +2,24 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+type UploadDiagnostic = {
+  bucket?: string;
+  bucket_public?: boolean;
+  prefix?: string;
+  first_folder?: string;
+  expected_path?: string;
+  required_role?: string;
+  current_user_id?: string;
+  current_user_is_admin?: boolean;
+  policies?: Array<{
+    name?: string;
+    command?: string;
+    roles?: string[];
+    using?: string | null;
+    with_check?: string | null;
+  }>;
+};
+
 export const getStorageUploadDiagnostics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { bucket: string; prefix: string }) =>
@@ -19,5 +37,5 @@ export const getStorageUploadDiagnostics = createServerFn({ method: "POST" })
     } as never);
 
     if (error) throw new Error(error.message);
-    return diagnostic as unknown;
+    return (diagnostic ?? {}) as UploadDiagnostic;
   });
