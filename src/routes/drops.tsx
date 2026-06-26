@@ -5,6 +5,7 @@ import { ShoppingBag, Calendar, Tag, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
+import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -128,13 +129,18 @@ function DropsPublicPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">LANÇAMENTOS DA COMUNIDADE</div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-3">
-          <ShoppingBag className="h-9 w-9 text-primary" /> Drops
-        </h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">
-          Roupas, adesivos e produtos oficiais da Galera. Reserve seu interesse para garantir o seu.
-        </p>
+        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
+          <div>
+            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">LANÇAMENTOS DA COMUNIDADE</div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-3">
+              <ShoppingBag className="h-9 w-9 text-primary" /> Drops
+            </h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">
+              Roupas, adesivos e produtos oficiais da Galera. Reserve seu interesse para garantir o seu.
+            </p>
+          </div>
+          <PublicMascotSpot placement="drops" className="hidden lg:flex" />
+        </div>
 
         {isLoading ? (
           <p className="text-muted-foreground mt-10">Carregando…</p>

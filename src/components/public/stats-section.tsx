@@ -3,7 +3,7 @@ import { Users, Building2, Briefcase, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-type HomeStats = { members?: number; recruiters?: number; jobs?: number; events?: number };
+type HomeStats = { members_count?: number; recruiters_count?: number; jobs_count?: number; events_count?: number };
 
 const formatCount = (value: number | undefined) =>
   typeof value === "number" ? new Intl.NumberFormat("pt-BR").format(value) : "—";
@@ -13,17 +13,20 @@ export function StatsSection() {
     queryKey: ["public-home-stats"],
     staleTime: 60_000,
     queryFn: async () => {
-      const { data, error } = await (supabase as any).rpc("get_public_home_stats");
+      const { data, error } = await (supabase as any)
+        .from("public_home_stats")
+        .select("members_count,recruiters_count,jobs_count,events_count")
+        .maybeSingle();
       if (error) throw error;
       return (data ?? {}) as HomeStats;
     },
   });
 
   const stats = [
-    { icon: Users, value: formatCount(data?.members), label: "Membros Ativos", color: "text-primary" },
-    { icon: Building2, value: formatCount(data?.recruiters), label: "Recrutadores Conectados", color: "text-secondary" },
-    { icon: Briefcase, value: formatCount(data?.jobs), label: "Vagas Publicadas", color: "text-[oklch(0.88_0.30_145)]" },
-    { icon: Calendar, value: formatCount(data?.events), label: "Eventos Publicados", color: "text-[oklch(0.78_0.18_65)]" },
+    { icon: Users, value: formatCount(data?.members_count), label: "Membros Ativos", color: "text-primary" },
+    { icon: Building2, value: formatCount(data?.recruiters_count), label: "Recrutadores Conectados", color: "text-secondary" },
+    { icon: Briefcase, value: formatCount(data?.jobs_count), label: "Vagas Publicadas", color: "text-[oklch(0.88_0.30_145)]" },
+    { icon: Calendar, value: formatCount(data?.events_count), label: "Eventos Publicados", color: "text-[oklch(0.78_0.18_65)]" },
   ];
 
   return (

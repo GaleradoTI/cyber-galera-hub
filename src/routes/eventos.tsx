@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/public/public-layout";
+import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { EventCard } from "@/components/public/event-card";
 import { supabase } from "@/integrations/supabase/client";
 import { EventDetailDialog } from "@/components/public/event-detail-dialog";
@@ -65,9 +66,14 @@ function EventosPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">AGENDA</div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight">Próximos eventos</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">Encontros, lives e workshops abertos para a comunidade.</p>
+        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
+          <div>
+            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">AGENDA</div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight">Próximos eventos</h1>
+            <p className="text-muted-foreground mt-2 max-w-2xl">Encontros, lives e workshops abertos para a comunidade.</p>
+          </div>
+          <PublicMascotSpot placement="events" className="hidden lg:flex" />
+        </div>
 
         <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-4 gap-2">
           <Input className="md:col-span-2 lg:col-span-1" placeholder="Buscar evento..." value={q} onChange={(e) => setQ(e.target.value)} />

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { PublicLayout } from "@/components/public/public-layout";
+import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,12 +30,17 @@ function FaqPage() {
 
   return (
     <PublicLayout>
-      <section className="container mx-auto px-4 py-16 max-w-3xl">
-        <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">DÚVIDAS</div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight">FAQ</h1>
-        <p className="text-muted-foreground mt-2">Perguntas frequentes sobre a comunidade.</p>
+      <section className="container mx-auto px-4 py-16 max-w-5xl">
+        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
+          <div>
+            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">DÚVIDAS</div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight">FAQ</h1>
+            <p className="text-muted-foreground mt-2">Perguntas frequentes sobre a comunidade.</p>
+          </div>
+          <PublicMascotSpot placement="faq" className="hidden lg:flex" />
+        </div>
 
-        <div className="mt-10 glass rounded-2xl p-2">
+        <div className="mt-10 glass rounded-2xl p-2 max-w-3xl">
           <Accordion type="single" collapsible className="w-full">
             {faqs.map((f: any) => (
               <AccordionItem key={f.id} value={f.id} className="px-4">
