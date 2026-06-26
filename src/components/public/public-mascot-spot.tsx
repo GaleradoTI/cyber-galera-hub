@@ -33,8 +33,12 @@ export function PublicMascotSpot({ placement, className = "", compact = false }:
     },
   });
 
-  const mascot = items.find((item) => item.placement === placement);
-  if (!mascot) return null;
+  const mascot = items.find((item) => item.placement === placement) ?? {
+    name: "Mascote da GALERA DO T.I.",
+    image_url: "",
+    placement,
+    caption: "",
+  };
   const imageSrc = failed ? mascotFallback : mascot.image_url || mascotFallback;
 
   return (
