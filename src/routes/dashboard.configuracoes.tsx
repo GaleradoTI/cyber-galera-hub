@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter } from "lucide-react";
+import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { ImageUploader } from "@/components/ui/image-uploader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/dashboard/configuracoes")({ component: SettingsPage });
 
@@ -52,6 +54,7 @@ function SettingsPage() {
           <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/40 p-1">
             <TabsTrigger value="seo"><Search className="h-3.5 w-3.5 mr-1.5" /> SEO & Favicon</TabsTrigger>
             <TabsTrigger value="hero"><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Hero & Home</TabsTrigger>
+            <TabsTrigger value="mascotes"><ImageIcon className="h-3.5 w-3.5 mr-1.5" /> Mascotes</TabsTrigger>
             <TabsTrigger value="contato"><Globe className="h-3.5 w-3.5 mr-1.5" /> Contato & Social</TabsTrigger>
             <TabsTrigger value="avancado"><SettingsIcon className="h-3.5 w-3.5 mr-1.5" /> Avançado</TabsTrigger>
           </TabsList>
@@ -64,6 +67,7 @@ function SettingsPage() {
 
           <TabsContent value="hero" className="mt-5 space-y-5">
             {byKey.hero && <GenericCard setting={byKey.hero} onSaved={onSaved} title="Hero" />}
+            {byKey.home_content && <GenericCard setting={byKey.home_content} onSaved={onSaved} title="Textos do início" />}
             {byKey.cta_section && <GenericCard setting={byKey.cta_section} onSaved={onSaved} title="CTA da home" />}
             {byKey.newsletter && <GenericCard setting={byKey.newsletter} onSaved={onSaved} title="Newsletter" />}
             {byKey.stats && <GenericCard setting={byKey.stats} onSaved={onSaved} title="Estatísticas" />}
@@ -71,15 +75,19 @@ function SettingsPage() {
             {byKey.footer && <GenericCard setting={byKey.footer} onSaved={onSaved} title="Rodapé" />}
           </TabsContent>
 
+          <TabsContent value="mascotes" className="mt-5 space-y-5">
+            {byKey.mascots && <MascotsCard setting={byKey.mascots} onSaved={onSaved} />}
+          </TabsContent>
+
           <TabsContent value="contato" className="mt-5 space-y-5">
             {byKey.contact && <GenericCard setting={byKey.contact} onSaved={onSaved} title="Contato" />}
-            {byKey.social_links && <GenericCard setting={byKey.social_links} onSaved={onSaved} title="Redes sociais" />}
+            {byKey.social_links && <SocialLinksCard setting={byKey.social_links} onSaved={onSaved} />}
             {byKey.partners && <GenericCard setting={byKey.partners} onSaved={onSaved} title="Parceiros" />}
           </TabsContent>
 
           <TabsContent value="avancado" className="mt-5 space-y-5">
             {settings
-              .filter((s) => !["seo", "favicon", "hero", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners"].includes(s.setting_key))
+              .filter((s) => !["seo", "favicon", "hero", "home_content", "mascots", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners"].includes(s.setting_key))
               .map((s) => (
                 <GenericCard key={s.id} setting={s} onSaved={onSaved} />
               ))}
@@ -364,6 +372,104 @@ function FaviconCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
             <Input value={draft.apple_touch_url ?? ""} onChange={(e) => set("apple_touch_url", e.target.value)} placeholder="https://..." />
           </Field>
         </div>
+      </div>
+    </CardShell>
+  );
+}
+
+type MascotItem = { name?: string; image_url?: string; placement?: string; caption?: string };
+
+function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
+  const value = setting.setting_value ?? {};
+  const [items, setItems] = useState<MascotItem[]>(Array.isArray(value.items) ? value.items : []);
+  const [saving, setSaving] = useState(false);
+  const update = (idx: number, patch: MascotItem) => setItems((list) => list.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("public_site_settings").update({ setting_value: { items } }).eq("id", setting.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Mascotes atualizados.");
+    onSaved();
+  };
+
+  return (
+    <CardShell title="Mascotes das páginas" description="Adicione personagens para a home, sobre e chamadas públicas." badge="MASCOTES" saving={saving} onSave={save}>
+      <div className="space-y-4">
+        {items.map((item, idx) => (
+          <div key={idx} className="rounded-lg border border-border/40 p-3 bg-muted/10 grid lg:grid-cols-[220px_1fr_auto] gap-3 items-start">
+            <ImageUploader
+              bucket="project-covers"
+              folder="site/mascots"
+              value={item.image_url ?? null}
+              onChange={(url) => update(idx, { image_url: url ?? "" })}
+              label="Imagem"
+              aspect="square"
+              policyKey="project_covers"
+              resizeMax={1200}
+              hint="JPG/PNG/WebP · use PNG com fundo transparente quando possível"
+            />
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Field label="Nome"><Input value={item.name ?? ""} onChange={(e) => update(idx, { name: e.target.value })} /></Field>
+              <Field label="Local de exibição">
+                <Select value={item.placement ?? "home_hero"} onValueChange={(v) => update(idx, { placement: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="home_hero">Hero da home</SelectItem>
+                    <SelectItem value="about">Sobre</SelectItem>
+                    <SelectItem value="footer">Rodapé</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <div className="sm:col-span-2"><Field label="Legenda"><Input value={item.caption ?? ""} onChange={(e) => update(idx, { caption: e.target.value })} /></Field></div>
+            </div>
+            <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => setItems((list) => list.filter((_, i) => i !== idx))}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" onClick={() => setItems((list) => [...list, { name: "", image_url: "", placement: "home_hero", caption: "" }])}>
+          <Plus className="h-4 w-4 mr-1" /> Adicionar mascote
+        </Button>
+      </div>
+    </CardShell>
+  );
+}
+
+function SocialLinksCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
+  const value = setting.setting_value ?? {};
+  const [links, setLinks] = useState<{ label: string; url: string }[]>(
+    Object.entries(value).map(([label, url]) => ({ label, url: String(url ?? "") })),
+  );
+  const [saving, setSaving] = useState(false);
+  const update = (idx: number, patch: Partial<{ label: string; url: string }>) => setLinks((list) => list.map((item, i) => (i === idx ? { ...item, ...patch } : item)));
+
+  const save = async () => {
+    const setting_value = Object.fromEntries(links.filter((l) => l.label.trim() && l.url.trim()).map((l) => [l.label.trim().toLowerCase(), l.url.trim()]));
+    setSaving(true);
+    const { error } = await supabase.from("public_site_settings").update({ setting_value }).eq("id", setting.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Redes sociais atualizadas.");
+    onSaved();
+  };
+
+  return (
+    <CardShell title="Redes e links públicos" description="Inclua Instagram, LinkedIn, Discord, GitHub, YouTube, site e outras redes." badge="SOCIAL" saving={saving} onSave={save}>
+      <div className="space-y-2">
+        {links.map((link, idx) => (
+          <div key={idx} className="grid sm:grid-cols-[180px_1fr_auto] gap-2 items-center">
+            <Input placeholder="Nome da rede" value={link.label} onChange={(e) => update(idx, { label: e.target.value })} />
+            <Input placeholder="https://..." value={link.url} onChange={(e) => update(idx, { url: e.target.value })} />
+            <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => setLinks((list) => list.filter((_, i) => i !== idx))}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button type="button" variant="outline" size="sm" onClick={() => setLinks((list) => [...list, { label: "", url: "" }])}>
+          <Plus className="h-4 w-4 mr-1" /> Novo link
+        </Button>
       </div>
     </CardShell>
   );

@@ -19,10 +19,12 @@ import { Route as ParceirosRouteImport } from './routes/parceiros'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as EmbaixadoresRouteImport } from './routes/embaixadores'
 import { Route as DropsRouteImport } from './routes/drops'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AdministradoresRouteImport } from './routes/administradores'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
@@ -39,12 +41,14 @@ import { Route as DashboardMeusProjetosRouteImport } from './routes/dashboard.me
 import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meus-eventos'
 import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensagens'
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
+import { Route as DashboardFeedRouteImport } from './routes/dashboard.feed'
 import { Route as DashboardExplorarProjetosRouteImport } from './routes/dashboard.explorar-projetos'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
 import { Route as DashboardDropsRouteImport } from './routes/dashboard.drops'
 import { Route as DashboardDepoimentosRouteImport } from './routes/dashboard.depoimentos'
 import { Route as DashboardDenunciasRouteImport } from './routes/dashboard.denuncias'
 import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
+import { Route as DashboardComunidadePerfisRouteImport } from './routes/dashboard.comunidade-perfis'
 import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
 import { Route as DashboardCandidaturasRouteImport } from './routes/dashboard.candidaturas'
 import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.candidatos'
@@ -99,6 +103,11 @@ const EventosRoute = EventosRouteImport.update({
   path: '/eventos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbaixadoresRoute = EmbaixadoresRouteImport.update({
+  id: '/embaixadores',
+  path: '/embaixadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DropsRoute = DropsRouteImport.update({
   id: '/drops',
   path: '/drops',
@@ -117,6 +126,11 @@ const CanaisRoute = CanaisRouteImport.update({
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdministradoresRoute = AdministradoresRouteImport.update({
+  id: '/administradores',
+  path: '/administradores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -199,6 +213,11 @@ const DashboardLogsRoute = DashboardLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardFeedRoute = DashboardFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardExplorarProjetosRoute =
   DashboardExplorarProjetosRouteImport.update({
     id: '/explorar-projetos',
@@ -230,6 +249,12 @@ const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardComunidadePerfisRoute =
+  DashboardComunidadePerfisRouteImport.update({
+    id: '/comunidade-perfis',
+    path: '/comunidade-perfis',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 const DashboardCargosRoute = DashboardCargosRouteImport.update({
   id: '/cargos',
   path: '/cargos',
@@ -248,10 +273,12 @@ const DashboardCandidatosRoute = DashboardCandidatosRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
+  '/embaixadores': typeof EmbaixadoresRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -265,12 +292,14 @@ export interface FileRoutesByFullPath {
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
+  '/dashboard/comunidade-perfis': typeof DashboardComunidadePerfisRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/drops': typeof DashboardDropsRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
+  '/dashboard/feed': typeof DashboardFeedRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -289,9 +318,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/drops': typeof DropsRoute
+  '/embaixadores': typeof EmbaixadoresRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -305,12 +336,14 @@ export interface FileRoutesByTo {
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
+  '/dashboard/comunidade-perfis': typeof DashboardComunidadePerfisRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/drops': typeof DashboardDropsRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
+  '/dashboard/feed': typeof DashboardFeedRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -330,10 +363,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
+  '/embaixadores': typeof EmbaixadoresRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -347,12 +382,14 @@ export interface FileRoutesById {
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
+  '/dashboard/comunidade-perfis': typeof DashboardComunidadePerfisRoute
   '/dashboard/configuracoes': typeof DashboardConfiguracoesRoute
   '/dashboard/denuncias': typeof DashboardDenunciasRoute
   '/dashboard/depoimentos': typeof DashboardDepoimentosRoute
   '/dashboard/drops': typeof DashboardDropsRoute
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
+  '/dashboard/feed': typeof DashboardFeedRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -373,10 +410,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/administradores'
     | '/cadastro'
     | '/canais'
     | '/dashboard'
     | '/drops'
+    | '/embaixadores'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -390,12 +429,14 @@ export interface FileRouteTypes {
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
+    | '/dashboard/comunidade-perfis'
     | '/dashboard/configuracoes'
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/drops'
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
+    | '/dashboard/feed'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -414,9 +455,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/administradores'
     | '/cadastro'
     | '/canais'
     | '/drops'
+    | '/embaixadores'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -430,12 +473,14 @@ export interface FileRouteTypes {
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
+    | '/dashboard/comunidade-perfis'
     | '/dashboard/configuracoes'
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/drops'
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
+    | '/dashboard/feed'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -454,10 +499,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/administradores'
     | '/cadastro'
     | '/canais'
     | '/dashboard'
     | '/drops'
+    | '/embaixadores'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -471,12 +518,14 @@ export interface FileRouteTypes {
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
+    | '/dashboard/comunidade-perfis'
     | '/dashboard/configuracoes'
     | '/dashboard/denuncias'
     | '/dashboard/depoimentos'
     | '/dashboard/drops'
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
+    | '/dashboard/feed'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -496,10 +545,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdministradoresRoute: typeof AdministradoresRoute
   CadastroRoute: typeof CadastroRoute
   CanaisRoute: typeof CanaisRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DropsRoute: typeof DropsRoute
+  EmbaixadoresRoute: typeof EmbaixadoresRoute
   EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
@@ -586,6 +637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/embaixadores': {
+      id: '/embaixadores'
+      path: '/embaixadores'
+      fullPath: '/embaixadores'
+      preLoaderRoute: typeof EmbaixadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/drops': {
       id: '/drops'
       path: '/drops'
@@ -612,6 +670,13 @@ declare module '@tanstack/react-router' {
       path: '/cadastro'
       fullPath: '/cadastro'
       preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/administradores': {
+      id: '/administradores'
+      path: '/administradores'
+      fullPath: '/administradores'
+      preLoaderRoute: typeof AdministradoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -726,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLogsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/feed': {
+      id: '/dashboard/feed'
+      path: '/feed'
+      fullPath: '/dashboard/feed'
+      preLoaderRoute: typeof DashboardFeedRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/explorar-projetos': {
       id: '/dashboard/explorar-projetos'
       path: '/explorar-projetos'
@@ -768,6 +840,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardConfiguracoesRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/comunidade-perfis': {
+      id: '/dashboard/comunidade-perfis'
+      path: '/comunidade-perfis'
+      fullPath: '/dashboard/comunidade-perfis'
+      preLoaderRoute: typeof DashboardComunidadePerfisRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/cargos': {
       id: '/dashboard/cargos'
       path: '/cargos'
@@ -796,12 +875,14 @@ interface DashboardRouteChildren {
   DashboardCandidatosRoute: typeof DashboardCandidatosRoute
   DashboardCandidaturasRoute: typeof DashboardCandidaturasRoute
   DashboardCargosRoute: typeof DashboardCargosRoute
+  DashboardComunidadePerfisRoute: typeof DashboardComunidadePerfisRoute
   DashboardConfiguracoesRoute: typeof DashboardConfiguracoesRoute
   DashboardDenunciasRoute: typeof DashboardDenunciasRoute
   DashboardDepoimentosRoute: typeof DashboardDepoimentosRoute
   DashboardDropsRoute: typeof DashboardDropsRoute
   DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardExplorarProjetosRoute: typeof DashboardExplorarProjetosRoute
+  DashboardFeedRoute: typeof DashboardFeedRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMensagensRoute: typeof DashboardMensagensRoute
   DashboardMeusEventosRoute: typeof DashboardMeusEventosRoute
@@ -821,12 +902,14 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardCandidatosRoute: DashboardCandidatosRoute,
   DashboardCandidaturasRoute: DashboardCandidaturasRoute,
   DashboardCargosRoute: DashboardCargosRoute,
+  DashboardComunidadePerfisRoute: DashboardComunidadePerfisRoute,
   DashboardConfiguracoesRoute: DashboardConfiguracoesRoute,
   DashboardDenunciasRoute: DashboardDenunciasRoute,
   DashboardDepoimentosRoute: DashboardDepoimentosRoute,
   DashboardDropsRoute: DashboardDropsRoute,
   DashboardEventosRoute: DashboardEventosRoute,
   DashboardExplorarProjetosRoute: DashboardExplorarProjetosRoute,
+  DashboardFeedRoute: DashboardFeedRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardMensagensRoute: DashboardMensagensRoute,
   DashboardMeusEventosRoute: DashboardMeusEventosRoute,
@@ -848,10 +931,12 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdministradoresRoute: AdministradoresRoute,
   CadastroRoute: CadastroRoute,
   CanaisRoute: CanaisRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DropsRoute: DropsRoute,
+  EmbaixadoresRoute: EmbaixadoresRoute,
   EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,

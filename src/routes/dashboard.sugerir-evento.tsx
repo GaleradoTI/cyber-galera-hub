@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { formatDateOnly } from "@/lib/utils";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { DateField } from "@/components/ui/date-field";
 
 export const Route = createFileRoute("/dashboard/sugerir-evento")({ component: SugerirEventoPage });
 
@@ -90,7 +91,7 @@ function SugerirEventoPage() {
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2"><Label>Nome *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Tema</Label><Input value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value })} /></div>
-              <div><Label>Data *</Label><Input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} /></div>
+              <DateField label="Data" required value={form.event_date} onChange={(value) => setForm({ ...form, event_date: value })} />
               <div><Label>Hora</Label><Input type="time" value={form.event_time} onChange={(e) => setForm({ ...form, event_time: e.target.value })} /></div>
               <div>
                 <Label>Modalidade</Label>

@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { formatPhone } from "@/lib/formatters";
+import { formatDateOnly } from "@/lib/utils";
 
 export const Route = createFileRoute("/drops")({
   head: () => ({
@@ -48,14 +50,6 @@ const interestSchema = z.object({
     .regex(/^[\d\s()+-]+$/, "Use apenas números, espaços e ( ) + -"),
   note: z.string().trim().max(500).optional().or(z.literal("")),
 });
-
-const formatPhone = (v: string) => {
-  const d = v.replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 2) return d;
-  if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
-  if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
-  return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
-};
 
 const fmtPrice = (cents: number, currency = "BRL") =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency }).format(cents / 100);
@@ -167,7 +161,7 @@ function DropsPublicPage() {
                     <div className="text-lg font-black text-primary">{fmtPrice(d.price_cents, d.currency)}</div>
                     {d.launch_date && (
                       <Badge variant="outline" className="text-[10px]">
-                        <Calendar className="h-3 w-3 mr-1" /> {new Date(d.launch_date).toLocaleDateString("pt-BR")}
+                        <Calendar className="h-3 w-3 mr-1" /> {formatDateOnly(d.launch_date)}
                       </Badge>
                     )}
                   </div>
@@ -199,7 +193,7 @@ function DropsPublicPage() {
                 {open.launch_date && (
                   <div className="rounded bg-muted/20 p-2">
                     <div className="text-[10px] tracking-widest text-muted-foreground/70">LANÇAMENTO</div>
-                    <div className="font-semibold">{new Date(open.launch_date).toLocaleDateString("pt-BR")}</div>
+                    <div className="font-semibold">{formatDateOnly(open.launch_date)}</div>
                   </div>
                 )}
                 <div className="rounded bg-muted/20 p-2">

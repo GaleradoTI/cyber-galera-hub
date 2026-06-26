@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { DateField } from "@/components/ui/date-field";
+import { formatDateOnly } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/projetos")({ component: ProjetosAdminPage });
 
@@ -660,7 +662,7 @@ function ProjetosAdminPage() {
                 <div className="min-w-0">
                   <div className="font-semibold text-sm">{g.title}</div>
                   {g.description && <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>}
-                  {g.due_date && <div className="text-[10px] text-muted-foreground mt-1">Prazo: {new Date(g.due_date).toLocaleDateString("pt-BR")}</div>}
+                  {g.due_date && <div className="text-[10px] text-muted-foreground mt-1">Prazo: {formatDateOnly(g.due_date)}</div>}
                   {g.tasks?.length > 0 && (
                     <div className="text-[10px] text-muted-foreground mt-1">{g.tasks.filter((t) => t.done).length}/{g.tasks.length} tasks</div>
                   )}
@@ -678,7 +680,7 @@ function ProjetosAdminPage() {
             <div className="text-[10px] font-bold tracking-widest text-muted-foreground/70">NOVA META</div>
             <Input placeholder="Título" value={newGoal.title ?? ""} onChange={(e) => setNewGoal({ ...newGoal, title: e.target.value })} />
             <Textarea rows={2} placeholder="Descrição (opcional)" value={newGoal.description ?? ""} onChange={(e) => setNewGoal({ ...newGoal, description: e.target.value })} />
-            <Input type="date" value={newGoal.due_date ?? ""} onChange={(e) => setNewGoal({ ...newGoal, due_date: e.target.value })} />
+            <DateField label="Prazo" value={newGoal.due_date ?? ""} onChange={(value) => setNewGoal({ ...newGoal, due_date: value })} />
             <div className="space-y-1">
               <div className="text-[10px] tracking-widest text-muted-foreground/70">TASKS (CHECKLIST)</div>
               {(newGoal.tasks ?? []).map((t, i) => (
@@ -717,7 +719,7 @@ function ProjetosAdminPage() {
             <div className="space-y-3">
               <div><Label>Título</Label><Input value={editingGoal.title} onChange={(e) => setEditingGoal({ ...editingGoal, title: e.target.value })} /></div>
               <div><Label>Descrição</Label><Textarea rows={3} value={editingGoal.description ?? ""} onChange={(e) => setEditingGoal({ ...editingGoal, description: e.target.value })} /></div>
-              <div><Label>Prazo</Label><Input type="date" value={editingGoal.due_date ?? ""} onChange={(e) => setEditingGoal({ ...editingGoal, due_date: e.target.value })} /></div>
+              <DateField label="Prazo" value={editingGoal.due_date ?? ""} onChange={(value) => setEditingGoal({ ...editingGoal, due_date: value })} />
               <div>
                 <Label>Tasks</Label>
                 <div className="space-y-1 mt-1">

@@ -123,6 +123,8 @@ function LogsPage() {
       public_site_settings: { table: "public_site_settings", cols: "setting_key,description,updated_at", key: "setting_key" },
       drops: { table: "drops", cols: "id,title,status,price_cents,launch_date" },
       drop_interests: { table: "drop_interests", cols: "id,drop_id,full_name,email" },
+      community_profiles: { table: "community_profiles", cols: "id,name,profile_type,is_active" },
+      member_feed_posts: { table: "member_feed_posts", cols: "id,author_id,status,created_at" },
     };
     const byEntity = new Map<string, string[]>();
     (data ?? []).forEach((l: any) => {
@@ -286,6 +288,8 @@ function EntityContext({ entity, entityId }: { entity: string; entityId: string 
         site_settings_history: { table: "site_settings_history", cols: "id,setting_key,changed_by_name,created_at" },
         drops: { table: "drops", cols: "id,title,status,price_cents,launch_date" },
         drop_interests: { table: "drop_interests", cols: "id,drop_id,full_name,email,phone" },
+        community_profiles: { table: "community_profiles", cols: "id,name,profile_type,is_active" },
+        member_feed_posts: { table: "member_feed_posts", cols: "id,author_id,status,created_at" },
       };
       const conf = map[entity];
       if (!conf || !entityId) return null;

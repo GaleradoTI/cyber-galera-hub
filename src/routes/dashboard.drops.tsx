@@ -15,6 +15,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { downloadCSV } from "@/lib/csv";
+import { centsToMoneyInput, isValidDateOnly, moneyInputToCents } from "@/lib/formatters";
+import { DateField } from "@/components/ui/date-field";
 
 export const Route = createFileRoute("/dashboard/drops")({ component: DropsAdminPage });
 
@@ -75,10 +77,7 @@ function DropsAdminPage() {
     else if (editing.title.trim().length < 3) errs.title = "Use ao menos 3 caracteres";
     if ((editing.price_cents ?? 0) < 0) errs.price = "Preço não pode ser negativo";
     if ((editing.price_cents ?? 0) > 99999999) errs.price = "Preço acima do máximo permitido";
-    if (editing.launch_date) {
-      const d = new Date(editing.launch_date);
-      if (Number.isNaN(d.getTime())) errs.launch_date = "Data inválida";
-    }
+    if (editing.launch_date && !isValidDateOnly(editing.launch_date)) errs.launch_date = "Data inválida";
     const methods = editing.payment_methods ?? [];
     if (methods.length === 0) errs.payment = "Selecione ao menos uma forma de pagamento";
     if (methods.includes("Pix")) {
@@ -177,7 +176,7 @@ function DropsAdminPage() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="font-bold text-sm truncate">{d.title}</h3>
-                  <div className="text-xs text-primary font-bold">R$ {(d.price_cents / 100).toFixed(2)}</div>
+                  <div className="text-xs text-primary font-bold">{centsToMoneyInput(d.price_cents)}</div>
                 </div>
                 <Badge variant="outline" className="text-[10px]">{d.status}</Badge>
               </div>
@@ -209,14 +208,10 @@ function DropsAdminPage() {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label>Preço (R$)</Label>
-                  <Input type="number" min={0} step="0.01" value={((editing.price_cents ?? 0) / 100).toString()} onChange={(e) => setEditing({ ...editing, price_cents: Math.round((parseFloat(e.target.value) || 0) * 100) })} />
+                  <Input inputMode="numeric" value={centsToMoneyInput(editing.price_cents ?? 0)} onChange={(e) => setEditing({ ...editing, price_cents: moneyInputToCents(e.target.value) })} />
                   {errors.price && <p className="text-xs text-destructive mt-1">{errors.price}</p>}
                 </div>
-                <div>
-                  <Label>Data de lançamento</Label>
-                  <Input type="date" value={editing.launch_date ? String(editing.launch_date).slice(0, 10) : ""} onChange={(e) => setEditing({ ...editing, launch_date: e.target.value || null })} />
-                  {errors.launch_date && <p className="text-xs text-destructive mt-1">{errors.launch_date}</p>}
-                </div>
+                <DateField label="Data de lançamento" value={editing.launch_date ? String(editing.launch_date).slice(0, 10) : ""} onChange={(value) => setEditing({ ...editing, launch_date: value || null })} error={errors.launch_date} />
               </div>
               <div>
                 <Label>Status</Label>

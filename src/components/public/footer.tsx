@@ -1,9 +1,21 @@
 import { Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Logo } from "@/components/brand/logo";
 import { SITE_CONFIG } from "@/lib/site-config";
-import { Mail } from "lucide-react";
+import { ExternalLink, Mail } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export function Footer() {
+  const { data: socials = {} } = useQuery({
+    queryKey: ["public-social-links"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("public_site_settings").select("setting_value").eq("setting_key", "social_links").maybeSingle();
+      return (data?.setting_value ?? {}) as Record<string, string>;
+    },
+  });
+  const socialEntries = Object.entries(socials).filter(([, url]) => !!url);
+
   return (
     <footer className="border-t border-border/40 bg-background/50 backdrop-blur-xl mt-24">
       <div className="container mx-auto px-4 py-12">
@@ -18,6 +30,15 @@ export function Footer() {
               <Mail className="h-4 w-4 text-secondary" />
               {SITE_CONFIG.email}
             </div>
+            {socialEntries.length > 0 && (
+              <div className="flex flex-wrap gap-3 text-xs">
+                {socialEntries.map(([label, url]) => (
+                  <a key={label} href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-muted-foreground hover:text-secondary transition-colors capitalize">
+                    {label} <ExternalLink className="h-3 w-3" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -26,6 +47,8 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/sobre" className="text-muted-foreground hover:text-secondary transition-colors">Sobre</Link></li>
+              <li><Link to="/embaixadores" className="text-muted-foreground hover:text-secondary transition-colors">Embaixadores</Link></li>
+              <li><Link to="/administradores" className="text-muted-foreground hover:text-secondary transition-colors">Administradores</Link></li>
               <li><Link to="/canais" className="text-muted-foreground hover:text-secondary transition-colors">Canais</Link></li>
               <li><Link to="/vagas" className="text-muted-foreground hover:text-secondary transition-colors">Vagas</Link></li>
               <li><Link to="/eventos" className="text-muted-foreground hover:text-secondary transition-colors">Eventos</Link></li>

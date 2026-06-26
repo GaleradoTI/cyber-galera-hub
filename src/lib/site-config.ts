@@ -15,6 +15,8 @@ export const SITE_CONFIG = {
 export const NAV_LINKS = [
   { to: "/", label: "Início" },
   { to: "/sobre", label: "Sobre" },
+  { to: "/embaixadores", label: "Embaixadores" },
+  { to: "/administradores", label: "Administradores" },
   { to: "/canais", label: "Canais" },
   { to: "/vagas", label: "Vagas" },
   { to: "/projetos", label: "Projetos" },

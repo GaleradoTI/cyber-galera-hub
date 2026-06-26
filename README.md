@@ -16,7 +16,8 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 
 ### Área pública
 - Home com hero, estatísticas e CTA configuráveis
-- Vagas, Eventos, Canais, FAQ, Sobre, Termos, Privacidade
+- Vagas, Eventos, Canais, FAQ, Sobre editável, Embaixadores, Administradores, Termos, Privacidade
+- Mascotes configuráveis para páginas públicas, com imagem e local de exibição
 - SEO por rota (head() com title/description/og:* e twitter:*) — preview ao
   vivo de Google, Open Graph e Twitter Card no dashboard, aplicado no
   `<head>` do site público
@@ -34,6 +35,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   ou de terceiros para aprovação por um admin
 - **Meus Projetos**: squads que participo, mural de posts, modal de membro com contatos
 - **Depoimentos**: enviar/editar/excluir depoimento (passa por moderação antes de aparecer no site público)
+- **Feed da Galera** (`/dashboard/feed`): membros publicam textos e links; autor remove o próprio post e ADMIN/SUPER_ADMIN moderam
 - Cartão de **participação** no perfil com check-ins, conversão e badges
   por marcos (Explorador → Embaixador)
 
@@ -52,6 +54,8 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   aparecem ordenados por **Líder > Cargo no squad > Nome**.
 - Depoimentos: aprovar / rejeitar com observação
 - Configurações do Site: SEO (prévia Google, Open Graph e **Twitter Card** ao vivo), favicon com validação, histórico de versões com pré-visualização e reversão, hero, contact, about, stats, social_links, footer, newsletter, partners, cta_section, legal, password_policy
+- Embaixadores/Admins (`/dashboard/comunidade-perfis`): CRUD de perfis públicos com foto, história profissional, redes e atuação na comunidade
+- Mascotes e links sociais podem ser editados em Configurações do Site; `home_content` controla textos das seções da home e `about` controla textos da página Sobre
 - **Logs de auditoria** preenchidos automaticamente: criação de usuário
   (`USER_CREATED`), alterações em projetos (`PROJECT_CREATED/UPDATED/
   DELETED`), configurações do site (`SETTING_UPDATED`), submissão e
@@ -63,6 +67,13 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 - Tudo do Admin
 - Promover/rebaixar ADMIN
 - Política de senha (`password_policy`): senha padrão de reset e validade (em dias)
+- Configuração global de uploads (`/dashboard/upload-config`): tamanho máximo, MIME types aceitos e redimensionamento por contexto
+
+### Drops e uploads
+- Imagens de drops usam o bucket público `project-covers` no prefixo `drops/`.
+- Uploads de drops registram `DROP_IMAGE_UPLOAD_SUCCESS` ou `DROP_IMAGE_UPLOAD_FAILED` em `/dashboard/logs` com usuário, bucket, caminho, arquivo, tipo, tamanho e motivo.
+- Erro RLS 403 agora mostra bucket/prefixo exatos e o diagnóstico informa a política ativa antes do envio.
+- Preço do drop usa máscara BRL e datas usam campo padronizado de calendário para evitar drift de fuso e formatos inválidos.
 
 ## Setup
 
@@ -86,7 +97,8 @@ SUPABASE_SERVICE_ROLE_KEY=
 ## Banco de Dados
 
 Tabelas principais: `profiles`, `user_roles`, `jobs`, `events`, `channels`, `faqs`,
-`saved_jobs`, `user_event_interests`, `public_site_settings`, `audit_logs`, `lgpd_consents`.
+`saved_jobs`, `user_event_interests`, `public_site_settings`, `audit_logs`, `lgpd_consents`,
+`community_profiles`, `member_feed_posts`.
 
 Funções: `is_admin_or_super`, `has_role`, `handle_new_user`, `promote_user_to_super_admin`.
 
@@ -127,6 +139,8 @@ src/
 
 - RLS em todas as tabelas
 - Roles em tabela separada (`user_roles`) com `SECURITY DEFINER` `has_role`
+- `community_profiles`: leitura pública apenas de perfis ativos; criação/edição/exclusão só por ADMIN/SUPER_ADMIN
+- `member_feed_posts`: leitura e publicação apenas para autenticados; autor remove o próprio post; ADMIN/SUPER_ADMIN moderam
 - Server functions sensíveis (reset de senha) usam `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor
 - Validação Zod em entradas server-side
 - LGPD: `lgpd_consents` com versão de termos

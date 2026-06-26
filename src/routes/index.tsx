@@ -13,6 +13,8 @@ import { ChannelGrid } from "@/components/public/channel-grid";
 import { TestimonialsSection } from "@/components/public/testimonials-section";
 import { PartnersCarousel } from "@/components/public/partners-carousel";
 
+type HomeContent = Record<string, string>;
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -63,6 +65,19 @@ function Index() {
     },
   });
 
+  const { data: home = {} } = useQuery({
+    queryKey: ["home-content-settings"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("public_site_settings")
+        .select("setting_value")
+        .eq("setting_key", "home_content")
+        .maybeSingle();
+      return (data?.setting_value ?? {}) as HomeContent;
+    },
+  });
+
   return (
     <PublicLayout>
       <Hero />
@@ -71,9 +86,9 @@ function Index() {
       {/* Áreas & Tecnologias */}
       <section className="container mx-auto px-4 py-16">
         <SectionHeader
-          eyebrow="ECOSSISTEMA"
-          title="Áreas & Tecnologias"
-          subtitle="A comunidade reúne profissionais de todas as frentes da tecnologia."
+          eyebrow={home.ecosystem_eyebrow ?? "ECOSSISTEMA"}
+          title={home.ecosystem_title ?? "Áreas & Tecnologias"}
+          subtitle={home.ecosystem_subtitle ?? "A comunidade reúne profissionais de todas as frentes da tecnologia."}
         />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10">
           {TECH_AREAS.map((area, i) => {
@@ -98,9 +113,9 @@ function Index() {
       {/* Vagas */}
       <section className="container mx-auto px-4 py-16">
         <SectionHeader
-          eyebrow="OPORTUNIDADES"
-          title="Últimas vagas"
-          subtitle="Vagas curadas e publicadas direto pela equipe."
+          eyebrow={home.jobs_eyebrow ?? "OPORTUNIDADES"}
+          title={home.jobs_title ?? "Últimas vagas"}
+          subtitle={home.jobs_subtitle ?? "Vagas curadas e publicadas direto pela equipe."}
           cta={{ to: "/vagas", label: "Ver todas as vagas" }}
         />
         <div className="grid md:grid-cols-3 gap-5 mt-10">
@@ -111,9 +126,9 @@ function Index() {
       {/* Eventos */}
       <section className="container mx-auto px-4 py-16">
         <SectionHeader
-          eyebrow="AGENDA"
-          title="Próximos eventos"
-          subtitle="Meetups, workshops e lives da comunidade."
+          eyebrow={home.events_eyebrow ?? "AGENDA"}
+          title={home.events_title ?? "Próximos eventos"}
+          subtitle={home.events_subtitle ?? "Meetups, workshops e lives da comunidade."}
           cta={{ to: "/eventos", label: "Ver todos os eventos" }}
         />
         <div className="grid md:grid-cols-3 gap-5 mt-10">
@@ -124,9 +139,9 @@ function Index() {
       {/* Canais */}
       <section className="container mx-auto px-4 py-16">
         <SectionHeader
-          eyebrow="ONDE A GENTE TÁ"
-          title="Canais oficiais"
-          subtitle="Plug-se nos canais que mais combinam com você."
+          eyebrow={home.channels_eyebrow ?? "ONDE A GENTE TÁ"}
+          title={home.channels_title ?? "Canais oficiais"}
+          subtitle={home.channels_subtitle ?? "Plug-se nos canais que mais combinam com você."}
         />
         <div className="mt-10">
           <ChannelGrid />
@@ -144,16 +159,15 @@ function Index() {
           <div className="absolute inset-0 bg-gradient-neon opacity-10" />
           <div className="relative">
             <h2 className="text-3xl md:text-5xl font-black tracking-tight">
-              Faça parte da maior <span className="text-gradient-neon">comunidade tech</span>
+              {home.cta_title ?? "Faça parte da maior comunidade tech"}
             </h2>
             <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-              Aprenda, compartilhe, evolua e conquiste novas oportunidades ao
-              lado de quem vive tecnologia todos os dias.
+              {home.cta_description ?? "Aprenda, compartilhe, evolua e conquiste novas oportunidades ao lado de quem vive tecnologia todos os dias."}
             </p>
             <div className="mt-8">
               <Button asChild variant="neon" size="xl">
                 <Link to="/cadastro">
-                  Quero entrar! <ArrowRight className="ml-2 h-4 w-4" />
+                  {home.cta_button ?? "Quero entrar!"} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
