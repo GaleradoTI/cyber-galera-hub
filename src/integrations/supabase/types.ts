@@ -999,6 +999,33 @@ export type Database = {
         }
         Relationships: []
       }
+      public_home_stats: {
+        Row: {
+          events_count: number
+          id: boolean
+          jobs_count: number
+          members_count: number
+          recruiters_count: number
+          updated_at: string
+        }
+        Insert: {
+          events_count?: number
+          id?: boolean
+          jobs_count?: number
+          members_count?: number
+          recruiters_count?: number
+          updated_at?: string
+        }
+        Update: {
+          events_count?: number
+          id?: boolean
+          jobs_count?: number
+          members_count?: number
+          recruiters_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       public_site_settings: {
         Row: {
           description: string | null
@@ -1532,6 +1559,7 @@ export type Database = {
         Returns: undefined
       }
       promote_user_to_super_admin: { Args: { _email: string }; Returns: string }
+      recalculate_public_home_stats: { Args: never; Returns: undefined }
       register_event_interest: { Args: { _event_id: string }; Returns: Json }
       resolve_report: {
         Args: { _action: string; _note: string; _report_id: string }
