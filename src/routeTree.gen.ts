@@ -19,10 +19,12 @@ import { Route as ParceirosRouteImport } from './routes/parceiros'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as EmbaixadoresRouteImport } from './routes/embaixadores'
 import { Route as DropsRouteImport } from './routes/drops'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as AdministradoresRouteImport } from './routes/administradores'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
@@ -99,6 +101,11 @@ const EventosRoute = EventosRouteImport.update({
   path: '/eventos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmbaixadoresRoute = EmbaixadoresRouteImport.update({
+  id: '/embaixadores',
+  path: '/embaixadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DropsRoute = DropsRouteImport.update({
   id: '/drops',
   path: '/drops',
@@ -117,6 +124,11 @@ const CanaisRoute = CanaisRouteImport.update({
 const CadastroRoute = CadastroRouteImport.update({
   id: '/cadastro',
   path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdministradoresRoute = AdministradoresRouteImport.update({
+  id: '/administradores',
+  path: '/administradores',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -248,10 +260,12 @@ const DashboardCandidatosRoute = DashboardCandidatosRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
+  '/embaixadores': typeof EmbaixadoresRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -289,9 +303,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/drops': typeof DropsRoute
+  '/embaixadores': typeof EmbaixadoresRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -330,10 +346,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
+  '/embaixadores': typeof EmbaixadoresRoute
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
@@ -373,10 +391,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/administradores'
     | '/cadastro'
     | '/canais'
     | '/dashboard'
     | '/drops'
+    | '/embaixadores'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -414,9 +434,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/administradores'
     | '/cadastro'
     | '/canais'
     | '/drops'
+    | '/embaixadores'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -454,10 +476,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/administradores'
     | '/cadastro'
     | '/canais'
     | '/dashboard'
     | '/drops'
+    | '/embaixadores'
     | '/eventos'
     | '/faq'
     | '/login'
@@ -496,10 +520,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdministradoresRoute: typeof AdministradoresRoute
   CadastroRoute: typeof CadastroRoute
   CanaisRoute: typeof CanaisRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DropsRoute: typeof DropsRoute
+  EmbaixadoresRoute: typeof EmbaixadoresRoute
   EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
@@ -586,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/embaixadores': {
+      id: '/embaixadores'
+      path: '/embaixadores'
+      fullPath: '/embaixadores'
+      preLoaderRoute: typeof EmbaixadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/drops': {
       id: '/drops'
       path: '/drops'
@@ -612,6 +645,13 @@ declare module '@tanstack/react-router' {
       path: '/cadastro'
       fullPath: '/cadastro'
       preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/administradores': {
+      id: '/administradores'
+      path: '/administradores'
+      fullPath: '/administradores'
+      preLoaderRoute: typeof AdministradoresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -848,10 +888,12 @@ const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdministradoresRoute: AdministradoresRoute,
   CadastroRoute: CadastroRoute,
   CanaisRoute: CanaisRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DropsRoute: DropsRoute,
+  EmbaixadoresRoute: EmbaixadoresRoute,
   EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
