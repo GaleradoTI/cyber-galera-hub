@@ -251,6 +251,13 @@ Página reescrita com filtros (usuário, ação, entidade, intervalo de datas, b
 - `ImageUploader` agora mostra **progresso**, toasts "Processando → Otimizando → Enviando → Concluído" e mensagens claras: formato inválido informa o tipo recebido, arquivo grande mostra o tamanho real x limite, erros de permissão/MIME/tamanho do servidor são traduzidos.
 - Hint padrão exibe extensões aceitas + tamanho máximo em todos os pontos (avatar, capa/banner de projeto, banner de evento).
 
+### Correção de Storage RLS — drops, mascotes, perfis públicos e favicon
+- A regra de upload foi centralizada nas funções `can_upload_storage_object` e `can_update_storage_object`, evitando falso bloqueio por RLS ao gravar em `storage.objects`.
+- Prefixos administrativos liberados para `ADMIN`/`SUPER_ADMIN`: `project-covers/drops/*` e `project-covers/site/*` (inclui mascotes, favicon e fotos públicas de embaixadores/administradores).
+- Avatares seguem restritos a `avatars/<user_id>/*`; eventos continuam em `project-covers/events/*` para usuários autenticados.
+- O diagnóstico de upload agora mostra cargo atual, bucket, prefixo, caminho esperado, policy aplicada e teste `can_insert_probe`.
+- O upload de favicon usa o mesmo `ImageUploader`, com auditoria (`site_asset`) e erro detalhado quando o Storage negar por RLS.
+
 ### Metas com prazo (squad goals)
 - Tabelas: `squad_goals` (admin cria) e `squad_goal_completions` (squad marca).
 - Admin: botão "Metas" (ícone alvo) em cada projeto em `/dashboard/projetos` — criar/excluir metas com prazo.

@@ -360,8 +360,9 @@ function DiagnosticsPopover({
         {effective.resizeMax && <Row k="Resize" v={`${effective.resizeMax}px`} />}
         <div className="pt-2 border-t border-border/30">
           <p className="text-[10px] text-muted-foreground leading-snug">
-            RLS: apenas <strong>ADMIN / SUPER_ADMIN</strong> (verificado em <code>user_roles</code>) pode escrever em
-            <code> {bucket}/{folder.split("/")[0]}/*</code>. Mudanças no tamanho/tipo são em
+            RLS: a permissão é calculada por bucket e prefixo. Para <code>project-covers/site/*</code> e
+            <code> project-covers/drops/*</code>, somente <strong>ADMIN / SUPER_ADMIN</strong>; para <code>avatars/*</code>, somente o dono da pasta.
+            Mudanças no tamanho/tipo são em
             <code> /dashboard/upload-config</code>.
           </p>
         </div>
