@@ -1489,6 +1489,14 @@ export type Database = {
     }
     Functions: {
       _audit_actor_name: { Args: { _uid: string }; Returns: string }
+      can_update_storage_object: {
+        Args: { _bucket: string; _name: string; _owner?: string }
+        Returns: boolean
+      }
+      can_upload_storage_object: {
+        Args: { _bucket: string; _name: string }
+        Returns: boolean
+      }
       decide_join_request: {
         Args: { _action: string; _id: string; _note?: string }
         Returns: undefined

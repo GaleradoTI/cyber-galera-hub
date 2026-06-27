@@ -10,7 +10,9 @@ type UploadDiagnostic = {
   expected_path?: string;
   required_role?: string;
   current_user_id?: string;
+  current_user_roles?: string[];
   current_user_is_admin?: boolean;
+  can_insert_probe?: boolean;
   policies?: Array<{
     name?: string;
     command?: string;

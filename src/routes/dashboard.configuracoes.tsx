@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Search, Upload, Image as ImageIcon, Loader2, X, ExternalLink, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter, Plus, Trash2 } from "lucide-react";
+import { Save, Search, Image as ImageIcon, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter, Plus, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,14 +14,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import mascotFallback from "@/assets/mascot-axolotl.png";
 
 export const Route = createFileRoute("/dashboard/configuracoes")({ component: SettingsPage });
 
 type Setting = { id: string; setting_key: string; setting_value: any; description: string | null };
 
 const FAVICON_FALLBACK = "/favicon.ico";
-const FAVICON_MAX_BYTES = 512 * 1024;
-const FAVICON_ALLOWED = ["image/png", "image/svg+xml", "image/x-icon", "image/vnd.microsoft.icon"];
 
 function SettingsPage() {
   const navigate = useNavigate();
@@ -284,40 +283,8 @@ function SeoCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }
 function FaviconCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
   const [draft, setDraft] = useState<Record<string, any>>(setting.setting_value ?? {});
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const set = (k: string, v: any) => setDraft((d) => ({ ...d, [k]: v }));
-
-  const handleFile = async (file: File) => {
-    if (!FAVICON_ALLOWED.includes(file.type)) {
-      toast.error("Formato inválido. Envie PNG, SVG ou ICO. Usando fallback.");
-      set("url", FAVICON_FALLBACK);
-      return;
-    }
-    if (file.size > FAVICON_MAX_BYTES) {
-      toast.error("Arquivo maior que 512KB. Usando fallback.");
-      set("url", FAVICON_FALLBACK);
-      return;
-    }
-    setUploading(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() ?? "ico";
-    const path = `site/favicon-${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from("project-covers").upload(path, file, {
-      cacheControl: "3600",
-      upsert: true,
-      contentType: file.type,
-    });
-    setUploading(false);
-    if (upErr) {
-      toast.error(`Falha no upload: ${upErr.message}. Usando fallback.`);
-      set("url", FAVICON_FALLBACK);
-      return;
-    }
-    const { data } = supabase.storage.from("project-covers").getPublicUrl(path);
-    set("url", data.publicUrl);
-    toast.success("Favicon enviado.");
-  };
 
   const save = async () => {
     const value = { ...draft, url: draft.url || FAVICON_FALLBACK };
@@ -339,32 +306,25 @@ function FaviconCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
             ) : (
               <ImageIcon className="h-5 w-5 text-muted-foreground" />
             )}
-            {uploading && <Loader2 className="h-4 w-4 animate-spin absolute" />}
-          </div>
-          <div className="flex flex-col gap-2">
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".png,.svg,.ico,image/png,image/svg+xml,image/x-icon"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleFile(f);
-                e.target.value = "";
-              }}
-            />
-            <Button type="button" size="sm" variant="outline" onClick={() => inputRef.current?.click()} disabled={uploading}>
-              <Upload className="h-3 w-3 mr-1" /> Enviar favicon
-            </Button>
-            {draft.url && draft.url !== FAVICON_FALLBACK && (
-              <Button type="button" size="sm" variant="ghost" className="text-destructive" onClick={() => set("url", FAVICON_FALLBACK)}>
-                <X className="h-3 w-3 mr-1" /> Voltar ao padrão
-              </Button>
-            )}
-            <p className="text-[10px] text-muted-foreground">PNG, SVG ou ICO • máx. 512KB</p>
           </div>
         </div>
         <div className="flex-1 min-w-[240px] space-y-3">
+          <ImageUploader
+            bucket="project-covers"
+            folder="site/favicon"
+            value={draft.url && draft.url !== FAVICON_FALLBACK ? draft.url : null}
+            onChange={(url) => set("url", url || FAVICON_FALLBACK)}
+            label="Enviar favicon"
+            aspect="square"
+            maxBytes={512 * 1024}
+            accept={["image/png", "image/svg+xml", "image/x-icon", "image/vnd.microsoft.icon"]}
+            policyKey="favicon"
+            auditEntity="site_asset"
+            auditEntityId="favicon"
+            showDiagnostics
+            imageFit="contain"
+            hint="PNG/SVG/ICO · máx 512KB · pasta project-covers/site/favicon"
+          />
           <Field label="URL do favicon">
             <Input value={draft.url ?? ""} onChange={(e) => set("url", e.target.value)} placeholder={FAVICON_FALLBACK} />
           </Field>
@@ -411,6 +371,7 @@ function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
               auditEntity="mascot_image"
               auditEntityId={item.placement ?? null}
               showDiagnostics
+              imageFit="contain"
               hint="JPG/PNG/WebP · use PNG com fundo transparente quando possível"
             />
             <div className="grid sm:grid-cols-2 gap-3">
@@ -439,9 +400,9 @@ function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
                 <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground mb-2">PRÉVIA</p>
                 <div className="rounded-lg border border-border/40 bg-background/40 p-3 flex items-center gap-3 min-h-24">
                   {item.image_url ? (
-                    <img src={item.image_url} alt={item.name || "Prévia do mascote"} className="h-20 w-20 object-contain" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                    <img src={item.image_url} alt={item.name || "Prévia do mascote"} className="h-20 w-20 object-contain" onError={(e) => { e.currentTarget.src = mascotFallback; }} />
                   ) : (
-                    <div className="h-20 w-20 rounded-md bg-muted/30 flex items-center justify-center text-[10px] text-muted-foreground text-center">Sem imagem</div>
+                    <img src={mascotFallback} alt="Mascote padrão" className="h-20 w-20 object-contain opacity-70" />
                   )}
                   <div className="min-w-0">
                     <div className="font-bold text-sm truncate">{item.name || "Mascote sem nome"}</div>
