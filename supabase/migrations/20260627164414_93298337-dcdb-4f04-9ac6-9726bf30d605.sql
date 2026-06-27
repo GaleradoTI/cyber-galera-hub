@@ -1,0 +1,10 @@
+REVOKE ALL ON FUNCTION public.can_upload_storage_object(text, text) FROM anon;
+REVOKE ALL ON FUNCTION public.can_update_storage_object(text, text, uuid) FROM anon;
+REVOKE ALL ON FUNCTION public.get_storage_upload_diagnostics(text, text) FROM anon;
+REVOKE ALL ON FUNCTION public.log_image_upload_attempt(text, text, text, text, text, text, text, bigint) FROM anon;
+REVOKE ALL ON FUNCTION public.log_drop_image_upload_attempt(text, text, text, text, text, text, text, bigint) FROM anon;
+GRANT EXECUTE ON FUNCTION public.can_upload_storage_object(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_update_storage_object(text, text, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_storage_upload_diagnostics(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.log_image_upload_attempt(text, text, text, text, text, text, text, bigint) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.log_drop_image_upload_attempt(text, text, text, text, text, text, text, bigint) TO authenticated;
