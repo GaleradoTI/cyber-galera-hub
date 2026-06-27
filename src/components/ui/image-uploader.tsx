@@ -27,7 +27,7 @@ type Props = {
   /** Helper text shown under the buttons. */
   hint?: string;
   /** Key in upload_policy (public_site_settings) used to override defaults at runtime. */
-  policyKey?: "avatars" | "project_covers" | "event_banners" | "drop_images" | "documents";
+  policyKey?: "avatars" | "project_covers" | "event_banners" | "drop_images" | "favicon" | "documents";
   /** Record every attempt (success/failure) of this upload in audit_logs (used for drops). */
   auditEntity?: "drop_image" | "community_profile_photo" | "mascot_image" | "site_asset";
   /** Optional entity id passed to the audit log (e.g. drop id). */
