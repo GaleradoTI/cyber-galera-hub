@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Upload, X, Loader2, Info } from "lucide-react";
@@ -34,6 +34,8 @@ type Props = {
   auditEntityId?: string | null;
   /** When true, shows a small "i" button with bucket/path/policy diagnostics (admin only). */
   showDiagnostics?: boolean;
+  /** How the preview image should fit inside its box. */
+  imageFit?: "cover" | "contain";
 };
 
 const DEFAULT_MAX_BYTES = 4 * 1024 * 1024; // 4MB
@@ -91,12 +93,17 @@ async function resizeImage(file: File, maxEdge: number): Promise<{ blob: Blob; w
 export function ImageUploader({
   bucket, folder, value, onChange, label = "Imagem", aspect = "square",
   maxBytes = DEFAULT_MAX_BYTES, accept = DEFAULT_ACCEPT, resizeMax, minWidth, hint,
-  policyKey, auditEntity, auditEntityId, showDiagnostics,
+  policyKey, auditEntity, auditEntityId, showDiagnostics, imageFit = "cover",
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [previewFailed, setPreviewFailed] = useState(false);
   const { data: policy } = useUploadPolicy();
+
+  useEffect(() => {
+    setPreviewFailed(false);
+  }, [value]);
 
   // Resolve effective accept/maxBytes from upload_policy when policyKey is provided.
   const effective = useMemo(() => {
@@ -207,19 +214,22 @@ export function ImageUploader({
       });
       if (upErr) {
         const msg = upErr.message || "";
+        const errorName = (upErr as any)?.name ? `${(upErr as any).name}: ` : "";
         const statusCode = (upErr as any)?.statusCode ?? (upErr as any)?.status ?? "";
+        const technical = `${errorName}${msg}${statusCode ? ` (status ${statusCode})` : ""}`;
         let friendly = msg;
         if (/jwt|invalid.*token|aud claim|not authenticated/i.test(msg)) {
-          friendly = `Sessão inválida. Saia e entre novamente para reenviar a imagem. Detalhe: ${msg}`;
+          friendly = `Sessão inválida. Saia e entre novamente para reenviar a imagem. Detalhe: ${technical}`;
         } else if (
           String(statusCode) === "403" ||
+          String(statusCode) === "400" ||
           /row-level security|not authorized|unauthorized|policy/i.test(msg)
         ) {
           friendly =
             `🔒 Permissão negada (RLS 403) ao enviar em ${bucket}/${path}. ` +
-            `Verifique se você ainda está logado como admin/super admin e tente novamente. ` +
-            `Se o erro persistir, peça a um SUPER_ADMIN para revisar a policy do bucket. ` +
-            `Detalhe: ${msg}`;
+            `Verifique se a sessão está ativa e se seu cargo permite este prefixo. ` +
+            `Abra o Diagnóstico para conferir bucket, pasta e policy aplicada. ` +
+            `Detalhe: ${technical}`;
         } else if (/payload too large|413/.test(msg)) {
           friendly = `Arquivo excede o limite do servidor (${limitMB}MB).`;
         } else if (/mime|content.?type/i.test(msg)) {
@@ -256,11 +266,16 @@ export function ImageUploader({
             aspect === "square" ? "w-24 h-24" : aspect === "wide" ? "w-48 h-20" : "w-40 h-24"
           }`}
         >
-          {value ? (
-            <img src={value} alt="" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+          {value && !previewFailed ? (
+            <img
+              src={value}
+              alt="Prévia da imagem enviada"
+              className={`w-full h-full ${imageFit === "contain" ? "object-contain p-2" : "object-cover"}`}
+              onError={() => setPreviewFailed(true)}
+            />
           ) : (
-            <div className="flex items-center justify-center w-full h-full text-muted-foreground text-xs">
-              Sem imagem
+            <div className="flex items-center justify-center w-full h-full text-muted-foreground text-xs text-center px-2">
+              {value ? "Imagem indisponível" : "Sem imagem"}
             </div>
           )}
           {uploading && (
@@ -338,6 +353,8 @@ function DiagnosticsPopover({
         <Row k="Prefixo (pasta)" v={folder} />
         <Row k="Caminho final" v={`${bucket}/${folder}/<timestamp>.<ext>`} mono />
         <Row k="Policy key" v={policyKey ?? "(usa default)"} />
+        {info?.current_user_roles && <Row k="Cargo atual" v={Array.isArray(info.current_user_roles) ? info.current_user_roles.join(", ") : String(info.current_user_roles)} />}
+        {info && <Row k="Permissão teste" v={info.can_insert_probe ? "liberada" : "bloqueada"} />}
         <Row k="Tipos aceitos" v={effective.accept.join(", ")} />
         <Row k="Tamanho máx" v={`${Math.round(effective.maxBytes / (1024 * 1024))} MB`} />
         {effective.resizeMax && <Row k="Resize" v={`${effective.resizeMax}px`} />}
