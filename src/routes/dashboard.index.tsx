@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDateOnly } from "@/lib/utils";
+import { countBy, getAgeRange, getGenderLabel } from "@/lib/profile-demographics";
 
 export const Route = createFileRoute("/dashboard/")({ component: DashboardIndex });
 
@@ -289,19 +290,31 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     queryKey: ["admin-kpis"],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const [users, jobs, events, projects, checkins] = await Promise.all([
-        supabase.from("profiles").select("user_id", { count: "exact", head: true }).eq("is_blocked", false),
+      const [profiles, jobs, events, projects, checkins] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_id,gender,birth_date,address_region,address_state,address_city,address_country,address_postal_code")
+          .eq("is_blocked", false)
+          .limit(2000),
         supabase.from("jobs").select("id", { count: "exact", head: true }).eq("status", "publicado"),
         supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "publicado").gte("event_date", today),
         supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "ativo"),
         supabase.from("event_checkins").select("id", { count: "exact", head: true }),
       ]);
+      const profileRows = profiles.data ?? [];
+      const withAddress = profileRows.filter((p: any) => p.address_city || p.address_state || p.address_region || p.address_postal_code).length;
       return {
-        users: users.count ?? 0,
+        users: profileRows.length,
         jobs: jobs.count ?? 0,
         events: events.count ?? 0,
         projects: projects.count ?? 0,
         checkins: checkins.count ?? 0,
+        addressCoverage: profileRows.length ? Math.round((withAddress / profileRows.length) * 100) : 0,
+        regions: countBy(profileRows, (p: any) => p.address_region),
+        genders: countBy(profileRows, (p: any) => getGenderLabel(p.gender)),
+        ageRanges: countBy(profileRows, (p: any) => getAgeRange(p.birth_date)),
+        states: countBy(profileRows, (p: any) => p.address_state).slice(0, 8),
+        cities: countBy(profileRows, (p: any) => p.address_city).slice(0, 8),
       };
     },
   });
@@ -326,6 +339,21 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           {isSuperAdmin && <QuickAction to="/dashboard/cargos" icon={Heart} title="Cargos / Badges" desc="Distinções de membros." />}
         </div>
       </Section>
+
+      <Section title="Métricas da comunidade">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <DistributionCard title="Regiões" items={stats?.regions ?? []} total={stats?.users ?? 0} />
+          <DistributionCard title="Sexo / gênero" items={stats?.genders ?? []} total={stats?.users ?? 0} />
+          <DistributionCard title="Faixa etária" items={stats?.ageRanges ?? []} total={stats?.users ?? 0} />
+          <DistributionCard title="Estados" items={stats?.states ?? []} total={stats?.users ?? 0} />
+          <DistributionCard title="Cidades" items={stats?.cities ?? []} total={stats?.users ?? 0} />
+          <div className="glass rounded-xl p-5 border border-primary/20">
+            <div className="text-[10px] tracking-[0.25em] text-muted-foreground font-bold">PERFIS COM ENDEREÇO</div>
+            <div className="text-4xl font-black text-gradient-neon mt-3">{stats?.addressCoverage ?? "…"}%</div>
+            <p className="text-xs text-muted-foreground mt-2">Baseado em CEP, cidade, estado ou região preenchidos.</p>
+          </div>
+        </div>
+      </Section>
     </>
   );
 }
@@ -338,6 +366,31 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: s
       <Icon className="h-5 w-5 text-primary" />
       <div className="text-2xl font-black mt-3 text-gradient-neon">{value}</div>
       <div className="text-xs text-muted-foreground mt-1">{label}</div>
+    </div>
+  );
+}
+
+function DistributionCard({ title, items, total }: { title: string; items: { label: string; value: number }[]; total: number }) {
+  const visible = items.length > 0 ? items.slice(0, 6) : [{ label: "Sem dados", value: 0 }];
+  return (
+    <div className="glass rounded-xl p-5 border border-primary/20">
+      <h3 className="text-sm font-bold mb-4">{title}</h3>
+      <div className="space-y-3">
+        {visible.map((item) => {
+          const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+          return (
+            <div key={item.label}>
+              <div className="flex items-center justify-between gap-2 text-xs mb-1">
+                <span className="truncate text-muted-foreground">{item.label}</span>
+                <span className="font-bold text-foreground">{item.value} · {pct}%</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                <div className="h-full bg-gradient-neon" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

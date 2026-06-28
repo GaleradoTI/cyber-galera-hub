@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BRAZIL_STATES, GENDER_OPTIONS, getRegionByState } from "@/lib/profile-demographics";
 
 export const Route = createFileRoute("/dashboard/perfil")({ component: PerfilPage });
 
@@ -20,6 +22,17 @@ const profileSchema = z.object({
   bio: z.string().trim().max(500).optional().nullable(),
   work_area: z.string().trim().max(80).optional().nullable(),
   phone: z.string().trim().max(40).optional().nullable(),
+  gender: z.enum(["feminino", "masculino", "nao_binario", "outro", "prefiro_nao_informar"]).optional().nullable(),
+  birth_date: z.string().trim().max(10).optional().nullable(),
+  address_postal_code: z.string().trim().max(20).optional().nullable(),
+  address_street: z.string().trim().max(160).optional().nullable(),
+  address_number: z.string().trim().max(20).optional().nullable(),
+  address_complement: z.string().trim().max(80).optional().nullable(),
+  address_neighborhood: z.string().trim().max(100).optional().nullable(),
+  address_city: z.string().trim().max(100).optional().nullable(),
+  address_state: z.string().trim().regex(/^[A-Z]{2}$/).optional().nullable(),
+  address_country: z.string().trim().max(80).optional().nullable(),
+  address_region: z.string().trim().max(40).optional().nullable(),
   looking_for_job: z.boolean(),
   tech_tags: z.array(z.string().trim().min(1).max(40)).max(20),
   avatar_url: z.string().trim().max(500).optional().nullable(),
@@ -47,6 +60,17 @@ function PerfilPage() {
     bio: "",
     work_area: "",
     phone: "",
+    gender: "" as string | null,
+    birth_date: "" as string | null,
+    address_postal_code: "",
+    address_street: "",
+    address_number: "",
+    address_complement: "",
+    address_neighborhood: "",
+    address_city: "",
+    address_state: "" as string | null,
+    address_country: "Brasil",
+    address_region: "",
     looking_for_job: false,
     tech_tags: [] as string[],
     avatar_url: "" as string | null,
@@ -75,6 +99,17 @@ function PerfilPage() {
       bio: profile.bio ?? "",
       work_area: profile.work_area ?? "",
       phone: (profile as any).phone ?? "",
+      gender: (profile as any).gender ?? "",
+      birth_date: (profile as any).birth_date ?? "",
+      address_postal_code: (profile as any).address_postal_code ?? "",
+      address_street: (profile as any).address_street ?? "",
+      address_number: (profile as any).address_number ?? "",
+      address_complement: (profile as any).address_complement ?? "",
+      address_neighborhood: (profile as any).address_neighborhood ?? "",
+      address_city: (profile as any).address_city ?? "",
+      address_state: (profile as any).address_state ?? "",
+      address_country: (profile as any).address_country ?? "Brasil",
+      address_region: (profile as any).address_region ?? "",
       looking_for_job: !!profile.looking_for_job,
       tech_tags: (profile.tech_tags ?? []) as string[],
       avatar_url: profile.avatar_url ?? "",
@@ -87,7 +122,13 @@ function PerfilPage() {
     const cleanedSocial = Object.fromEntries(
       Object.entries(form.social_links).filter(([, v]) => v && v.trim().length > 0),
     );
-    const parsed = profileSchema.safeParse({ ...form, social_links: cleanedSocial });
+    const parsed = profileSchema.safeParse({
+      ...form,
+      gender: form.gender || null,
+      address_state: form.address_state || null,
+      address_region: form.address_region || null,
+      social_links: cleanedSocial,
+    });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setSaving(true);
     const { error } = await supabase
@@ -97,6 +138,17 @@ function PerfilPage() {
         bio: parsed.data.bio ?? null,
         work_area: parsed.data.work_area ?? null,
         phone: parsed.data.phone ?? null,
+        gender: parsed.data.gender || null,
+        birth_date: parsed.data.birth_date || null,
+        address_postal_code: parsed.data.address_postal_code ?? null,
+        address_street: parsed.data.address_street ?? null,
+        address_number: parsed.data.address_number ?? null,
+        address_complement: parsed.data.address_complement ?? null,
+        address_neighborhood: parsed.data.address_neighborhood ?? null,
+        address_city: parsed.data.address_city ?? null,
+        address_state: parsed.data.address_state || null,
+        address_country: parsed.data.address_country || "Brasil",
+        address_region: parsed.data.address_region || null,
         looking_for_job: parsed.data.looking_for_job,
         tech_tags: parsed.data.tech_tags,
         avatar_url: parsed.data.avatar_url ?? null,
@@ -191,9 +243,77 @@ function PerfilPage() {
                 <Label className="flex items-center gap-2"><Phone className="h-3 w-3" /> Telefone / WhatsApp</Label>
                 <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="(11) 99999-9999" />
               </div>
+              <div>
+                <Label>Sexo / gênero</Label>
+                <Select value={form.gender || "__empty"} onValueChange={(v) => setForm({ ...form, gender: v === "__empty" ? "" : v })}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__empty">Não informar</SelectItem>
+                    {GENDER_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Data de nascimento</Label>
+                <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
+              </div>
               <div className="flex items-end gap-3 pb-1">
                 <Switch checked={form.looking_for_job} onCheckedChange={(v) => setForm({ ...form, looking_for_job: v })} />
                 <Label className="!mt-0">Estou em busca de oportunidade</Label>
+              </div>
+            </div>
+          </section>
+
+          <section className="glass rounded-xl p-5 border border-primary/20">
+            <h2 className="font-bold text-sm mb-4">Endereço</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <Label>CEP</Label>
+                <Input value={form.address_postal_code} onChange={(e) => setForm({ ...form, address_postal_code: e.target.value })} placeholder="00000-000" maxLength={20} />
+              </div>
+              <div>
+                <Label>País</Label>
+                <Input value={form.address_country} onChange={(e) => setForm({ ...form, address_country: e.target.value })} placeholder="Brasil" maxLength={80} />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Rua / logradouro</Label>
+                <Input value={form.address_street} onChange={(e) => setForm({ ...form, address_street: e.target.value })} maxLength={160} />
+              </div>
+              <div>
+                <Label>Número</Label>
+                <Input value={form.address_number} onChange={(e) => setForm({ ...form, address_number: e.target.value })} maxLength={20} />
+              </div>
+              <div>
+                <Label>Complemento</Label>
+                <Input value={form.address_complement} onChange={(e) => setForm({ ...form, address_complement: e.target.value })} maxLength={80} />
+              </div>
+              <div>
+                <Label>Bairro</Label>
+                <Input value={form.address_neighborhood} onChange={(e) => setForm({ ...form, address_neighborhood: e.target.value })} maxLength={100} />
+              </div>
+              <div>
+                <Label>Cidade</Label>
+                <Input value={form.address_city} onChange={(e) => setForm({ ...form, address_city: e.target.value })} maxLength={100} />
+              </div>
+              <div>
+                <Label>Estado</Label>
+                <Select
+                  value={form.address_state || "__empty"}
+                  onValueChange={(v) => {
+                    const uf = v === "__empty" ? "" : v;
+                    setForm({ ...form, address_state: uf, address_region: getRegionByState(uf) });
+                  }}
+                >
+                  <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__empty">Não informar</SelectItem>
+                    {BRAZIL_STATES.map((item) => <SelectItem key={item.uf} value={item.uf}>{item.uf} — {item.state}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Região</Label>
+                <Input value={form.address_region} readOnly placeholder="Preenchida pelo estado" />
               </div>
             </div>
           </section>

@@ -804,11 +804,22 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_city: string | null
+          address_complement: string | null
+          address_country: string | null
+          address_neighborhood: string | null
+          address_number: string | null
+          address_postal_code: string | null
+          address_region: string | null
+          address_state: string | null
+          address_street: string | null
           avatar_url: string | null
           bio: string | null
+          birth_date: string | null
           created_at: string
           display_name: string
           email: string
+          gender: string | null
           id: string
           is_blocked: boolean
           is_verified_recruiter: boolean
@@ -822,11 +833,22 @@ export type Database = {
           work_area: string | null
         }
         Insert: {
+          address_city?: string | null
+          address_complement?: string | null
+          address_country?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_postal_code?: string | null
+          address_region?: string | null
+          address_state?: string | null
+          address_street?: string | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name: string
           email: string
+          gender?: string | null
           id?: string
           is_blocked?: boolean
           is_verified_recruiter?: boolean
@@ -840,11 +862,22 @@ export type Database = {
           work_area?: string | null
         }
         Update: {
+          address_city?: string | null
+          address_complement?: string | null
+          address_country?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_postal_code?: string | null
+          address_region?: string | null
+          address_state?: string | null
+          address_street?: string | null
           avatar_url?: string | null
           bio?: string | null
+          birth_date?: string | null
           created_at?: string
           display_name?: string
           email?: string
+          gender?: string | null
           id?: string
           is_blocked?: boolean
           is_verified_recruiter?: boolean

@@ -136,10 +136,11 @@ function DynamicSiteHead() {
       const { data, error } = await supabase
         .from("public_site_settings")
         .select("setting_key, setting_value")
-        .in("setting_key", ["seo", "favicon"]);
+        .in("setting_key", ["seo", "favicon", "site_fonts"]);
       if (cancelled || error || !data) return;
       const seo = (data.find((r) => r.setting_key === "seo")?.setting_value ?? {}) as Record<string, string>;
       const favicon = (data.find((r) => r.setting_key === "favicon")?.setting_value ?? {}) as Record<string, string>;
+      const fonts = (data.find((r) => r.setting_key === "site_fonts")?.setting_value ?? {}) as Record<string, string>;
 
       if (seo.default_title) document.title = seo.default_title;
 
@@ -180,6 +181,35 @@ function DynamicSiteHead() {
         }
         el.setAttribute("href", href);
       };
+      if (fonts.google_fonts_url) {
+        let preconnectGoogle = document.head.querySelector<HTMLLinkElement>('link[data-site-font="google-preconnect"]');
+        if (!preconnectGoogle) {
+          preconnectGoogle = document.createElement("link");
+          preconnectGoogle.rel = "preconnect";
+          preconnectGoogle.href = "https://fonts.googleapis.com";
+          preconnectGoogle.dataset.siteFont = "google-preconnect";
+          document.head.appendChild(preconnectGoogle);
+        }
+        let preconnectGstatic = document.head.querySelector<HTMLLinkElement>('link[data-site-font="gstatic-preconnect"]');
+        if (!preconnectGstatic) {
+          preconnectGstatic = document.createElement("link");
+          preconnectGstatic.rel = "preconnect";
+          preconnectGstatic.href = "https://fonts.gstatic.com";
+          preconnectGstatic.crossOrigin = "anonymous";
+          preconnectGstatic.dataset.siteFont = "gstatic-preconnect";
+          document.head.appendChild(preconnectGstatic);
+        }
+        let stylesheet = document.head.querySelector<HTMLLinkElement>('link[data-site-font="stylesheet"]');
+        if (!stylesheet) {
+          stylesheet = document.createElement("link");
+          stylesheet.rel = "stylesheet";
+          stylesheet.dataset.siteFont = "stylesheet";
+          document.head.appendChild(stylesheet);
+        }
+        stylesheet.href = fonts.google_fonts_url;
+      }
+      if (fonts.body_font) document.documentElement.style.setProperty("--site-font-body", `"${fonts.body_font}", system-ui, sans-serif`);
+      if (fonts.heading_font) document.documentElement.style.setProperty("--site-font-heading", `"${fonts.heading_font}", var(--site-font-body)`);
       setLink("icon", favicon.url);
       setLink("apple-touch-icon", favicon.apple_touch_url);
       setLink("canonical", seo.site_url);
