@@ -122,7 +122,13 @@ function PerfilPage() {
     const cleanedSocial = Object.fromEntries(
       Object.entries(form.social_links).filter(([, v]) => v && v.trim().length > 0),
     );
-    const parsed = profileSchema.safeParse({ ...form, social_links: cleanedSocial });
+    const parsed = profileSchema.safeParse({
+      ...form,
+      gender: form.gender || null,
+      address_state: form.address_state || null,
+      address_region: form.address_region || null,
+      social_links: cleanedSocial,
+    });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setSaving(true);
     const { error } = await supabase
