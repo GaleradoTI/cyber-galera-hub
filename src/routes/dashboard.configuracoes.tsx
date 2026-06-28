@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Search, Image as ImageIcon, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter, Plus, Trash2 } from "lucide-react";
+import { Save, Search, Image as ImageIcon, Globe, Settings as SettingsIcon, Sparkles, History, RotateCcw, Eye, Twitter, Plus, Trash2, Type } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +53,7 @@ function SettingsPage() {
           <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/40 p-1">
             <TabsTrigger value="seo"><Search className="h-3.5 w-3.5 mr-1.5" /> SEO & Favicon</TabsTrigger>
             <TabsTrigger value="hero"><Sparkles className="h-3.5 w-3.5 mr-1.5" /> Hero & Home</TabsTrigger>
+            <TabsTrigger value="fontes"><Type className="h-3.5 w-3.5 mr-1.5" /> Fontes</TabsTrigger>
             <TabsTrigger value="mascotes"><ImageIcon className="h-3.5 w-3.5 mr-1.5" /> Mascotes</TabsTrigger>
             <TabsTrigger value="contato"><Globe className="h-3.5 w-3.5 mr-1.5" /> Contato & Social</TabsTrigger>
             <TabsTrigger value="avancado"><SettingsIcon className="h-3.5 w-3.5 mr-1.5" /> Avançado</TabsTrigger>
@@ -74,6 +75,10 @@ function SettingsPage() {
             {byKey.footer && <GenericCard setting={byKey.footer} onSaved={onSaved} title="Rodapé" />}
           </TabsContent>
 
+          <TabsContent value="fontes" className="mt-5 space-y-5">
+            {byKey.site_fonts && <FontsCard setting={byKey.site_fonts} onSaved={onSaved} />}
+          </TabsContent>
+
           <TabsContent value="mascotes" className="mt-5 space-y-5">
             {byKey.mascots && <MascotsCard setting={byKey.mascots} onSaved={onSaved} />}
           </TabsContent>
@@ -86,7 +91,7 @@ function SettingsPage() {
 
           <TabsContent value="avancado" className="mt-5 space-y-5">
             {settings
-              .filter((s) => !["seo", "favicon", "hero", "home_content", "mascots", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners"].includes(s.setting_key))
+              .filter((s) => !["seo", "favicon", "site_fonts", "hero", "home_content", "mascots", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners"].includes(s.setting_key))
               .map((s) => (
                 <GenericCard key={s.id} setting={s} onSaved={onSaved} />
               ))}
@@ -338,6 +343,92 @@ function FaviconCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
 }
 
 type MascotItem = { name?: string; image_url?: string; placement?: string; caption?: string };
+
+const FONT_PRESETS = [
+  {
+    value: "space_grotesk_inter",
+    label: "Space Grotesk + Inter",
+    heading_font: "Space Grotesk",
+    body_font: "Inter",
+    google_fonts_url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap",
+  },
+  {
+    value: "orbitron_exo",
+    label: "Orbitron + Exo 2",
+    heading_font: "Orbitron",
+    body_font: "Exo 2",
+    google_fonts_url: "https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800;900&display=swap",
+  },
+  {
+    value: "rajdhani_sora",
+    label: "Rajdhani + Sora",
+    heading_font: "Rajdhani",
+    body_font: "Sora",
+    google_fonts_url: "https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Sora:wght@400;500;600;700;800&display=swap",
+  },
+  {
+    value: "ibm_plex",
+    label: "IBM Plex Sans",
+    heading_font: "IBM Plex Sans",
+    body_font: "IBM Plex Sans",
+    google_fonts_url: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap",
+  },
+] as const;
+
+function FontsCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
+  const [draft, setDraft] = useState<Record<string, any>>(setting.setting_value ?? {});
+  const [saving, setSaving] = useState(false);
+  const applyPreset = (value: string) => {
+    const preset = FONT_PRESETS.find((item) => item.value === value);
+    if (!preset) return;
+    setDraft({ ...draft, ...preset, preset: preset.value });
+  };
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("public_site_settings").update({ setting_value: draft }).eq("id", setting.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    document.documentElement.style.setProperty("--site-font-body", `"${draft.body_font}", system-ui, sans-serif`);
+    document.documentElement.style.setProperty("--site-font-heading", `"${draft.heading_font}", var(--site-font-body)`);
+    toast.success("Fontes atualizadas.");
+    onSaved();
+  };
+
+  return (
+    <CardShell title="Fontes globais" description="Escolha as fontes aplicadas nos títulos e textos de todo o site." badge="TIPOGRAFIA" saving={saving} onSave={save}>
+      <div className="grid lg:grid-cols-2 gap-5">
+        <div className="space-y-3">
+          <Field label="Preset">
+            <Select value={draft.preset ?? "space_grotesk_inter"} onValueChange={applyPreset}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {FONT_PRESETS.map((preset) => <SelectItem key={preset.value} value={preset.value}>{preset.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="Fonte dos títulos">
+            <Input value={draft.heading_font ?? ""} onChange={(e) => setDraft({ ...draft, heading_font: e.target.value })} />
+          </Field>
+          <Field label="Fonte do corpo">
+            <Input value={draft.body_font ?? ""} onChange={(e) => setDraft({ ...draft, body_font: e.target.value })} />
+          </Field>
+          <Field label="URL Google Fonts">
+            <Input value={draft.google_fonts_url ?? ""} onChange={(e) => setDraft({ ...draft, google_fonts_url: e.target.value })} placeholder="https://fonts.googleapis.com/css2?..." />
+          </Field>
+        </div>
+        <div className="rounded-lg border border-border/40 bg-background/40 p-5">
+          <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground mb-3">PRÉVIA</p>
+          <div style={{ fontFamily: `"${draft.heading_font || "Space Grotesk"}", sans-serif` }} className="text-3xl font-black text-gradient-neon">
+            GALERA DO T.I.
+          </div>
+          <p style={{ fontFamily: `"${draft.body_font || "Inter"}", sans-serif` }} className="text-sm text-muted-foreground mt-3 leading-relaxed">
+            Se tem código, tem solução. Se não tem, a gente cria. Esta prévia mostra como títulos e textos vão aparecer no site.
+          </p>
+        </div>
+      </div>
+    </CardShell>
+  );
+}
 
 function MascotsCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
   const value = setting.setting_value ?? {};
