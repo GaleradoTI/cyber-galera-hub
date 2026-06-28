@@ -100,6 +100,7 @@ export function ImageUploader({
   const [progress, setProgress] = useState(0);
   const [previewFailed, setPreviewFailed] = useState(false);
   const { data: policy } = useUploadPolicy();
+  const normalizedFolder = useMemo(() => folder.replace(/^\/+|\/+$/g, ""), [folder]);
 
   useEffect(() => {
     setPreviewFailed(false);
@@ -165,20 +166,20 @@ export function ImageUploader({
       await supabase.auth.refreshSession();
       const { data: again } = await supabase.auth.getSession();
       if (!again.session) {
-        await recordAttempt("failed", `${folder}/<rejected>`, "Sessão expirada", file);
+        await recordAttempt("failed", `${normalizedFolder}/<rejected>`, "Sessão expirada", file);
         return toast.error("Sessão expirada", {
           description: "Faça login novamente para enviar imagens.",
         });
       }
     }
     if (!accept.includes(file.type)) {
-      await recordAttempt("failed", `${folder}/<rejected>`, `Tipo não aceito: ${file.type}`, file);
+      await recordAttempt("failed", `${normalizedFolder}/<rejected>`, `Tipo não aceito: ${file.type}`, file);
       return toast.error("Formato inválido", {
         description: `Aceitos: ${acceptedNames}. Recebido: ${file.type || "desconhecido"}.`,
       });
     }
     if (file.size > maxBytes) {
-      await recordAttempt("failed", `${folder}/<rejected>`, `Arquivo ${sizeMB}MB excede limite ${limitMB}MB`, file);
+      await recordAttempt("failed", `${normalizedFolder}/<rejected>`, `Arquivo ${sizeMB}MB excede limite ${limitMB}MB`, file);
       return toast.error("Arquivo grande demais", {
         description: `Limite ${limitMB}MB · arquivo enviado: ${sizeMB}MB.`,
       });
@@ -196,7 +197,7 @@ export function ImageUploader({
         const r = await resizeImage(file, resizeMax);
         if (minWidth && r.width < minWidth) {
           setUploading(false);
-          await recordAttempt("failed", `${folder}/<rejected>`, `Imagem ${r.width}px < mínimo ${minWidth}px`, file);
+          await recordAttempt("failed", `${normalizedFolder}/<rejected>`, `Imagem ${r.width}px < mínimo ${minWidth}px`, file);
           toast.error("Imagem pequena demais", { id: toastId, description: `Largura mínima ${minWidth}px · enviada ${r.width}px.` });
           return;
         }
@@ -206,7 +207,7 @@ export function ImageUploader({
       }
       setProgress(40);
       toast.loading("Enviando para o servidor…", { id: toastId });
-      path = `${folder}/${Date.now()}.${ext}`;
+      path = `${normalizedFolder}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from(bucket).upload(path, blob, {
         cacheControl: "3600",
         upsert: true,
@@ -226,7 +227,7 @@ export function ImageUploader({
           /row-level security|not authorized|unauthorized|policy/i.test(msg)
         ) {
           friendly =
-            `🔒 Permissão negada (RLS 403) ao enviar em ${bucket}/${path}. ` +
+            `🔒 Permissão negada ao enviar em ${bucket}/${path}. ` +
             `Verifique se a sessão está ativa e se seu cargo permite este prefixo. ` +
             `Abra o Diagnóstico para conferir bucket, pasta e policy aplicada. ` +
             `Detalhe: ${technical}`;
@@ -257,7 +258,7 @@ export function ImageUploader({
       {label && (
         <div className="flex items-center justify-between mb-2">
           <p className="text-sm font-medium">{label}</p>
-          {showDiagnostics && <DiagnosticsPopover bucket={bucket} folder={folder} effective={effective} policyKey={policyKey} />}
+          {showDiagnostics && <DiagnosticsPopover bucket={bucket} folder={normalizedFolder} effective={effective} policyKey={policyKey} />}
         </div>
       )}
       <div className="flex items-start gap-3">
