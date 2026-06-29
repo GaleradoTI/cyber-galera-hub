@@ -54,6 +54,17 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   aparecem ordenados por **Líder > Cargo no squad > Nome**.
 - Depoimentos: aprovar / rejeitar com observação
 - Configurações do Site: SEO (prévia Google, Open Graph e **Twitter Card** ao vivo), favicon com validação, histórico de versões com pré-visualização e reversão, hero, contact, about, stats, social_links, footer, newsletter, partners, cta_section, legal, password_policy e mascotes por página
+- **Tipografia global**: na aba *Fontes* o admin escolhe fonte de títulos
+  e corpo (qualquer Google Font), peso (300–900), itálico, caixa
+  (UPPER/lower/Capitalizado), espaçamento entre letras e escala global
+  (85%–125%). Inclui **prévia ao vivo no site inteiro** antes de salvar
+  e geração automática da URL Google Fonts.
+- **Métricas demográficas** (admin/super admin): cartões clicáveis de
+  Regiões, Sexo/Gênero e Faixa Etária funcionam como filtros cruzados
+  — clique numa barra para filtrar todos os números da tela.
+- **Uploader com diagnóstico**: erros de RLS/policy mostram bucket,
+  pasta, cargo atual e policy aplicada, com ação rápida para reabrir a
+  sessão (erros de auth) ou abrir o guia de permissões (erros de RLS).
 - Embaixadores/Admins (`/dashboard/comunidade-perfis`): CRUD de perfis públicos com foto, história profissional, redes e atuação na comunidade
 - Mascotes e links sociais podem ser editados em Configurações do Site; `home_content` controla textos das seções da home e `about` controla textos da página Sobre
 - **Logs de auditoria** preenchidos automaticamente: criação de usuário
