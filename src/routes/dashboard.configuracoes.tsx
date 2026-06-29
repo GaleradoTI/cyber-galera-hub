@@ -378,20 +378,81 @@ const FONT_PRESETS = [
 function FontsCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
   const [draft, setDraft] = useState<Record<string, any>>(setting.setting_value ?? {});
   const [saving, setSaving] = useState(false);
+  const [livePreview, setLivePreview] = useState(true);
   const applyPreset = (value: string) => {
     const preset = FONT_PRESETS.find((item) => item.value === value);
     if (!preset) return;
     setDraft({ ...draft, ...preset, preset: preset.value });
   };
+
+  const set = (k: string, v: any) => setDraft((d) => ({ ...d, [k]: v }));
+
+  // Auto-build a Google Fonts URL when user types fonts manually
+  const buildGoogleUrl = () => {
+    const families: string[] = [];
+    const weights = "wght@300;400;500;600;700;800;900";
+    if (draft.heading_font) families.push(`family=${encodeURIComponent(draft.heading_font).replace(/%20/g, "+")}:ital,${weights.replace("wght@", "wght@0,").replace(/;/g, ";0,")};1,400;1,700`);
+    if (draft.body_font && draft.body_font !== draft.heading_font)
+      families.push(`family=${encodeURIComponent(draft.body_font).replace(/%20/g, "+")}:ital,${weights.replace("wght@", "wght@0,").replace(/;/g, ";0,")};1,400;1,700`);
+    if (families.length === 0) return;
+    const url = `https://fonts.googleapis.com/css2?${families.join("&")}&display=swap`;
+    set("google_fonts_url", url);
+    toast.success("URL gerada", { description: "Confira a URL Google Fonts antes de salvar." });
+  };
+
+  // Apply preview to whole site immediately (without saving)
+  const applyToDom = (data: Record<string, any>) => {
+    const root = document.documentElement.style;
+    if (data.body_font) root.setProperty("--site-font-body", `"${data.body_font}", system-ui, sans-serif`);
+    if (data.heading_font) root.setProperty("--site-font-heading", `"${data.heading_font}", var(--site-font-body)`);
+    if (data.body_weight) root.setProperty("--site-font-body-weight", String(data.body_weight));
+    if (data.heading_weight) root.setProperty("--site-font-heading-weight", String(data.heading_weight));
+    if (data.body_style) root.setProperty("--site-font-body-style", String(data.body_style));
+    if (data.heading_style) root.setProperty("--site-font-heading-style", String(data.heading_style));
+    if (data.heading_transform) root.setProperty("--site-font-heading-transform", String(data.heading_transform));
+    if (data.letter_spacing) root.setProperty("--site-font-letter-spacing", String(data.letter_spacing));
+    if (data.font_scale) root.setProperty("--site-font-scale", String(data.font_scale));
+    if (data.google_fonts_url) {
+      let stylesheet = document.head.querySelector<HTMLLinkElement>('link[data-site-font="stylesheet"]');
+      if (!stylesheet) {
+        stylesheet = document.createElement("link");
+        stylesheet.rel = "stylesheet";
+        stylesheet.dataset.siteFont = "stylesheet";
+        document.head.appendChild(stylesheet);
+      }
+      if (stylesheet.href !== data.google_fonts_url) stylesheet.href = data.google_fonts_url;
+    }
+  };
+
+  // Live preview: reapply on every change while toggle is on
+  useEffect(() => {
+    if (livePreview) applyToDom(draft);
+  }, [draft, livePreview]);
+
   const save = async () => {
     setSaving(true);
     const { error } = await supabase.from("public_site_settings").update({ setting_value: draft }).eq("id", setting.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    document.documentElement.style.setProperty("--site-font-body", `"${draft.body_font}", system-ui, sans-serif`);
-    document.documentElement.style.setProperty("--site-font-heading", `"${draft.heading_font}", var(--site-font-body)`);
+    applyToDom(draft);
     toast.success("Fontes atualizadas.");
     onSaved();
+  };
+
+  const headingStyle: React.CSSProperties = {
+    fontFamily: `"${draft.heading_font || "Space Grotesk"}", sans-serif`,
+    fontWeight: Number(draft.heading_weight ?? 800),
+    fontStyle: draft.heading_style ?? "normal",
+    textTransform: (draft.heading_transform ?? "none") as React.CSSProperties["textTransform"],
+    letterSpacing: draft.letter_spacing ?? "0em",
+    fontSize: `calc(2.25rem * ${draft.font_scale ?? 1})`,
+  };
+  const bodyStyle: React.CSSProperties = {
+    fontFamily: `"${draft.body_font || "Inter"}", sans-serif`,
+    fontWeight: Number(draft.body_weight ?? 400),
+    fontStyle: draft.body_style ?? "normal",
+    letterSpacing: draft.letter_spacing ?? "0em",
+    fontSize: `calc(0.95rem * ${draft.font_scale ?? 1})`,
   };
 
   return (
@@ -406,23 +467,98 @@ function FontsCard({ setting, onSaved }: { setting: Setting; onSaved: () => void
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Fonte dos títulos">
-            <Input value={draft.heading_font ?? ""} onChange={(e) => setDraft({ ...draft, heading_font: e.target.value })} />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Fonte dos títulos" hint="Ex: Orbitron, Poppins">
+              <Input value={draft.heading_font ?? ""} onChange={(e) => set("heading_font", e.target.value)} placeholder="Space Grotesk" />
+            </Field>
+            <Field label="Fonte do corpo" hint="Ex: Inter, Roboto">
+              <Input value={draft.body_font ?? ""} onChange={(e) => set("body_font", e.target.value)} placeholder="Inter" />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Peso do título">
+              <Select value={String(draft.heading_weight ?? 700)} onValueChange={(v) => set("heading_weight", Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[300, 400, 500, 600, 700, 800, 900].map((w) => <SelectItem key={w} value={String(w)}>{w}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Peso do corpo">
+              <Select value={String(draft.body_weight ?? 400)} onValueChange={(v) => set("body_weight", Number(v))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[300, 400, 500, 600, 700].map((w) => <SelectItem key={w} value={String(w)}>{w}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Estilo do título">
+              <Select value={draft.heading_style ?? "normal"} onValueChange={(v) => set("heading_style", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="italic">Itálico</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Estilo do corpo">
+              <Select value={draft.body_style ?? "normal"} onValueChange={(v) => set("body_style", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">Normal</SelectItem>
+                  <SelectItem value="italic">Itálico</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Caixa do título">
+              <Select value={draft.heading_transform ?? "none"} onValueChange={(v) => set("heading_transform", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Normal</SelectItem>
+                  <SelectItem value="uppercase">MAIÚSCULAS</SelectItem>
+                  <SelectItem value="lowercase">minúsculas</SelectItem>
+                  <SelectItem value="capitalize">Capitalizado</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Espaçamento (em)" hint="0 a 0.2">
+              <Input type="number" step="0.01" min="-0.05" max="0.5"
+                value={String(parseFloat(String(draft.letter_spacing ?? "0").replace("em", "")) || 0)}
+                onChange={(e) => set("letter_spacing", `${e.target.value}em`)} />
+            </Field>
+          </div>
+          <Field label={`Escala global (${Math.round((draft.font_scale ?? 1) * 100)}%)`} hint="Aumenta/diminui todos os textos do site">
+            <input type="range" min="0.85" max="1.25" step="0.01"
+              value={draft.font_scale ?? 1}
+              onChange={(e) => set("font_scale", Number(e.target.value))}
+              className="w-full" />
           </Field>
-          <Field label="Fonte do corpo">
-            <Input value={draft.body_font ?? ""} onChange={(e) => setDraft({ ...draft, body_font: e.target.value })} />
-          </Field>
-          <Field label="URL Google Fonts">
-            <Input value={draft.google_fonts_url ?? ""} onChange={(e) => setDraft({ ...draft, google_fonts_url: e.target.value })} placeholder="https://fonts.googleapis.com/css2?..." />
+          <div className="flex items-center gap-2 text-xs">
+            <input id="font-live" type="checkbox" checked={livePreview} onChange={(e) => setLivePreview(e.target.checked)} className="accent-primary" />
+            <Label htmlFor="font-live" className="!mt-0">Prévia ao vivo no site inteiro (antes de salvar)</Label>
+          </div>
+          <Field label="URL Google Fonts" hint="Gere automaticamente ou cole sua URL">
+            <div className="flex gap-2">
+              <Input value={draft.google_fonts_url ?? ""} onChange={(e) => set("google_fonts_url", e.target.value)} placeholder="https://fonts.googleapis.com/css2?..." />
+              <Button type="button" variant="outline" size="sm" onClick={buildGoogleUrl}>Gerar</Button>
+            </div>
           </Field>
         </div>
         <div className="rounded-lg border border-border/40 bg-background/40 p-5">
-          <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground mb-3">PRÉVIA</p>
-          <div style={{ fontFamily: `"${draft.heading_font || "Space Grotesk"}", sans-serif` }} className="text-3xl font-black text-gradient-neon">
-            GALERA DO T.I.
+          <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground mb-3">PRÉVIA EM TEMPO REAL</p>
+          <div style={headingStyle} className="text-gradient-neon leading-tight">GALERA DO T.I.</div>
+          <div style={{ ...headingStyle, fontSize: `calc(1.125rem * ${draft.font_scale ?? 1})` }} className="mt-3 text-foreground">
+            Subtítulo de seção: comunidade & oportunidades
           </div>
-          <p style={{ fontFamily: `"${draft.body_font || "Inter"}", sans-serif` }} className="text-sm text-muted-foreground mt-3 leading-relaxed">
-            Se tem código, tem solução. Se não tem, a gente cria. Esta prévia mostra como títulos e textos vão aparecer no site.
+          <p style={bodyStyle} className="text-muted-foreground mt-3 leading-relaxed">
+            Se tem código, tem solução. Se não tem, a gente cria. Esta prévia mostra como os textos vão aparecer no site, incluindo peso, estilo, caixa e espaçamento.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button style={bodyStyle} size="sm" variant="neon">Botão neon</Button>
+            <Button style={bodyStyle} size="sm" variant="outline">Outline</Button>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-4">
+            Dica: ao salvar, a URL Google Fonts é injetada no &lt;head&gt; e as variáveis CSS são aplicadas globalmente.
           </p>
         </div>
       </div>
