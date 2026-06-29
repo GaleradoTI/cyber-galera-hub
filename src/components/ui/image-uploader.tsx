@@ -219,8 +219,11 @@ export function ImageUploader({
         const statusCode = (upErr as any)?.statusCode ?? (upErr as any)?.status ?? "";
         const technical = `${errorName}${msg}${statusCode ? ` (status ${statusCode})` : ""}`;
         let friendly = msg;
+        let isRls = false;
+        let isAuth = false;
         if (/jwt|invalid.*token|aud claim|not authenticated/i.test(msg)) {
           friendly = `Sessão inválida. Saia e entre novamente para reenviar a imagem. Detalhe: ${technical}`;
+          isAuth = true;
         } else if (
           String(statusCode) === "403" ||
           String(statusCode) === "400" ||
@@ -231,13 +234,16 @@ export function ImageUploader({
             `Verifique se a sessão está ativa e se seu cargo permite este prefixo. ` +
             `Abra o Diagnóstico para conferir bucket, pasta e policy aplicada. ` +
             `Detalhe: ${technical}`;
+          isRls = true;
         } else if (/payload too large|413/.test(msg)) {
           friendly = `Arquivo excede o limite do servidor (${limitMB}MB).`;
         } else if (/mime|content.?type/i.test(msg)) {
           friendly = `Formato não permitido pelo servidor. Aceitos: ${acceptedNames}.`;
         }
         await recordAttempt("failed", path, friendly, file);
-        throw new Error(friendly);
+        const err = new Error(friendly) as Error & { _kind?: string };
+        err._kind = isAuth ? "auth" : isRls ? "rls" : "generic";
+        throw err;
       }
       setProgress(95);
       const { data } = supabase.storage.from(bucket).getPublicUrl(path);
@@ -246,7 +252,37 @@ export function ImageUploader({
       await recordAttempt("success", path, null, { name: file.name, type: file.type, size: blob.size });
       toast.success("Imagem enviada", { id: toastId, description: `${(blob.size / 1024).toFixed(0)} KB` });
     } catch (e: any) {
-      toast.error("Falha no upload", { id: toastId, description: e?.message ?? "Erro desconhecido" });
+      const kind = e?._kind as string | undefined;
+      const action =
+        kind === "auth"
+          ? {
+              label: "Reabrir sessão",
+              onClick: async () => {
+                await supabase.auth.refreshSession();
+                toast.info("Sessão atualizada", { description: "Tente o envio novamente." });
+              },
+            }
+          : kind === "rls"
+          ? {
+              label: "Como corrigir",
+              onClick: () =>
+                toast.message("Permissão negada (RLS)", {
+                  description:
+                    `Bucket: ${bucket} · Pasta: ${normalizedFolder}\n` +
+                    `• Avatars: apenas o dono da pasta (user.id) pode enviar.\n` +
+                    `• project-covers/drops e /site: apenas ADMIN ou SUPER_ADMIN.\n` +
+                    `• project-covers/events: usuário autenticado.\n` +
+                    `Abra o botão "Diagnóstico" para ver as policies aplicadas.`,
+                  duration: 12000,
+                }),
+            }
+          : undefined;
+      toast.error("Falha no upload", {
+        id: toastId,
+        description: e?.message ?? "Erro desconhecido",
+        duration: 10000,
+        action,
+      });
     } finally {
       setUploading(false);
       setTimeout(() => setProgress(0), 600);
