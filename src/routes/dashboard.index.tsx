@@ -420,7 +420,7 @@ function FilterChip({ label, onClear }: { label: string; onClear: () => void }) 
   );
 }
 
-function DistributionCard({ title, items, total, active, onPick }: { title: string; items: { label: string; value: number }[]; total: number; active?: string | null; onPick?: (label: string) => void }) {
+function DistributionCard({ title, items, total, active, onPick }: { title: string; items: { label: string; value: number }[]; total: number; active?: string | null; onPick?: (label: string | null) => void }) {
   const visible = items.length > 0 ? items.slice(0, 6) : [{ label: "Sem dados", value: 0 }];
   return (
     <div className="glass rounded-xl p-5 border border-primary/20">
@@ -433,7 +433,7 @@ function DistributionCard({ title, items, total, active, onPick }: { title: stri
           return (
             <div
               key={item.label}
-              onClick={clickable ? () => onPick!(isActive ? "" as any : item.label) : undefined}
+              onClick={clickable ? () => onPick!(isActive ? null : item.label) : undefined}
               className={clickable ? "cursor-pointer group" : ""}
               role={clickable ? "button" : undefined}
               tabIndex={clickable ? 0 : undefined}
@@ -450,7 +450,7 @@ function DistributionCard({ title, items, total, active, onPick }: { title: stri
         })}
       </div>
       {onPick && active && (
-        <button type="button" onClick={() => onPick("" as any)} className="text-[10px] text-muted-foreground hover:text-primary mt-3">
+        <button type="button" onClick={() => onPick(null)} className="text-[10px] text-muted-foreground hover:text-primary mt-3">
           Limpar filtro
         </button>
       )}
