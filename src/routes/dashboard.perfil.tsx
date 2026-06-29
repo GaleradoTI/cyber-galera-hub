@@ -81,6 +81,7 @@ function PerfilPage() {
   const [tagInput, setTagInput] = useState("");
   const [customKey, setCustomKey] = useState("");
   const [customUrl, setCustomUrl] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -129,7 +130,16 @@ function PerfilPage() {
       address_region: form.address_region || null,
       social_links: cleanedSocial,
     });
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (!parsed.success) {
+      const map: Record<string, string> = {};
+      parsed.error.issues.forEach((iss) => {
+        const k = iss.path.join(".") || "form";
+        if (!map[k]) map[k] = iss.message;
+      });
+      setErrors(map);
+      return toast.error("Revise os campos destacados", { description: parsed.error.issues[0].message });
+    }
+    setErrors({});
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
