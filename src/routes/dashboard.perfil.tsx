@@ -233,6 +233,7 @@ function PerfilPage() {
               <div>
                 <Label>Nome</Label>
                 <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
+                {errors.display_name && <p className="text-xs text-destructive mt-1">{errors.display_name}</p>}
               </div>
               <div>
                 <Label>E-mail</Label>
@@ -244,6 +245,10 @@ function PerfilPage() {
               <div className="sm:col-span-2">
                 <Label>Bio</Label>
                 <Textarea rows={3} value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} placeholder="Fale um pouco sobre você (máx. 500 caracteres)" />
+                <div className="flex justify-between mt-1">
+                  {errors.bio && <p className="text-xs text-destructive">{errors.bio}</p>}
+                  <p className="text-[10px] text-muted-foreground ml-auto">{(form.bio ?? "").length}/500</p>
+                </div>
               </div>
               <div>
                 <Label className="flex items-center gap-2"><Briefcase className="h-3 w-3" /> Área de atuação</Label>
@@ -266,6 +271,7 @@ function PerfilPage() {
               <div>
                 <Label>Data de nascimento</Label>
                 <Input type="date" value={form.birth_date ?? ""} onChange={(e) => setForm({ ...form, birth_date: e.target.value })} />
+                {errors.birth_date && <p className="text-xs text-destructive mt-1">{errors.birth_date}</p>}
               </div>
               <div className="flex items-end gap-3 pb-1">
                 <Switch checked={form.looking_for_job} onCheckedChange={(v) => setForm({ ...form, looking_for_job: v })} />
@@ -320,6 +326,7 @@ function PerfilPage() {
                     {BRAZIL_STATES.map((item) => <SelectItem key={item.uf} value={item.uf}>{item.uf} — {item.state}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {errors.address_state && <p className="text-xs text-destructive mt-1">{errors.address_state}</p>}
               </div>
               <div>
                 <Label>Região</Label>
