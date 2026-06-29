@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Briefcase, Calendar, FolderKanban, Heart, ShieldCheck, Users, Sparkles, ClipboardList, Inbox, CheckCheck, X, UserPlus, Plus, MapPin, ExternalLink, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDateOnly } from "@/lib/utils";
 import { countBy, getAgeRange, getGenderLabel } from "@/lib/profile-demographics";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/")({ component: DashboardIndex });
 
@@ -286,7 +287,11 @@ function RecruiterHome({ userId }: { userId: string }) {
 /* ===================== ADMIN ===================== */
 
 function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
-  const { data: stats } = useQuery({
+  const [region, setRegion] = useState<string | null>(null);
+  const [gender, setGender] = useState<string | null>(null);
+  const [age, setAge] = useState<string | null>(null);
+
+  const { data: raw } = useQuery({
     queryKey: ["admin-kpis"],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
@@ -301,28 +306,47 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         supabase.from("projects").select("id", { count: "exact", head: true }).eq("status", "ativo"),
         supabase.from("event_checkins").select("id", { count: "exact", head: true }),
       ]);
-      const profileRows = profiles.data ?? [];
-      const withAddress = profileRows.filter((p: any) => p.address_city || p.address_state || p.address_region || p.address_postal_code).length;
       return {
-        users: profileRows.length,
+        profileRows: (profiles.data ?? []) as any[],
         jobs: jobs.count ?? 0,
         events: events.count ?? 0,
         projects: projects.count ?? 0,
         checkins: checkins.count ?? 0,
-        addressCoverage: profileRows.length ? Math.round((withAddress / profileRows.length) * 100) : 0,
-        regions: countBy(profileRows, (p: any) => p.address_region),
-        genders: countBy(profileRows, (p: any) => getGenderLabel(p.gender)),
-        ageRanges: countBy(profileRows, (p: any) => getAgeRange(p.birth_date)),
-        states: countBy(profileRows, (p: any) => p.address_state).slice(0, 8),
-        cities: countBy(profileRows, (p: any) => p.address_city).slice(0, 8),
       };
     },
   });
 
+  const stats = useMemo(() => {
+    const rows = raw?.profileRows ?? [];
+    const filtered = rows.filter((p: any) => {
+      if (region && (p.address_region || "Não informado") !== region) return false;
+      if (gender && getGenderLabel(p.gender) !== gender) return false;
+      if (age && getAgeRange(p.birth_date) !== age) return false;
+      return true;
+    });
+    const withAddress = filtered.filter((p: any) => p.address_city || p.address_state || p.address_region || p.address_postal_code).length;
+    return {
+      users: filtered.length,
+      totalUsers: rows.length,
+      jobs: raw?.jobs ?? 0,
+      events: raw?.events ?? 0,
+      projects: raw?.projects ?? 0,
+      checkins: raw?.checkins ?? 0,
+      addressCoverage: filtered.length ? Math.round((withAddress / filtered.length) * 100) : 0,
+      regions: countBy(filtered, (p: any) => p.address_region),
+      genders: countBy(filtered, (p: any) => getGenderLabel(p.gender)),
+      ageRanges: countBy(filtered, (p: any) => getAgeRange(p.birth_date)),
+      states: countBy(filtered, (p: any) => p.address_state).slice(0, 8),
+      cities: countBy(filtered, (p: any) => p.address_city).slice(0, 8),
+    };
+  }, [raw, region, gender, age]);
+
+  const activeFilters = [region, gender, age].filter(Boolean).length;
+
   return (
     <>
       <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Stat icon={Users} label="Usuários ativos" value={stats?.users ?? "…"} />
+        <Stat icon={Users} label={activeFilters ? `Usuários (filtrado de ${stats?.totalUsers})` : "Usuários ativos"} value={stats?.users ?? "…"} />
         <Stat icon={Briefcase} label="Vagas publicadas" value={stats?.jobs ?? "…"} />
         <Stat icon={Calendar} label="Eventos próximos" value={stats?.events ?? "…"} />
         <Stat icon={FolderKanban} label="Projetos ativos" value={stats?.projects ?? "…"} />
@@ -340,11 +364,29 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         </div>
       </Section>
 
-      <Section title="Métricas da comunidade">
+      <Section
+        title="Métricas da comunidade"
+        action={
+          activeFilters > 0 ? (
+            <Button variant="ghost" size="sm" onClick={() => { setRegion(null); setGender(null); setAge(null); }}>
+              <X className="h-3 w-3 mr-1" /> Limpar filtros ({activeFilters})
+            </Button>
+          ) : null
+        }
+      >
+        <div className="glass rounded-xl p-4 border border-primary/20 mb-4">
+          <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground mb-2">FILTROS RÁPIDOS — clique nas barras para filtrar</p>
+          <div className="flex flex-wrap gap-2 text-xs">
+            {region && <FilterChip label={`Região: ${region}`} onClear={() => setRegion(null)} />}
+            {gender && <FilterChip label={`Gênero: ${gender}`} onClear={() => setGender(null)} />}
+            {age && <FilterChip label={`Faixa: ${age}`} onClear={() => setAge(null)} />}
+            {!region && !gender && !age && <span className="text-muted-foreground">Nenhum filtro aplicado.</span>}
+          </div>
+        </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <DistributionCard title="Regiões" items={stats?.regions ?? []} total={stats?.users ?? 0} />
-          <DistributionCard title="Sexo / gênero" items={stats?.genders ?? []} total={stats?.users ?? 0} />
-          <DistributionCard title="Faixa etária" items={stats?.ageRanges ?? []} total={stats?.users ?? 0} />
+          <DistributionCard title="Regiões" items={stats?.regions ?? []} total={stats?.users ?? 0} active={region} onPick={setRegion} />
+          <DistributionCard title="Sexo / gênero" items={stats?.genders ?? []} total={stats?.users ?? 0} active={gender} onPick={setGender} />
+          <DistributionCard title="Faixa etária" items={stats?.ageRanges ?? []} total={stats?.users ?? 0} active={age} onPick={setAge} />
           <DistributionCard title="Estados" items={stats?.states ?? []} total={stats?.users ?? 0} />
           <DistributionCard title="Cidades" items={stats?.cities ?? []} total={stats?.users ?? 0} />
           <div className="glass rounded-xl p-5 border border-primary/20">
@@ -370,7 +412,16 @@ function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: s
   );
 }
 
-function DistributionCard({ title, items, total }: { title: string; items: { label: string; value: number }[]; total: number }) {
+function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/15 text-primary border border-primary/30">
+      {label}
+      <button type="button" onClick={onClear} className="hover:text-destructive"><X className="h-3 w-3" /></button>
+    </span>
+  );
+}
+
+function DistributionCard({ title, items, total, active, onPick }: { title: string; items: { label: string; value: number }[]; total: number; active?: string | null; onPick?: (label: string) => void }) {
   const visible = items.length > 0 ? items.slice(0, 6) : [{ label: "Sem dados", value: 0 }];
   return (
     <div className="glass rounded-xl p-5 border border-primary/20">
@@ -378,19 +429,32 @@ function DistributionCard({ title, items, total }: { title: string; items: { lab
       <div className="space-y-3">
         {visible.map((item) => {
           const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
+          const isActive = active === item.label;
+          const clickable = !!onPick && item.value > 0;
           return (
-            <div key={item.label}>
+            <div
+              key={item.label}
+              onClick={clickable ? () => onPick!(isActive ? "" as any : item.label) : undefined}
+              className={clickable ? "cursor-pointer group" : ""}
+              role={clickable ? "button" : undefined}
+              tabIndex={clickable ? 0 : undefined}
+            >
               <div className="flex items-center justify-between gap-2 text-xs mb-1">
-                <span className="truncate text-muted-foreground">{item.label}</span>
+                <span className={`truncate ${isActive ? "text-primary font-bold" : "text-muted-foreground group-hover:text-foreground"}`}>{item.label}</span>
                 <span className="font-bold text-foreground">{item.value} · {pct}%</span>
               </div>
-              <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
-                <div className="h-full bg-gradient-neon" style={{ width: `${pct}%` }} />
+              <div className={`h-1.5 rounded-full bg-muted/50 overflow-hidden ${isActive ? "ring-1 ring-primary" : ""}`}>
+                <div className="h-full bg-gradient-neon transition-all" style={{ width: `${pct}%` }} />
               </div>
             </div>
           );
         })}
       </div>
+      {onPick && active && (
+        <button type="button" onClick={() => onPick("" as any)} className="text-[10px] text-muted-foreground hover:text-primary mt-3">
+          Limpar filtro
+        </button>
+      )}
     </div>
   );
 }
