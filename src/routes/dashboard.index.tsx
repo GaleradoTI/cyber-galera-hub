@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { formatDateOnly } from "@/lib/utils";
 import { countBy, getAgeRange, getGenderLabel } from "@/lib/profile-demographics";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/dashboard/")({ component: DashboardIndex });
 
