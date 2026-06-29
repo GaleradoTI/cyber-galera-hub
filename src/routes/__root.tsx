@@ -210,6 +210,14 @@ function DynamicSiteHead() {
       }
       if (fonts.body_font) document.documentElement.style.setProperty("--site-font-body", `"${fonts.body_font}", system-ui, sans-serif`);
       if (fonts.heading_font) document.documentElement.style.setProperty("--site-font-heading", `"${fonts.heading_font}", var(--site-font-body)`);
+      const root = document.documentElement.style;
+      if (fonts.body_weight) root.setProperty("--site-font-body-weight", String(fonts.body_weight));
+      if (fonts.heading_weight) root.setProperty("--site-font-heading-weight", String(fonts.heading_weight));
+      if (fonts.body_style) root.setProperty("--site-font-body-style", String(fonts.body_style));
+      if (fonts.heading_style) root.setProperty("--site-font-heading-style", String(fonts.heading_style));
+      if (fonts.heading_transform) root.setProperty("--site-font-heading-transform", String(fonts.heading_transform));
+      if (fonts.letter_spacing) root.setProperty("--site-font-letter-spacing", String(fonts.letter_spacing));
+      if (fonts.font_scale) root.setProperty("--site-font-scale", String(fonts.font_scale));
       setLink("icon", favicon.url);
       setLink("apple-touch-icon", favicon.apple_touch_url);
       setLink("canonical", seo.site_url);
