@@ -78,6 +78,38 @@ function PerfilPage() {
   });
   const [saving, setSaving] = useState(false);
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
+  const [cepLoading, setCepLoading] = useState(false);
+
+  const lookupCep = async (raw: string) => {
+    const cep = raw.replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+      if (data?.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+      const uf = (data.uf ?? "").toUpperCase();
+      setForm((f) => ({
+        ...f,
+        address_postal_code: cep.replace(/(\d{5})(\d{3})/, "$1-$2"),
+        address_street: data.logradouro || f.address_street,
+        address_neighborhood: data.bairro || f.address_neighborhood,
+        address_city: data.localidade || f.address_city,
+        address_state: uf || f.address_state,
+        address_region: uf ? getRegionByState(uf) : f.address_region,
+        address_complement: data.complemento || f.address_complement,
+        address_country: f.address_country || "Brasil",
+      }));
+      toast.success("Endereço preenchido pelo CEP");
+    } catch {
+      toast.error("Não foi possível consultar o CEP");
+    } finally {
+      setCepLoading(false);
+    }
+  };
   const [tagInput, setTagInput] = useState("");
   const [customKey, setCustomKey] = useState("");
   const [customUrl, setCustomUrl] = useState("");
@@ -285,7 +317,15 @@ function PerfilPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label>CEP</Label>
-                <Input value={form.address_postal_code} onChange={(e) => setForm({ ...form, address_postal_code: e.target.value })} placeholder="00000-000" maxLength={20} />
+                <Input
+                  value={form.address_postal_code}
+                  onChange={(e) => setForm({ ...form, address_postal_code: e.target.value })}
+                  onBlur={(e) => lookupCep(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={20}
+                  disabled={cepLoading}
+                />
+                <p className="text-xs text-muted-foreground mt-1">{cepLoading ? "Consultando ViaCEP…" : "Preenchemos o endereço automaticamente ao sair do campo."}</p>
               </div>
               <div>
                 <Label>País</Label>
