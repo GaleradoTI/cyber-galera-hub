@@ -358,13 +358,20 @@ function PerfilPage() {
                 <Label>CEP</Label>
                 <Input
                   value={form.address_postal_code}
-                  onChange={(e) => setForm({ ...form, address_postal_code: e.target.value })}
+                  onChange={(e) => setForm({ ...form, address_postal_code: maskCep(e.target.value) })}
                   onBlur={(e) => lookupCep(e.target.value)}
                   placeholder="00000-000"
-                  maxLength={20}
-                  disabled={cepLoading}
+                  maxLength={9}
+                  inputMode="numeric"
                 />
-                <p className="text-xs text-muted-foreground mt-1">{cepLoading ? "Consultando ViaCEP…" : "Preenchemos o endereço automaticamente ao sair do campo."}</p>
+                <p className={`text-xs mt-1 ${cepError ? "text-destructive" : "text-muted-foreground"}`}>
+                  {cepLoading
+                    ? "Consultando ViaCEP…"
+                    : cepError
+                    ? cepError
+                    : "Preenchemos o endereço automaticamente ao digitar um CEP válido."}
+                </p>
+                {errors.address_postal_code && <p className="text-xs text-destructive mt-1">{errors.address_postal_code}</p>}
               </div>
               <div>
                 <Label>País</Label>
