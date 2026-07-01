@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X } from "lucide-react";
+import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X, Eye, Mail, Phone, MapPin, Briefcase, Calendar, Tag } from "lucide-react";
+import { getGenderLabel, getRegionByState } from "@/lib/profile-demographics";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserPassword } from "@/lib/admin-users.functions";
@@ -37,6 +38,7 @@ function UsuariosPage() {
   const [badgeFilter, setBadgeFilter] = useState<string>("__all");
   const [addBadgeFor, setAddBadgeFor] = useState<ProfileRow | null>(null);
   const [newBadge, setNewBadge] = useState({ label: "", color: "primary" });
+  const [viewing, setViewing] = useState<ProfileRow | null>(null);
   const resetPwdFn = useServerFn(resetUserPassword);
 
   useEffect(() => {
@@ -303,6 +305,9 @@ function UsuariosPage() {
                   <TableCell className="text-right space-x-2">
                     <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setEditName(p.display_name ?? ""); }}>
                       <Pencil className="h-3 w-3 mr-1" /> Editar
+                    </Button>
+                    <Button size="sm" variant="neon-outline" onClick={() => setViewing(p)}>
+                      <Eye className="h-3 w-3 mr-1" /> Ver detalhes
                     </Button>
                     {isSuperAdmin && role === "MEMBRO" && (
                       <Button size="sm" variant="outline" onClick={() => promoteToAdmin(p)}>
