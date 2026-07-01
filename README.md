@@ -355,3 +355,10 @@ Removido `background-attachment: fixed` no body abaixo de 1024 px — corrige o 
 - **Exclusão segura de Drops**: substituído `confirm()` por `AlertDialog` que mostra o número de interessados cadastrados que serão perdidos e sugere usar o status *Encerrado* como alternativa.
 - **Validações reforçadas em Drops**: preço ≥ 0, data de lançamento válida, chave Pix obrigatória quando "Pix" estiver entre as formas de pagamento, telefone do interesse com máscara `(DD) NNNNN-NNNN` e regex de caracteres permitidos.
 - **RLS revisada**: `drops` (admin escreve, público lê apenas publicados; admin vê tudo) e `drop_interests` (qualquer pessoa cria; usuário lê só os próprios; admin lê/edita/exclui todos) — sem alterações necessárias.
+
+### Ajustes (jul/2026 — perfil, endereço e usuários)
+- **CEP com ViaCEP**: campo CEP no `/dashboard/perfil` agora aplica máscara `00000-000`, dispara consulta debounced (600 ms) ao completar 8 dígitos e ao `onBlur`. Exibe estados distintos para *carregando*, *CEP inválido*, *CEP não encontrado* e *falha de rede*, sempre orientando preencher manualmente.
+- **Validação Zod do CEP**: regex `^\d{5}-?\d{3}$` no schema do perfil impede persistir CEP incompleto no Supabase; erro é destacado abaixo do campo.
+- **Fallback de UF/região**: quando o ViaCEP devolve payload incompleto (`uf` vazio), o form preserva o estado/região já preenchido e exibe `toast.warning` orientando o usuário a informar manualmente — o salvamento não quebra.
+- **Logs**: falhas na consulta ViaCEP são logadas com `console.warn("[perfil] falha na consulta ViaCEP", err)` para inspeção rápida no browser sem quebrar UX.
+- **Modal "Ver detalhes" em `/dashboard/usuarios`**: novo CTA `Ver detalhes` em cada linha da tabela abre um dialog com bio, contatos, endereço completo (com região inferida), tecnologias, redes sociais e data de criação. Reaproveita `getGenderLabel` / `getRegionByState` para formatação consistente.
