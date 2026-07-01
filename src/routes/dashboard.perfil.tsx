@@ -24,7 +24,13 @@ const profileSchema = z.object({
   phone: z.string().trim().max(40).optional().nullable(),
   gender: z.enum(["feminino", "masculino", "nao_binario", "outro", "prefiro_nao_informar"]).optional().nullable(),
   birth_date: z.string().trim().max(10).optional().nullable(),
-  address_postal_code: z.string().trim().max(20).optional().nullable(),
+  address_postal_code: z
+    .string()
+    .trim()
+    .regex(/^\d{5}-?\d{3}$/, "CEP deve ter 8 dígitos (00000-000)")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   address_street: z.string().trim().max(160).optional().nullable(),
   address_number: z.string().trim().max(20).optional().nullable(),
   address_complement: z.string().trim().max(80).optional().nullable(),
@@ -41,6 +47,14 @@ const profileSchema = z.object({
     z.string().trim().max(300),
   ),
 });
+
+// Máscara de CEP: mantém somente dígitos e insere hífen
+const maskCep = (raw: string) => {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 5) return digits;
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+};
+const normalizeCep = (raw: string) => raw.replace(/\D/g, "");
 
 const PRESET_SOCIALS: { key: string; label: string; Icon: any; placeholder: string }[] = [
   { key: "linkedin", label: "LinkedIn", Icon: Linkedin, placeholder: "https://linkedin.com/in/..." },
@@ -79,37 +93,62 @@ function PerfilPage() {
   const [saving, setSaving] = useState(false);
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
   const [cepLoading, setCepLoading] = useState(false);
+  const [cepError, setCepError] = useState<string | null>(null);
 
   const lookupCep = async (raw: string) => {
-    const cep = raw.replace(/\D/g, "");
-    if (cep.length !== 8) return;
+    const cep = normalizeCep(raw);
+    if (cep.length === 0) { setCepError(null); return; }
+    if (cep.length !== 8) { setCepError("CEP deve ter 8 dígitos"); return; }
     setCepLoading(true);
+    setCepError(null);
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!res.ok) throw new Error(`ViaCEP HTTP ${res.status}`);
       const data = await res.json();
       if (data?.erro) {
-        toast.error("CEP não encontrado");
+        const msg = "CEP não encontrado na base ViaCEP";
+        setCepError(msg);
+        toast.error(msg, { description: "Verifique o número ou preencha o endereço manualmente." });
         return;
       }
-      const uf = (data.uf ?? "").toUpperCase();
+      const uf = (data.uf ?? "").toString().toUpperCase();
+      const regionFromUf = uf ? getRegionByState(uf) : "";
       setForm((f) => ({
         ...f,
         address_postal_code: cep.replace(/(\d{5})(\d{3})/, "$1-$2"),
         address_street: data.logradouro || f.address_street,
         address_neighborhood: data.bairro || f.address_neighborhood,
         address_city: data.localidade || f.address_city,
-        address_state: uf || f.address_state,
-        address_region: uf ? getRegionByState(uf) : f.address_region,
+        // fallback: preserva UF/região já existentes se ViaCEP vier incompleto
+        address_state: uf || f.address_state || "",
+        address_region: regionFromUf || f.address_region || "",
         address_complement: data.complemento || f.address_complement,
         address_country: f.address_country || "Brasil",
       }));
-      toast.success("Endereço preenchido pelo CEP");
-    } catch {
-      toast.error("Não foi possível consultar o CEP");
+      if (!uf) {
+        toast.warning("Endereço parcial: informe o estado manualmente.");
+      } else {
+        toast.success("Endereço preenchido pelo CEP");
+      }
+    } catch (err) {
+      console.warn("[perfil] falha na consulta ViaCEP", err);
+      const msg = "Não foi possível consultar o CEP agora";
+      setCepError(msg);
+      toast.error(msg, { description: "Verifique sua conexão ou preencha o endereço manualmente." });
     } finally {
       setCepLoading(false);
     }
   };
+
+  // debounce: dispara lookup 600ms após parar de digitar quando o CEP estiver completo
+  useEffect(() => {
+    const digits = normalizeCep(form.address_postal_code);
+    if (digits.length !== 8) return;
+    const t = setTimeout(() => { lookupCep(digits); }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.address_postal_code]);
+
   const [tagInput, setTagInput] = useState("");
   const [customKey, setCustomKey] = useState("");
   const [customUrl, setCustomUrl] = useState("");
@@ -319,13 +358,20 @@ function PerfilPage() {
                 <Label>CEP</Label>
                 <Input
                   value={form.address_postal_code}
-                  onChange={(e) => setForm({ ...form, address_postal_code: e.target.value })}
+                  onChange={(e) => setForm({ ...form, address_postal_code: maskCep(e.target.value) })}
                   onBlur={(e) => lookupCep(e.target.value)}
                   placeholder="00000-000"
-                  maxLength={20}
-                  disabled={cepLoading}
+                  maxLength={9}
+                  inputMode="numeric"
                 />
-                <p className="text-xs text-muted-foreground mt-1">{cepLoading ? "Consultando ViaCEP…" : "Preenchemos o endereço automaticamente ao sair do campo."}</p>
+                <p className={`text-xs mt-1 ${cepError ? "text-destructive" : "text-muted-foreground"}`}>
+                  {cepLoading
+                    ? "Consultando ViaCEP…"
+                    : cepError
+                    ? cepError
+                    : "Preenchemos o endereço automaticamente ao digitar um CEP válido."}
+                </p>
+                {errors.address_postal_code && <p className="text-xs text-destructive mt-1">{errors.address_postal_code}</p>}
               </div>
               <div>
                 <Label>País</Label>
