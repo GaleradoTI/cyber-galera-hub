@@ -436,6 +436,115 @@ function UsuariosPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UserDetailDialog user={viewing} onClose={() => setViewing(null)} />
     </DashboardShell>
+  );
+}
+
+function UserDetailDialog({ user, onClose }: { user: ProfileRow | null; onClose: () => void }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-profile-detail", user?.user_id],
+    enabled: !!user?.user_id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("*").eq("user_id", user!.user_id).maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+  return (
+    <Dialog open={!!user} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 flex items-center justify-center text-sm font-black">
+              {(user?.display_name ?? user?.email ?? "?").slice(0, 1).toUpperCase()}
+            </div>
+            <div>
+              <div>{user?.display_name || "Sem nome"}</div>
+              <div className="text-xs font-normal text-muted-foreground">{user?.email}</div>
+            </div>
+          </DialogTitle>
+          <DialogDescription>Detalhes completos do usuário selecionado.</DialogDescription>
+        </DialogHeader>
+
+        {isLoading || !data ? (
+          <div className="text-sm text-muted-foreground py-6 text-center">Carregando…</div>
+        ) : (
+          <div className="grid gap-4 text-sm">
+            {data.bio && (
+              <div>
+                <div className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground mb-1">BIO</div>
+                <p className="text-muted-foreground leading-relaxed">{data.bio}</p>
+              </div>
+            )}
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Field icon={<Mail className="h-3 w-3" />} label="E-mail" value={data.email} />
+              <Field icon={<Phone className="h-3 w-3" />} label="Telefone" value={data.phone} />
+              <Field icon={<Briefcase className="h-3 w-3" />} label="Área" value={data.work_area} />
+              <Field icon={<UserIcon className="h-3 w-3" />} label="Gênero" value={getGenderLabel(data.gender)} />
+              <Field icon={<Calendar className="h-3 w-3" />} label="Nascimento" value={data.birth_date} />
+              <Field icon={<Shield className="h-3 w-3" />} label="Busca vaga" value={data.looking_for_job ? "Sim" : "Não"} />
+            </div>
+
+            {(data.address_city || data.address_state || data.address_postal_code) && (
+              <div>
+                <div className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground mb-1 flex items-center gap-1"><MapPin className="h-3 w-3" /> ENDEREÇO</div>
+                <div className="text-muted-foreground leading-relaxed">
+                  {[data.address_street, data.address_number].filter(Boolean).join(", ")}
+                  {data.address_complement && ` — ${data.address_complement}`}
+                  <br />
+                  {[data.address_neighborhood, data.address_city, data.address_state].filter(Boolean).join(" • ")}
+                  {data.address_postal_code && ` — CEP ${data.address_postal_code}`}
+                  <br />
+                  <span className="text-xs">{[data.address_region || getRegionByState(data.address_state), data.address_country].filter(Boolean).join(" • ")}</span>
+                </div>
+              </div>
+            )}
+
+            {(data.tech_tags ?? []).length > 0 && (
+              <div>
+                <div className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground mb-2 flex items-center gap-1"><Tag className="h-3 w-3" /> TECNOLOGIAS</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(data.tech_tags as string[]).map((t) => (
+                    <span key={t} className="text-xs px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {data.social_links && Object.keys(data.social_links).length > 0 && (
+              <div>
+                <div className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground mb-2">REDES</div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(data.social_links as Record<string, string>).filter(([, v]) => v).map(([k, v]) => (
+                    <a key={k} href={v.startsWith("http") ? v : `https://${v}`} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded border border-border/50 hover:border-primary hover:text-primary">
+                      {k}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">
+              Criado em {new Date(data.created_at).toLocaleString("pt-BR")}
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Field({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | null }) {
+  return (
+    <div className="glass rounded-md p-2 border border-border/40">
+      <div className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground flex items-center gap-1">{icon} {label}</div>
+      <div className="text-sm mt-0.5 truncate">{value || <span className="text-muted-foreground">—</span>}</div>
+    </div>
   );
 }
