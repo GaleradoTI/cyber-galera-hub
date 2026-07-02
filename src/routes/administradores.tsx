@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
 import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { supabase } from "@/integrations/supabase/client";
