@@ -5,6 +5,7 @@ import { PublicLayout } from "@/components/public/public-layout";
 import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { supabase } from "@/integrations/supabase/client";
 import { CommunityProfileCard, type CommunityProfile } from "@/components/public/community-profile-card";
+import { CommunityProfileSkeletonGrid } from "@/components/public/community-profile-skeleton";
 
 export const Route = createFileRoute("/administradores")({
   head: () => ({
@@ -13,7 +14,13 @@ export const Route = createFileRoute("/administradores")({
       { name: "description", content: "Conheça os administradores da GALERA DO T.I. e o que fazem pela comunidade." },
       { property: "og:title", content: "Administradores — GALERA DO T.I." },
       { property: "og:description", content: "Histórias e responsabilidades de quem cuida da comunidade." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://galera-do-ti.lovable.app/administradores" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Administradores — GALERA DO T.I." },
+      { name: "twitter:description", content: "Histórias e responsabilidades de quem cuida da comunidade." },
     ],
+    links: [{ rel: "canonical", href: "https://galera-do-ti.lovable.app/administradores" }],
   }),
   component: AdministradoresPage,
 });
@@ -46,7 +53,7 @@ function AdministradoresPage() {
           <PublicMascotSpot placement="administrators" className="hidden lg:flex" />
         </div>
         {isLoading ? (
-          <p className="text-muted-foreground mt-10">Carregando…</p>
+          <CommunityProfileSkeletonGrid />
         ) : profiles.length === 0 ? (
           <div className="glass rounded-xl p-8 mt-10 text-center text-muted-foreground"><ShieldCheck className="h-8 w-8 mx-auto mb-2" /> Nenhum administrador publicado ainda.</div>
         ) : (
