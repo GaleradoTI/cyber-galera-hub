@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ExternalLink, Info } from "lucide-react";
+import { ExternalLink, Info, AlertTriangle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,23 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
   const links = normalizeLinks(profile.social_links).filter((l) => l.url);
   const primaryLink = links[0];
 
+  const track = (event: string, extra: Record<string, unknown> = {}) => {
+    try {
+      const payload = { event, profile_id: profile.id, profile_name: profile.name, ...extra };
+      (window as any).dataLayer?.push?.(payload);
+      window.dispatchEvent(new CustomEvent("community-profile-analytics", { detail: payload }));
+      if (import.meta.env.DEV) console.debug("[analytics]", payload);
+    } catch {}
+  };
+
+  const isValidUrl = (raw?: string) => {
+    if (!raw) return false;
+    try {
+      const u = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch { return false; }
+  };
+
   return (
     <>
       <article className="glass rounded-xl border border-primary/20 p-5 hover-glow-cyan flex flex-col h-full">
@@ -44,14 +61,20 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
         </div>
 
         <div className="mt-auto pt-5 flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="secondary" onClick={() => setOpen(true)} className="flex-1 min-w-[7rem]">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => { track("community_profile_open"); setOpen(true); }}
+            className="flex-1 min-w-[7rem]"
+          >
             <Info className="h-3.5 w-3.5 mr-1.5" /> Saiba mais
           </Button>
-          {primaryLink && (
+          {primaryLink && isValidUrl(primaryLink.url) && (
             <a
               href={primaryLink.url}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
+              onClick={() => track("community_profile_primary_link_click", { url: primaryLink.url, label: primaryLink.label })}
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline px-2"
             >
               {primaryLink.label || "Link"} <ExternalLink className="h-3 w-3" />
@@ -60,7 +83,7 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
         </div>
       </article>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) track("community_profile_close"); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4">
@@ -105,17 +128,32 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
                 <div>
                   <p className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground/70 mb-2">LINKS</p>
                   <div className="flex flex-wrap gap-2">
-                    {links.map((link) => (
-                      <a
-                        key={`${link.label}-${link.url}`}
-                        href={link.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border/40 hover:border-primary/50 hover:text-primary transition"
-                      >
-                        {link.label || "Link"} <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ))}
+                    {links.map((link) => {
+                      const valid = isValidUrl(link.url);
+                      if (!valid) {
+                        return (
+                          <span
+                            key={`${link.label}-${link.url}`}
+                            title="Link inválido — verifique com o administrador"
+                            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-destructive/40 text-destructive/80 opacity-70 cursor-not-allowed"
+                          >
+                            <AlertTriangle className="h-3 w-3" /> {link.label || "Link"} indisponível
+                          </span>
+                        );
+                      }
+                      return (
+                        <a
+                          key={`${link.label}-${link.url}`}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => track("community_profile_link_click", { url: link.url, label: link.label })}
+                          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border/40 hover:border-primary/50 hover:text-primary transition"
+                        >
+                          {link.label || "Link"} <ExternalLink className="h-3 w-3" />
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               </>
