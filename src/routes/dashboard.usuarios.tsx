@@ -245,11 +245,34 @@ function UsuariosPage() {
 
   return (
     <DashboardShell title="Usuários" description={isSuperAdmin ? "Gerencie todos os usuários, papéis e status." : "Gerencie membros (ativar/bloquear)."}>
-      <div className="flex items-center gap-2 mb-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou email" className="pl-9" />
         </div>
+        <Select value={regionFilter} onValueChange={setRegionFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Região" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Todas regiões</SelectItem>
+            {REGIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+            <SelectItem value="Não informado">Não informado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Sexo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Todos os sexos</SelectItem>
+            {GENDER_OPTIONS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
+            <SelectItem value="__none">Não informado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={ageFilter} onValueChange={setAgeFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Idade" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Todas idades</SelectItem>
+            {AGE_RANGES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+          </SelectContent>
+        </Select>
         {allBadgeLabels.length > 0 && (
           <Select value={badgeFilter} onValueChange={setBadgeFilter}>
             <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar por cargo" /></SelectTrigger>
@@ -276,7 +299,7 @@ function UsuariosPage() {
             {isLoading && (
               <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
-            {!isLoading && filtered.map((p) => {
+            {!isLoading && paginated.map((p) => {
               const role = primaryOf(p.user_id);
               const isTargetAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
               const canActOnTarget = isSuperAdmin || !isTargetAdmin;
@@ -376,6 +399,16 @@ function UsuariosPage() {
           </TableBody>
         </Table>
       </div>
+
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+          <span>Página {currentPage} de {totalPages}</span>
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!addBadgeFor} onOpenChange={(o) => !o && setAddBadgeFor(null)}>
         <DialogContent>
