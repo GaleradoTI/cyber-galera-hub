@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Users } from "lucide-react";
+import { Users, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PublicLayout } from "@/components/public/public-layout";
 import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +30,10 @@ export const Route = createFileRoute("/embaixadores")({
 });
 
 function CommunityProfilesPage({ type, title, eyebrow, description }: { type: string; title: string; eyebrow: string; description: string }) {
+  const [search, setSearch] = useState("");
+  const [area, setArea] = useState("__all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 9;
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["community-profiles", type],
     queryFn: async () => {
@@ -40,6 +48,18 @@ function CommunityProfilesPage({ type, title, eyebrow, description }: { type: st
       return (data ?? []) as CommunityProfile[];
     },
   });
+  const areas = useMemo(() => Array.from(new Set(profiles.map((p) => p.role_title).filter(Boolean) as string[])).sort(), [profiles]);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return profiles.filter((p) => {
+      if (area !== "__all" && (p.role_title ?? "") !== area) return false;
+      if (!q) return true;
+      return `${p.name} ${p.role_title ?? ""}`.toLowerCase().includes(q);
+    });
+  }, [profiles, search, area]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <PublicLayout>
@@ -53,14 +73,44 @@ function CommunityProfilesPage({ type, title, eyebrow, description }: { type: st
           <PublicMascotSpot placement="ambassadors" className="hidden lg:flex" />
         </div>
 
+        {!isLoading && profiles.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 mt-8">
+            <div className="relative flex-1 min-w-[220px] max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Buscar por nome ou cargo" className="pl-9" />
+            </div>
+            {areas.length > 0 && (
+              <Select value={area} onValueChange={(v) => { setArea(v); setPage(1); }}>
+                <SelectTrigger className="w-56"><SelectValue placeholder="Área de atuação" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">Todas as áreas</SelectItem>
+                  {areas.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <div className="text-xs text-muted-foreground ml-auto">{filtered.length} resultado(s)</div>
+          </div>
+        )}
+
         {isLoading ? (
           <CommunityProfileSkeletonGrid />
-        ) : profiles.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="glass rounded-xl p-8 mt-10 text-center text-muted-foreground"><Users className="h-8 w-8 mx-auto mb-2" /> Nenhum perfil publicado ainda.</div>
         ) : (
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mt-10">
-            {profiles.map((p) => <CommunityProfileCard key={p.id} profile={p} />)}
-          </div>
+          <>
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mt-6">
+              {paginated.map((p) => <CommunityProfileCard key={p.id} profile={p} />)}
+            </div>
+            {filtered.length > PAGE_SIZE && (
+              <div className="flex items-center justify-between mt-6 text-xs text-muted-foreground">
+                <span>Página {currentPage} de {totalPages}</span>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
     </PublicLayout>
