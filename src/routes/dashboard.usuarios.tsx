@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X, Eye, Mail, Phone, MapPin, Briefcase, Calendar, Tag } from "lucide-react";
-import { getGenderLabel, getRegionByState } from "@/lib/profile-demographics";
+import { getGenderLabel, getRegionByState, getAgeRange, BRAZIL_STATES, GENDER_OPTIONS } from "@/lib/profile-demographics";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserPassword } from "@/lib/admin-users.functions";
@@ -19,17 +19,28 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/usuarios")({ component: UsuariosPage });
 
-type ProfileRow = { id: string; user_id: string; display_name: string; email: string; is_blocked: boolean; created_at: string; is_verified_recruiter: boolean };
+type ProfileRow = {
+  id: string; user_id: string; display_name: string; email: string;
+  is_blocked: boolean; created_at: string; is_verified_recruiter: boolean;
+  gender?: string | null; birth_date?: string | null; address_state?: string | null; address_region?: string | null;
+};
 type RoleRow = { user_id: string; role: string };
 type BadgeRow = { id: string; user_id: string; label: string; color: string };
 
 const BADGE_COLORS = ["primary", "secondary", "accent", "destructive"];
+const AGE_RANGES = ["Até 17", "18–24", "25–34", "35–44", "45–54", "55+", "Não informado"];
+const REGIONS = Array.from(new Set(BRAZIL_STATES.map((s) => s.region))).sort();
+const PAGE_SIZE = 20;
 
 function UsuariosPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isSuperAdmin, rolesReady } = useDashboardRoles();
   const [search, setSearch] = useState("");
+  const [regionFilter, setRegionFilter] = useState("__all");
+  const [genderFilter, setGenderFilter] = useState("__all");
+  const [ageFilter, setAgeFilter] = useState("__all");
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editName, setEditName] = useState("");
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
@@ -48,7 +59,7 @@ function UsuariosPage() {
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("profiles").select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region").order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
     },
@@ -116,8 +127,24 @@ function UsuariosPage() {
       const bs = badgesByUser.get(p.user_id) ?? [];
       if (!bs.some((b) => b.label === badgeFilter)) return false;
     }
+    if (regionFilter !== "__all") {
+      const region = p.address_region || getRegionByState(p.address_state) || "Não informado";
+      if (region !== regionFilter) return false;
+    }
+    if (genderFilter !== "__all") {
+      if ((p.gender || "__none") !== genderFilter) return false;
+    }
+    if (ageFilter !== "__all") {
+      if (getAgeRange(p.birth_date) !== ageFilter) return false;
+    }
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [search, regionFilter, genderFilter, ageFilter, badgeFilter]);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
