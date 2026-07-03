@@ -804,6 +804,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address_cep_validated_at: string | null
           address_city: string | null
           address_complement: string | null
           address_country: string | null
@@ -833,6 +834,7 @@ export type Database = {
           work_area: string | null
         }
         Insert: {
+          address_cep_validated_at?: string | null
           address_city?: string | null
           address_complement?: string | null
           address_country?: string | null
@@ -862,6 +864,7 @@ export type Database = {
           work_area?: string | null
         }
         Update: {
+          address_cep_validated_at?: string | null
           address_city?: string | null
           address_complement?: string | null
           address_country?: string | null
@@ -1589,6 +1592,15 @@ export type Database = {
       is_squad_member: {
         Args: { _squad_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_cep_lookup: {
+        Args: {
+          _cep: string
+          _http_status?: number
+          _reason?: string
+          _status: string
+        }
+        Returns: undefined
       }
       log_drop_image_upload_attempt: {
         Args: {
