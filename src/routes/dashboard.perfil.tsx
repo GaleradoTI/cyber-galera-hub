@@ -211,6 +211,7 @@ function PerfilPage() {
       avatar_url: profile.avatar_url ?? "",
       social_links: { ...((profile.social_links ?? {}) as Record<string, string>) },
     });
+    setCepValidatedAt(((profile as any).address_cep_validated_at as string | null) ?? null);
   }, [profile]);
 
   const save = async () => {
@@ -236,6 +237,35 @@ function PerfilPage() {
     }
     setErrors({});
     setSaving(true);
+    // Revalidação automática: se o CEP mudou desde o último save (ou nunca foi validado),
+    // consultamos a ViaCEP para garantir coerência com o que persistimos.
+    let validatedAt = cepValidatedAt;
+    const rawCep = normalizeCep(parsed.data.address_postal_code ?? "");
+    if (rawCep.length === 8) {
+      const savedCep = normalizeCep(((profile as any)?.address_postal_code ?? "") as string);
+      if (rawCep !== savedCep || !validatedAt) {
+        try {
+          const r = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
+          if (r.ok) {
+            const d = await r.json();
+            if (!d?.erro) {
+              validatedAt = new Date().toISOString();
+              void logCepLookup(rawCep, "success", "revalidate_on_save", 200);
+            } else {
+              validatedAt = null;
+              void logCepLookup(rawCep, "failed", "revalidate_not_found", 200);
+            }
+          } else {
+            void logCepLookup(rawCep, "failed", `revalidate_http_${r.status}`, r.status);
+          }
+        } catch (err) {
+          console.warn("[perfil] revalidação de CEP falhou", err);
+          void logCepLookup(rawCep, "failed", "revalidate_exception");
+        }
+      }
+    } else {
+      validatedAt = null;
+    }
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -258,10 +288,12 @@ function PerfilPage() {
         tech_tags: parsed.data.tech_tags,
         avatar_url: parsed.data.avatar_url ?? null,
         social_links: parsed.data.social_links,
-      })
+        address_cep_validated_at: validatedAt,
+      } as any)
       .eq("user_id", user!.id);
     setSaving(false);
     if (error) return toast.error(error.message);
+    setCepValidatedAt(validatedAt);
     toast.success("Perfil atualizado");
     qc.invalidateQueries({ queryKey: ["my-profile"] });
     qc.invalidateQueries({ queryKey: ["profile"] });
