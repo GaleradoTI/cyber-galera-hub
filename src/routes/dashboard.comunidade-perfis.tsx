@@ -147,6 +147,7 @@ function CommunityProfilesAdminPage() {
       </div>
 
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando…</p> : (
+        <>
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {rows.map((p) => (
             <div key={p.id} className="glass rounded-xl border border-primary/20 overflow-hidden">
@@ -168,6 +169,16 @@ function CommunityProfilesAdminPage() {
             </div>
           ))}
         </div>
+        {filtered.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+            <span>Página {currentPage} de {totalPages}</span>
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+              <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+            </div>
+          </div>
+        )}
+        </>
       )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
