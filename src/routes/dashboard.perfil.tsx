@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart } from "lucide-react";
+import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -94,6 +94,20 @@ function PerfilPage() {
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
+  const [cepValidatedAt, setCepValidatedAt] = useState<string | null>(null);
+
+  const logCepLookup = async (cep: string, status: "success" | "failed", reason?: string, httpStatus?: number) => {
+    try {
+      await supabase.rpc("log_cep_lookup" as any, {
+        _cep: cep,
+        _status: status,
+        _reason: reason ?? null,
+        _http_status: httpStatus ?? null,
+      });
+    } catch (err) {
+      console.warn("[perfil] falha ao registrar log de CEP", err);
+    }
+  };
 
   const lookupCep = async (raw: string) => {
     const cep = normalizeCep(raw);
@@ -102,13 +116,19 @@ function PerfilPage() {
     setCepLoading(true);
     setCepError(null);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      if (!res.ok) throw new Error(`ViaCEP HTTP ${res.status}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.status === 429) { void logCepLookup(cep, "failed", "rate_limit", 429); throw new Error("ViaCEP rate limit"); }
+      if (res.status === 404) { void logCepLookup(cep, "failed", "not_found", 404); throw new Error("CEP não encontrado"); }
+      if (!res.ok) { void logCepLookup(cep, "failed", `http_${res.status}`, res.status); throw new Error(`ViaCEP HTTP ${res.status}`); }
       const data = await res.json();
       if (data?.erro) {
         const msg = "CEP não encontrado na base ViaCEP";
         setCepError(msg);
         toast.error(msg, { description: "Verifique o número ou preencha o endereço manualmente." });
+        void logCepLookup(cep, "failed", "viacep_erro_true", 200);
         return;
       }
       const uf = (data.uf ?? "").toString().toUpperCase();
@@ -125,14 +145,18 @@ function PerfilPage() {
         address_complement: data.complemento || f.address_complement,
         address_country: f.address_country || "Brasil",
       }));
+      setCepValidatedAt(new Date().toISOString());
+      void logCepLookup(cep, "success", uf ? undefined : "uf_ausente", 200);
       if (!uf) {
         toast.warning("Endereço parcial: informe o estado manualmente.");
       } else {
         toast.success("Endereço preenchido pelo CEP");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn("[perfil] falha na consulta ViaCEP", err);
-      const msg = "Não foi possível consultar o CEP agora";
+      const isTimeout = err?.name === "AbortError";
+      const msg = isTimeout ? "Timeout ao consultar ViaCEP" : "Não foi possível consultar o CEP agora";
+      if (isTimeout) void logCepLookup(cep, "failed", "timeout");
       setCepError(msg);
       toast.error(msg, { description: "Verifique sua conexão ou preencha o endereço manualmente." });
     } finally {
