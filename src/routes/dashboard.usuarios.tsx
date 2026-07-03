@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/dashboard/usuarios")({ component: UsuariosPage });
 
@@ -529,7 +530,17 @@ function UserDetailDialog({ user, onClose }: { user: ProfileRow | null; onClose:
         </DialogHeader>
 
         {isLoading || !data ? (
-          <div className="text-sm text-muted-foreground py-6 text-center">Carregando…</div>
+          <div className="grid gap-3 py-4">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+            </div>
+            <Skeleton className="h-20 w-full" />
+          </div>
         ) : (
           <div className="grid gap-4 text-sm">
             {data.bio && (
