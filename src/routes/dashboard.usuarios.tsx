@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X, Eye, Mail, Phone, MapPin, Briefcase, Calendar, Tag } from "lucide-react";
-import { getGenderLabel, getRegionByState } from "@/lib/profile-demographics";
+import { getGenderLabel, getRegionByState, getAgeRange, BRAZIL_STATES, GENDER_OPTIONS } from "@/lib/profile-demographics";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserPassword } from "@/lib/admin-users.functions";
@@ -16,20 +16,32 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const Route = createFileRoute("/dashboard/usuarios")({ component: UsuariosPage });
 
-type ProfileRow = { id: string; user_id: string; display_name: string; email: string; is_blocked: boolean; created_at: string; is_verified_recruiter: boolean };
+type ProfileRow = {
+  id: string; user_id: string; display_name: string; email: string;
+  is_blocked: boolean; created_at: string; is_verified_recruiter: boolean;
+  gender?: string | null; birth_date?: string | null; address_state?: string | null; address_region?: string | null;
+};
 type RoleRow = { user_id: string; role: string };
 type BadgeRow = { id: string; user_id: string; label: string; color: string };
 
 const BADGE_COLORS = ["primary", "secondary", "accent", "destructive"];
+const AGE_RANGES = ["Até 17", "18–24", "25–34", "35–44", "45–54", "55+", "Não informado"];
+const REGIONS = Array.from(new Set(BRAZIL_STATES.map((s) => s.region))).sort();
+const PAGE_SIZE = 20;
 
 function UsuariosPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isSuperAdmin, rolesReady } = useDashboardRoles();
   const [search, setSearch] = useState("");
+  const [regionFilter, setRegionFilter] = useState("__all");
+  const [genderFilter, setGenderFilter] = useState("__all");
+  const [ageFilter, setAgeFilter] = useState("__all");
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editName, setEditName] = useState("");
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
@@ -48,7 +60,7 @@ function UsuariosPage() {
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter").order("created_at", { ascending: false });
+      const { data, error } = await supabase.from("profiles").select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region").order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
     },
@@ -116,8 +128,24 @@ function UsuariosPage() {
       const bs = badgesByUser.get(p.user_id) ?? [];
       if (!bs.some((b) => b.label === badgeFilter)) return false;
     }
+    if (regionFilter !== "__all") {
+      const region = p.address_region || getRegionByState(p.address_state) || "Não informado";
+      if (region !== regionFilter) return false;
+    }
+    if (genderFilter !== "__all") {
+      if ((p.gender || "__none") !== genderFilter) return false;
+    }
+    if (ageFilter !== "__all") {
+      if (getAgeRange(p.birth_date) !== ageFilter) return false;
+    }
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => { setPage(1); }, [search, regionFilter, genderFilter, ageFilter, badgeFilter]);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
@@ -218,11 +246,34 @@ function UsuariosPage() {
 
   return (
     <DashboardShell title="Usuários" description={isSuperAdmin ? "Gerencie todos os usuários, papéis e status." : "Gerencie membros (ativar/bloquear)."}>
-      <div className="flex items-center gap-2 mb-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou email" className="pl-9" />
         </div>
+        <Select value={regionFilter} onValueChange={setRegionFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Região" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Todas regiões</SelectItem>
+            {REGIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+            <SelectItem value="Não informado">Não informado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={genderFilter} onValueChange={setGenderFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Sexo" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Todos os sexos</SelectItem>
+            {GENDER_OPTIONS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
+            <SelectItem value="__none">Não informado</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={ageFilter} onValueChange={setAgeFilter}>
+          <SelectTrigger className="w-40"><SelectValue placeholder="Idade" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Todas idades</SelectItem>
+            {AGE_RANGES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+          </SelectContent>
+        </Select>
         {allBadgeLabels.length > 0 && (
           <Select value={badgeFilter} onValueChange={setBadgeFilter}>
             <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar por cargo" /></SelectTrigger>
@@ -249,7 +300,7 @@ function UsuariosPage() {
             {isLoading && (
               <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
             )}
-            {!isLoading && filtered.map((p) => {
+            {!isLoading && paginated.map((p) => {
               const role = primaryOf(p.user_id);
               const isTargetAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
               const canActOnTarget = isSuperAdmin || !isTargetAdmin;
@@ -349,6 +400,16 @@ function UsuariosPage() {
           </TableBody>
         </Table>
       </div>
+
+      {filtered.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+          <span>Página {currentPage} de {totalPages}</span>
+          <div className="flex gap-1">
+            <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+            <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!addBadgeFor} onOpenChange={(o) => !o && setAddBadgeFor(null)}>
         <DialogContent>
@@ -469,7 +530,17 @@ function UserDetailDialog({ user, onClose }: { user: ProfileRow | null; onClose:
         </DialogHeader>
 
         {isLoading || !data ? (
-          <div className="text-sm text-muted-foreground py-6 text-center">Carregando…</div>
+          <div className="grid gap-3 py-4">
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+            </div>
+            <Skeleton className="h-20 w-full" />
+          </div>
         ) : (
           <div className="grid gap-4 text-sm">
             {data.bio && (

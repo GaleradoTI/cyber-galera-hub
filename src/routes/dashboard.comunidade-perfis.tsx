@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Search } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +49,10 @@ function CommunityProfilesAdminPage() {
   const { user, isAdmin, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Profile> | null>(null);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [areaFilter, setAreaFilter] = useState("__all");
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 12;
 
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
@@ -61,7 +65,24 @@ function CommunityProfilesAdminPage() {
     },
   });
 
-  const rows = useMemo(() => filter === "all" ? profiles : profiles.filter((p) => p.profile_type === filter), [profiles, filter]);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return profiles.filter((p) => {
+      if (filter !== "all" && p.profile_type !== filter) return false;
+      if (areaFilter !== "__all" && (p.role_title ?? "").toLowerCase() !== areaFilter.toLowerCase()) return false;
+      if (q) {
+        const hay = `${p.name} ${p.role_title ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [profiles, filter, search, areaFilter]);
+
+  const areaOptions = useMemo(() => Array.from(new Set(profiles.map((p) => p.role_title).filter(Boolean) as string[])).sort(), [profiles]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const rows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  useEffect(() => { setPage(1); }, [search, filter, areaFilter]);
 
   const save = async () => {
     if (!editing) return;
@@ -100,6 +121,10 @@ function CommunityProfilesAdminPage() {
   return (
     <DashboardShell title="Embaixadores e Administradores" description="Gerencie os perfis públicos da comunidade.">
       <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="relative flex-1 min-w-[220px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou cargo" className="pl-9" />
+        </div>
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -108,10 +133,21 @@ function CommunityProfilesAdminPage() {
             <SelectItem value="administrator">Administradores</SelectItem>
           </SelectContent>
         </Select>
+        {areaOptions.length > 0 && (
+          <Select value={areaFilter} onValueChange={setAreaFilter}>
+            <SelectTrigger className="w-52"><SelectValue placeholder="Área/Cargo" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all">Todas as áreas</SelectItem>
+              {areaOptions.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
+        <div className="text-xs text-muted-foreground">{filtered.length} perfil(is)</div>
         <Button className="ml-auto" onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo perfil</Button>
       </div>
 
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando…</p> : (
+        <>
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {rows.map((p) => (
             <div key={p.id} className="glass rounded-xl border border-primary/20 overflow-hidden">
@@ -133,6 +169,16 @@ function CommunityProfilesAdminPage() {
             </div>
           ))}
         </div>
+        {filtered.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+            <span>Página {currentPage} de {totalPages}</span>
+            <div className="flex gap-1">
+              <Button size="sm" variant="outline" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Anterior</Button>
+              <Button size="sm" variant="outline" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
+            </div>
+          </div>
+        )}
+        </>
       )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>

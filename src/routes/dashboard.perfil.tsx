@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart } from "lucide-react";
+import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -94,6 +94,20 @@ function PerfilPage() {
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
+  const [cepValidatedAt, setCepValidatedAt] = useState<string | null>(null);
+
+  const logCepLookup = async (cep: string, status: "success" | "failed", reason?: string, httpStatus?: number) => {
+    try {
+      await supabase.rpc("log_cep_lookup" as any, {
+        _cep: cep,
+        _status: status,
+        _reason: reason ?? null,
+        _http_status: httpStatus ?? null,
+      });
+    } catch (err) {
+      console.warn("[perfil] falha ao registrar log de CEP", err);
+    }
+  };
 
   const lookupCep = async (raw: string) => {
     const cep = normalizeCep(raw);
@@ -102,13 +116,19 @@ function PerfilPage() {
     setCepLoading(true);
     setCepError(null);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-      if (!res.ok) throw new Error(`ViaCEP HTTP ${res.status}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.status === 429) { void logCepLookup(cep, "failed", "rate_limit", 429); throw new Error("ViaCEP rate limit"); }
+      if (res.status === 404) { void logCepLookup(cep, "failed", "not_found", 404); throw new Error("CEP não encontrado"); }
+      if (!res.ok) { void logCepLookup(cep, "failed", `http_${res.status}`, res.status); throw new Error(`ViaCEP HTTP ${res.status}`); }
       const data = await res.json();
       if (data?.erro) {
         const msg = "CEP não encontrado na base ViaCEP";
         setCepError(msg);
         toast.error(msg, { description: "Verifique o número ou preencha o endereço manualmente." });
+        void logCepLookup(cep, "failed", "viacep_erro_true", 200);
         return;
       }
       const uf = (data.uf ?? "").toString().toUpperCase();
@@ -125,14 +145,18 @@ function PerfilPage() {
         address_complement: data.complemento || f.address_complement,
         address_country: f.address_country || "Brasil",
       }));
+      setCepValidatedAt(new Date().toISOString());
+      void logCepLookup(cep, "success", uf ? undefined : "uf_ausente", 200);
       if (!uf) {
         toast.warning("Endereço parcial: informe o estado manualmente.");
       } else {
         toast.success("Endereço preenchido pelo CEP");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn("[perfil] falha na consulta ViaCEP", err);
-      const msg = "Não foi possível consultar o CEP agora";
+      const isTimeout = err?.name === "AbortError";
+      const msg = isTimeout ? "Timeout ao consultar ViaCEP" : "Não foi possível consultar o CEP agora";
+      if (isTimeout) void logCepLookup(cep, "failed", "timeout");
       setCepError(msg);
       toast.error(msg, { description: "Verifique sua conexão ou preencha o endereço manualmente." });
     } finally {
@@ -187,6 +211,7 @@ function PerfilPage() {
       avatar_url: profile.avatar_url ?? "",
       social_links: { ...((profile.social_links ?? {}) as Record<string, string>) },
     });
+    setCepValidatedAt(((profile as any).address_cep_validated_at as string | null) ?? null);
   }, [profile]);
 
   const save = async () => {
@@ -212,6 +237,35 @@ function PerfilPage() {
     }
     setErrors({});
     setSaving(true);
+    // Revalidação automática: se o CEP mudou desde o último save (ou nunca foi validado),
+    // consultamos a ViaCEP para garantir coerência com o que persistimos.
+    let validatedAt = cepValidatedAt;
+    const rawCep = normalizeCep(parsed.data.address_postal_code ?? "");
+    if (rawCep.length === 8) {
+      const savedCep = normalizeCep(((profile as any)?.address_postal_code ?? "") as string);
+      if (rawCep !== savedCep || !validatedAt) {
+        try {
+          const r = await fetch(`https://viacep.com.br/ws/${rawCep}/json/`);
+          if (r.ok) {
+            const d = await r.json();
+            if (!d?.erro) {
+              validatedAt = new Date().toISOString();
+              void logCepLookup(rawCep, "success", "revalidate_on_save", 200);
+            } else {
+              validatedAt = null;
+              void logCepLookup(rawCep, "failed", "revalidate_not_found", 200);
+            }
+          } else {
+            void logCepLookup(rawCep, "failed", `revalidate_http_${r.status}`, r.status);
+          }
+        } catch (err) {
+          console.warn("[perfil] revalidação de CEP falhou", err);
+          void logCepLookup(rawCep, "failed", "revalidate_exception");
+        }
+      }
+    } else {
+      validatedAt = null;
+    }
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -234,10 +288,12 @@ function PerfilPage() {
         tech_tags: parsed.data.tech_tags,
         avatar_url: parsed.data.avatar_url ?? null,
         social_links: parsed.data.social_links,
-      })
+        address_cep_validated_at: validatedAt,
+      } as any)
       .eq("user_id", user!.id);
     setSaving(false);
     if (error) return toast.error(error.message);
+    setCepValidatedAt(validatedAt);
     toast.success("Perfil atualizado");
     qc.invalidateQueries({ queryKey: ["my-profile"] });
     qc.invalidateQueries({ queryKey: ["profile"] });
@@ -356,21 +412,35 @@ function PerfilPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label>CEP</Label>
-                <Input
-                  value={form.address_postal_code}
-                  onChange={(e) => setForm({ ...form, address_postal_code: maskCep(e.target.value) })}
-                  onBlur={(e) => lookupCep(e.target.value)}
-                  placeholder="00000-000"
-                  maxLength={9}
-                  inputMode="numeric"
-                />
-                <p className={`text-xs mt-1 ${cepError ? "text-destructive" : "text-muted-foreground"}`}>
-                  {cepLoading
-                    ? "Consultando ViaCEP…"
-                    : cepError
-                    ? cepError
-                    : "Preenchemos o endereço automaticamente ao digitar um CEP válido."}
-                </p>
+                <div className="relative">
+                  <Input
+                    value={form.address_postal_code}
+                    onChange={(e) => { setForm({ ...form, address_postal_code: maskCep(e.target.value) }); setCepValidatedAt(null); }}
+                    onBlur={(e) => lookupCep(e.target.value)}
+                    placeholder="00000-000"
+                    maxLength={9}
+                    inputMode="numeric"
+                    className={cepLoading ? "pr-9 animate-pulse" : "pr-9"}
+                  />
+                  {cepLoading && (
+                    <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-primary" />
+                  )}
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-xs">
+                  {cepLoading ? (
+                    <span className="text-muted-foreground inline-flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Consultando ViaCEP…</span>
+                  ) : cepError ? (
+                    <span className="text-destructive inline-flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {cepError}</span>
+                  ) : cepValidatedAt ? (
+                    <span className="text-primary inline-flex items-center gap-1" title={new Date(cepValidatedAt).toLocaleString("pt-BR")}>
+                      <ShieldCheck className="h-3 w-3" /> Validado pela ViaCEP
+                    </span>
+                  ) : form.address_postal_code ? (
+                    <span className="text-muted-foreground inline-flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Informado sem validação</span>
+                  ) : (
+                    <span className="text-muted-foreground">Preenchemos o endereço automaticamente ao digitar um CEP válido.</span>
+                  )}
+                </div>
                 {errors.address_postal_code && <p className="text-xs text-destructive mt-1">{errors.address_postal_code}</p>}
               </div>
               <div>
