@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ExternalLink, Info, AlertTriangle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,25 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
   const [open, setOpen] = useState(false);
   const links = normalizeLinks(profile.social_links).filter((l) => l.url);
   const primaryLink = links[0];
+
+  // Injeta JSON-LD (schema.org/Person) dinâmico enquanto o modal está aberto para SEO.
+  useEffect(() => {
+    if (!open) return;
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.dataset.communityProfile = profile.id;
+    script.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Person",
+      name: profile.name,
+      jobTitle: profile.role_title || undefined,
+      description: profile.professional_story || profile.community_role || undefined,
+      image: profile.photo_url || undefined,
+      sameAs: links.map((l) => l.url).filter(Boolean),
+    });
+    document.head.appendChild(script);
+    return () => { script.remove(); };
+  }, [open, profile, links]);
 
   const track = (event: string, extra: Record<string, unknown> = {}) => {
     try {
