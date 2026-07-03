@@ -412,21 +412,35 @@ function PerfilPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label>CEP</Label>
-                <Input
-                  value={form.address_postal_code}
-                  onChange={(e) => setForm({ ...form, address_postal_code: maskCep(e.target.value) })}
-                  onBlur={(e) => lookupCep(e.target.value)}
-                  placeholder="00000-000"
-                  maxLength={9}
-                  inputMode="numeric"
-                />
-                <p className={`text-xs mt-1 ${cepError ? "text-destructive" : "text-muted-foreground"}`}>
-                  {cepLoading
-                    ? "Consultando ViaCEP…"
-                    : cepError
-                    ? cepError
-                    : "Preenchemos o endereço automaticamente ao digitar um CEP válido."}
-                </p>
+                <div className="relative">
+                  <Input
+                    value={form.address_postal_code}
+                    onChange={(e) => { setForm({ ...form, address_postal_code: maskCep(e.target.value) }); setCepValidatedAt(null); }}
+                    onBlur={(e) => lookupCep(e.target.value)}
+                    placeholder="00000-000"
+                    maxLength={9}
+                    inputMode="numeric"
+                    className={cepLoading ? "pr-9 animate-pulse" : "pr-9"}
+                  />
+                  {cepLoading && (
+                    <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-primary" />
+                  )}
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-xs">
+                  {cepLoading ? (
+                    <span className="text-muted-foreground inline-flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Consultando ViaCEP…</span>
+                  ) : cepError ? (
+                    <span className="text-destructive inline-flex items-center gap-1"><AlertCircle className="h-3 w-3" /> {cepError}</span>
+                  ) : cepValidatedAt ? (
+                    <span className="text-primary inline-flex items-center gap-1" title={new Date(cepValidatedAt).toLocaleString("pt-BR")}>
+                      <ShieldCheck className="h-3 w-3" /> Validado pela ViaCEP
+                    </span>
+                  ) : form.address_postal_code ? (
+                    <span className="text-muted-foreground inline-flex items-center gap-1"><AlertCircle className="h-3 w-3" /> Informado sem validação</span>
+                  ) : (
+                    <span className="text-muted-foreground">Preenchemos o endereço automaticamente ao digitar um CEP válido.</span>
+                  )}
+                </div>
                 {errors.address_postal_code && <p className="text-xs text-destructive mt-1">{errors.address_postal_code}</p>}
               </div>
               <div>
