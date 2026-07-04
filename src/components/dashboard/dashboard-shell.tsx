@@ -47,6 +47,7 @@ const ROLE_META: Record<string, { label: string; icon: any; className: string }>
   ADMIN: { label: "ADMIN", icon: ShieldCheck, className: "border-primary text-primary shadow-[0_0_20px_hsl(var(--primary)/0.4)]" },
   MODERADOR: { label: "MODERADOR", icon: Sparkles, className: "border-accent text-accent" },
   RECRUTADOR: { label: "RECRUTADOR", icon: Building2, className: "border-accent text-accent shadow-[0_0_18px_hsl(var(--accent)/0.35)]" },
+  EMBAIXADOR: { label: "EMBAIXADOR", icon: Award, className: "border-secondary text-secondary shadow-[0_0_18px_hsl(var(--secondary)/0.35)]" },
   MEMBRO: { label: "MEMBRO", icon: UserIcon, className: "border-muted text-muted-foreground" },
 };
 
@@ -73,16 +74,19 @@ export function useDashboardRoles() {
   const isSuperAdmin = roles.includes("SUPER_ADMIN");
   const isAdmin = isSuperAdmin || roles.includes("ADMIN");
   const isRecruiter = roles.includes("RECRUTADOR");
+  const isAmbassador = roles.includes("EMBAIXADOR");
   const primary = isSuperAdmin
     ? "SUPER_ADMIN"
     : roles.includes("ADMIN")
     ? "ADMIN"
     : roles.includes("MODERADOR")
     ? "MODERADOR"
+    : isAmbassador
+    ? "EMBAIXADOR"
     : isRecruiter
     ? "RECRUTADOR"
     : "MEMBRO";
-  return { user, roles, isAdmin, isSuperAdmin, isRecruiter, primary, profile, rolesLoading, rolesReady: !!user?.id && rolesFetched };
+  return { user, roles, isAdmin, isSuperAdmin, isRecruiter, isAmbassador, primary, profile, rolesLoading, rolesReady: !!user?.id && rolesFetched };
 }
 
 export function RoleBadge({ role }: { role: string }) {
@@ -99,7 +103,7 @@ export function RoleBadge({ role }: { role: string }) {
 export function DashboardShell({ children, title, description }: { children: ReactNode; title: string; description?: string }) {
   const navigate = useNavigate();
   const { loading, isAuthenticated } = useAuth();
-  const { isAdmin, isSuperAdmin, isRecruiter, primary, profile, user } = useDashboardRoles();
+  const { isAdmin, isSuperAdmin, isRecruiter, isAmbassador, primary, profile, user } = useDashboardRoles();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
@@ -140,6 +144,17 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/candidaturas", label: "Minhas Candidaturas", icon: ClipboardList, show: !isAdmin && !isRecruiter },
         { to: "/dashboard/meus-eventos", label: "Meus Eventos", icon: Calendar, show: !isAdmin },
         { to: "/dashboard/sugerir-evento", label: "Sugerir Evento", icon: Calendar, show: !isAdmin },
+      ],
+    },
+    {
+      heading: "EMBAIXADOR",
+      items: [
+        { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAmbassador && !isAdmin },
+        { to: "/dashboard/vagas", label: "Vagas", icon: Briefcase, show: isAmbassador && !isAdmin },
+        { to: "/dashboard/parceiros", label: "Parceiros", icon: Handshake, show: isAmbassador && !isAdmin },
+        { to: "/dashboard/candidatos", label: "Candidatos", icon: UserSearch, show: isAmbassador && !isAdmin },
+        { to: "/dashboard/depoimentos", label: "Depoimentos", icon: MessageSquareQuote, show: isAmbassador && !isAdmin },
+        { to: "/dashboard/comunidade-perfis", label: "Embaixadores/Admins", icon: IdCard, show: isAmbassador && !isAdmin },
       ],
     },
     {

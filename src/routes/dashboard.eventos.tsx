@@ -42,14 +42,14 @@ const empty: Partial<Evt> = {
 function EventosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin, user, rolesReady } = useDashboardRoles();
+  const { isAdmin, isAmbassador, user, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Evt> | null>(null);
   const [viewing, setViewing] = useState<Evt | null>(null);
   const [removing, setRemoving] = useState<Evt | null>(null);
   const [metricsFor, setMetricsFor] = useState<Evt | null>(null);
   const [tab, setTab] = useState<"all" | "pending">("all");
 
-  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
+  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassador) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassador, navigate]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events"],

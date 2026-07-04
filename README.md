@@ -117,7 +117,7 @@ Funções: `is_admin_or_super`, `has_role`, `handle_new_user`, `promote_user_to_
 
 Tabela agregada pública: `public_home_stats` guarda somente totais da home e é atualizada por triggers.
 
-Papéis: `MEMBRO`, `MODERADOR`, `ADMIN`, `SUPER_ADMIN`.
+Papéis: `MEMBRO`, `MODERADOR`, `RECRUTADOR`, `EMBAIXADOR`, `ADMIN`, `SUPER_ADMIN`.
 
 Promover o primeiro SUPER_ADMIN (SQL Editor):
 
@@ -154,7 +154,7 @@ src/
 
 - RLS em todas as tabelas
 - Roles em tabela separada (`user_roles`) com `SECURITY DEFINER` `has_role`
-- `community_profiles`: leitura pública apenas de perfis ativos; criação/edição/exclusão só por ADMIN/SUPER_ADMIN
+- `community_profiles`: leitura pública apenas de perfis ativos; criação/exclusão só por ADMIN/SUPER_ADMIN. **EMBAIXADOR** com `user_id` vinculado pode atualizar somente o próprio card (RLS `Ambassadors update own community profile`).
 - `member_feed_posts`: leitura e publicação apenas para autenticados; autor remove o próprio post; ADMIN/SUPER_ADMIN moderam
 - Server functions sensíveis (reset de senha) usam `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor
 - Validação Zod em entradas server-side
@@ -196,6 +196,7 @@ Privado — comunidade GALERA DO T.I.
 | **MEMBRO** | Editar próprio perfil, salvar vagas, candidatar-se, inscrever-se em eventos, sugerir eventos (passa por aprovação), enviar depoimento (passa por moderação), participar de squads que foi adicionado, postar no mural do projeto, denunciar conteúdo. |
 | **RECRUTADOR** (verificado por SUPER_ADMIN) | Tudo de MEMBRO + criar/editar próprias vagas, ver lista de candidatos com filtros, abrir conversas diretas. |
 | **MODERADOR** | Aprovar/rejeitar depoimentos e sugestões de evento. |
+| **EMBAIXADOR** | Tudo de MEMBRO + visualizar (somente leitura) `dashboard/eventos`, `dashboard/vagas`, `dashboard/parceiros`, `dashboard/candidatos`, `dashboard/depoimentos` e a lista de embaixadores/admins, com permissão para **editar apenas o próprio card** em `community_profiles`. Não pode criar nem remover cards de comunidade. |
 | **ADMIN** | Tudo acima + CRUD completo de vagas, eventos, parceiros, projetos, configurações do site, denúncias e usuários (bloquear/reativar/resetar senha). |
 | **SUPER_ADMIN** | Tudo de ADMIN + promover/rebaixar ADMINs, marcar recrutador como verificado, alterar política de senha e gerenciar squads (membros e líderes). |
 
@@ -373,3 +374,13 @@ Removido `background-attachment: fixed` no body abaixo de 1024 px — corrige o 
 - **Páginas públicas `/administradores` e `/embaixadores`**: busca por nome/cargo, filtro por área de atuação e paginação de 9 cards por página. Analytics via `window.dataLayer.push()` + `CustomEvent("community-profile-analytics")` para eventos `community_profile_open`, `community_profile_close`, `community_profile_link_click` e `community_profile_primary_link_click`.
 - **JSON-LD dinâmico de perfil**: quando o modal `Saiba mais` abre, o `CommunityProfileCard` injeta um `<script type="application/ld+json">` (schema.org/Person) com `name`, `jobTitle`, `description`, `image` e `sameAs` (links do perfil) — removido ao fechar. Melhora rastreabilidade para crawlers que executam JS.
 - **Validação de links no modal**: URLs inválidas (que não passam em `new URL()`) são exibidas como pílula desabilitada com `AlertTriangle` e mensagem `Link indisponível`, evitando cliques em links quebrados. Todos os links agora usam `rel="noopener noreferrer"`.
+
+### Ajustes (jul/2026 — role EMBAIXADOR, card minimalista e nav pública)
+- **Novo papel `EMBAIXADOR`** no enum `app_role`. Coluna `community_profiles.user_id` (FK opcional para `auth.users`) vincula o card a um usuário; RLS `Ambassadors update own community profile` permite `UPDATE` **apenas** quando `user_id = auth.uid()` e o solicitante tem o papel. Sem INSERT/DELETE.
+- **Dashboard do embaixador**: nova seção `EMBAIXADOR` na sidebar (visível quando o usuário tem só o papel `EMBAIXADOR`) dá acesso somente-leitura a Eventos, Vagas, Parceiros, Candidatos, Depoimentos e à lista Embaixadores/Admins. Botões de criar/editar/excluir são escondidos para não-admin (`readOnly` em Parceiros; ações `Editar`/`Novo` gated em Comunidade-perfis pelo helper `canEdit(p) = isAdmin || (isAmbassador && p.user_id === user.id)`).
+- **Badge `EMBAIXADOR`** adicionado a `ROLE_META` (ícone `Award`, borda `secondary`).
+- **Card público minimalista** em `/embaixadores` e `/administradores`: mostra apenas foto, nome, cargo, redes (até 4) e um botão discreto `Saiba mais →` (link ghost). A `professional_story` e o `community_role` continuam **exclusivos do modal** para reduzir ruído visual.
+- **Nav pública reorganizada**: de 11 links para 6 grupos com dropdown — `Início · Sobre · Comunidade ▾ (Embaixadores, Administradores, Parceiros) · Oportunidades ▾ (Vagas, Projetos) · Conteúdo ▾ (Eventos, Drops, Canais) · FAQ`. Desktop usa `DropdownMenu` (radix), mobile renderiza como accordion simples com heading e sub-links.
+
+#### Logs de auditoria envolvidos
+- `COMMUNITY_PROFILE_UPDATED` continua sendo o registro para qualquer edição de card, incluindo a auto-edição feita por embaixador (o trigger `audit_community_profiles_changes` captura `auth.uid()` como ator).
