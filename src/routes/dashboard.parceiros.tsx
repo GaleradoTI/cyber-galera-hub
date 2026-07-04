@@ -26,11 +26,12 @@ const empty: Partial<Partner> = { name: "", description: "", logo_url: "", websi
 function ParceirosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { isAdmin, user, rolesReady } = useDashboardRoles();
+  const { isAdmin, isAmbassador, user, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Partner> | null>(null);
   const [removing, setRemoving] = useState<Partner | null>(null);
 
-  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
+  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassador) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassador, navigate]);
+  const readOnly = !isAdmin;
 
   const { data: partners = [], isLoading } = useQuery({
     queryKey: ["admin-partners"],
