@@ -24,7 +24,6 @@ function normalizeLinks(value: CommunityProfile["social_links"]) {
 export function CommunityProfileCard({ profile }: { profile: CommunityProfile }) {
   const [open, setOpen] = useState(false);
   const links = normalizeLinks(profile.social_links).filter((l) => l.url);
-  const primaryLink = links[0];
 
   // Injeta JSON-LD (schema.org/Person) dinâmico enquanto o modal está aberto para SEO.
   useEffect(() => {
