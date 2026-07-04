@@ -104,6 +104,7 @@ export type Database = {
           role_title: string | null
           social_links: Json
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           community_role?: string | null
@@ -119,6 +120,7 @@ export type Database = {
           role_title?: string | null
           social_links?: Json
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           community_role?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           role_title?: string | null
           social_links?: Json
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1645,7 +1648,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "SUPER_ADMIN" | "ADMIN" | "MEMBRO" | "RECRUTADOR"
+      app_role: "SUPER_ADMIN" | "ADMIN" | "MEMBRO" | "RECRUTADOR" | "EMBAIXADOR"
       content_status: "rascunho" | "publicado" | "pausado" | "encerrado"
       event_modality: "online" | "presencial" | "hibrido"
       recruiting_status: "open" | "closed" | "waitlist"
@@ -1783,7 +1786,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["SUPER_ADMIN", "ADMIN", "MEMBRO", "RECRUTADOR"],
+      app_role: ["SUPER_ADMIN", "ADMIN", "MEMBRO", "RECRUTADOR", "EMBAIXADOR"],
       content_status: ["rascunho", "publicado", "pausado", "encerrado"],
       event_modality: ["online", "presencial", "hibrido"],
       recruiting_status: ["open", "closed", "waitlist"],
