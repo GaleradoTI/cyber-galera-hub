@@ -117,7 +117,7 @@ Funções: `is_admin_or_super`, `has_role`, `handle_new_user`, `promote_user_to_
 
 Tabela agregada pública: `public_home_stats` guarda somente totais da home e é atualizada por triggers.
 
-Papéis: `MEMBRO`, `MODERADOR`, `ADMIN`, `SUPER_ADMIN`.
+Papéis: `MEMBRO`, `MODERADOR`, `RECRUTADOR`, `EMBAIXADOR`, `ADMIN`, `SUPER_ADMIN`.
 
 Promover o primeiro SUPER_ADMIN (SQL Editor):
 
@@ -154,7 +154,7 @@ src/
 
 - RLS em todas as tabelas
 - Roles em tabela separada (`user_roles`) com `SECURITY DEFINER` `has_role`
-- `community_profiles`: leitura pública apenas de perfis ativos; criação/edição/exclusão só por ADMIN/SUPER_ADMIN
+- `community_profiles`: leitura pública apenas de perfis ativos; criação/exclusão só por ADMIN/SUPER_ADMIN. **EMBAIXADOR** com `user_id` vinculado pode atualizar somente o próprio card (RLS `Ambassadors update own community profile`).
 - `member_feed_posts`: leitura e publicação apenas para autenticados; autor remove o próprio post; ADMIN/SUPER_ADMIN moderam
 - Server functions sensíveis (reset de senha) usam `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor
 - Validação Zod em entradas server-side
@@ -196,6 +196,7 @@ Privado — comunidade GALERA DO T.I.
 | **MEMBRO** | Editar próprio perfil, salvar vagas, candidatar-se, inscrever-se em eventos, sugerir eventos (passa por aprovação), enviar depoimento (passa por moderação), participar de squads que foi adicionado, postar no mural do projeto, denunciar conteúdo. |
 | **RECRUTADOR** (verificado por SUPER_ADMIN) | Tudo de MEMBRO + criar/editar próprias vagas, ver lista de candidatos com filtros, abrir conversas diretas. |
 | **MODERADOR** | Aprovar/rejeitar depoimentos e sugestões de evento. |
+| **EMBAIXADOR** | Tudo de MEMBRO + visualizar (somente leitura) `dashboard/eventos`, `dashboard/vagas`, `dashboard/parceiros`, `dashboard/candidatos`, `dashboard/depoimentos` e a lista de embaixadores/admins, com permissão para **editar apenas o próprio card** em `community_profiles`. Não pode criar nem remover cards de comunidade. |
 | **ADMIN** | Tudo acima + CRUD completo de vagas, eventos, parceiros, projetos, configurações do site, denúncias e usuários (bloquear/reativar/resetar senha). |
 | **SUPER_ADMIN** | Tudo de ADMIN + promover/rebaixar ADMINs, marcar recrutador como verificado, alterar política de senha e gerenciar squads (membros e líderes). |
 
