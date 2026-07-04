@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ExternalLink, Info, AlertTriangle } from "lucide-react";
+import { ExternalLink, ArrowRight, AlertTriangle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,40 +65,45 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
   return (
     <>
       <article className="glass rounded-xl border border-primary/20 p-5 hover-glow-cyan flex flex-col h-full">
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4">
-          <Avatar className="h-16 w-16 shrink-0 border border-secondary/30">
+        <div className="flex flex-col items-center text-center gap-3">
+          <Avatar className="h-20 w-20 border border-secondary/30">
             <AvatarImage src={profile.photo_url ?? undefined} alt={profile.name} className="object-cover" />
             <AvatarFallback>{profile.name.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <div className="min-w-0">
-            <h2 className="font-black text-lg leading-tight truncate">{profile.name}</h2>
-            {profile.role_title && <p className="text-sm text-secondary mt-1 line-clamp-2">{profile.role_title}</p>}
-            {profile.community_role && (
-              <Badge variant="outline" className="mt-2 text-[10px]">{profile.community_role}</Badge>
+          <div className="min-w-0 w-full">
+            <h2 className="font-black text-base leading-tight truncate">{profile.name}</h2>
+            {profile.role_title && (
+              <p className="text-xs text-secondary mt-1 line-clamp-2">{profile.role_title}</p>
             )}
           </div>
+          {links.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {links.slice(0, 4).map((l) =>
+                isValidUrl(l.url) ? (
+                  <a
+                    key={`${l.label}-${l.url}`}
+                    href={l.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => track("community_profile_primary_link_click", { url: l.url, label: l.label })}
+                    className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition px-2 py-0.5 rounded border border-border/30"
+                  >
+                    {l.label || "Link"} <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                ) : null,
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="mt-auto pt-5 flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
+        <div className="mt-auto pt-4">
+          <button
+            type="button"
             onClick={() => { track("community_profile_open"); setOpen(true); }}
-            className="flex-1 min-w-[7rem]"
+            className="w-full inline-flex items-center justify-center gap-1 text-xs font-medium text-muted-foreground hover:text-primary transition py-1.5"
           >
-            <Info className="h-3.5 w-3.5 mr-1.5" /> Saiba mais
-          </Button>
-          {primaryLink && isValidUrl(primaryLink.url) && (
-            <a
-              href={primaryLink.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => track("community_profile_primary_link_click", { url: primaryLink.url, label: primaryLink.label })}
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline px-2"
-            >
-              {primaryLink.label || "Link"} <ExternalLink className="h-3 w-3" />
-            </a>
-          )}
+            Saiba mais <ArrowRight className="h-3 w-3" />
+          </button>
         </div>
       </article>
 
