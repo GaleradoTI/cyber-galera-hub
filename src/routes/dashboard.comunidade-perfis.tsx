@@ -29,6 +29,7 @@ type Profile = {
   social_links: SocialLink[] | Record<string, string>;
   is_active: boolean;
   display_order: number;
+  user_id?: string | null;
 };
 
 const empty: Partial<Profile> = {
@@ -46,7 +47,7 @@ const empty: Partial<Profile> = {
 function CommunityProfilesAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { user, isAdmin, rolesReady } = useDashboardRoles();
+  const { user, isAdmin, isAmbassador, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Profile> | null>(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -54,7 +55,9 @@ function CommunityProfilesAdminPage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 12;
 
-  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
+  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassador) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassador, navigate]);
+  const canManageAll = isAdmin;
+  const canEdit = (p: Profile) => isAdmin || (isAmbassador && p.user_id === user?.id);
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-community-profiles"],
@@ -116,7 +119,7 @@ function CommunityProfilesAdminPage() {
     qc.invalidateQueries({ queryKey: ["admin-community-profiles"] });
   };
 
-  if (rolesReady && !isAdmin) return null;
+  if (rolesReady && !isAdmin && !isAmbassador) return null;
 
   return (
     <DashboardShell title="Embaixadores e Administradores" description="Gerencie os perfis públicos da comunidade.">
@@ -143,7 +146,9 @@ function CommunityProfilesAdminPage() {
           </Select>
         )}
         <div className="text-xs text-muted-foreground">{filtered.length} perfil(is)</div>
-        <Button className="ml-auto" onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo perfil</Button>
+        {canManageAll && (
+          <Button className="ml-auto" onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo perfil</Button>
+        )}
       </div>
 
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando…</p> : (
@@ -161,8 +166,12 @@ function CommunityProfilesAdminPage() {
                   <Badge variant={p.is_active ? "default" : "secondary"}>{p.profile_type === "ambassador" ? "Embaixador" : "Admin"}</Badge>
                 </div>
                 <div className="flex gap-1 mt-3">
-                  <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p, social_links: normalizeLinks(p.social_links) })}><Pencil className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-3 w-3" /></Button>
+                  {canEdit(p) && (
+                    <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p, social_links: normalizeLinks(p.social_links) })}><Pencil className="h-3 w-3" /></Button>
+                  )}
+                  {canManageAll && (
+                    <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-3 w-3" /></Button>
+                  )}
                   <Button size="sm" variant="ghost" asChild className="ml-auto"><a href={p.profile_type === "ambassador" ? "/embaixadores" : "/administradores"} target="_blank" rel="noreferrer"><ExternalLink className="h-3 w-3" /></a></Button>
                 </div>
               </div>
