@@ -12,16 +12,34 @@ export const SITE_CONFIG = {
   },
 } as const;
 
-export const NAV_LINKS = [
+export type NavChild = { to: string; label: string; description?: string };
+export type NavItem = { label: string; to?: string; children?: NavChild[] };
+
+export const NAV_LINKS: NavItem[] = [
   { to: "/", label: "Início" },
   { to: "/sobre", label: "Sobre" },
-  { to: "/embaixadores", label: "Embaixadores" },
-  { to: "/administradores", label: "Administradores" },
-  { to: "/canais", label: "Canais" },
-  { to: "/vagas", label: "Vagas" },
-  { to: "/projetos", label: "Projetos" },
-  { to: "/drops", label: "Drops" },
-  { to: "/eventos", label: "Eventos" },
-  { to: "/parceiros", label: "Parceiros" },
+  {
+    label: "Comunidade",
+    children: [
+      { to: "/embaixadores", label: "Embaixadores", description: "Quem representa a galera" },
+      { to: "/administradores", label: "Administradores", description: "Time que mantém tudo de pé" },
+      { to: "/parceiros", label: "Parceiros", description: "Marcas que caminham com a gente" },
+    ],
+  },
+  {
+    label: "Oportunidades",
+    children: [
+      { to: "/vagas", label: "Vagas", description: "Posições abertas na comunidade" },
+      { to: "/projetos", label: "Projetos", description: "Projetos abertos para colaborar" },
+    ],
+  },
+  {
+    label: "Conteúdo",
+    children: [
+      { to: "/eventos", label: "Eventos", description: "Meetups, lives e workshops" },
+      { to: "/drops", label: "Drops", description: "Lançamentos e novidades" },
+      { to: "/canais", label: "Canais", description: "Onde a comunidade conversa" },
+    ],
+  },
   { to: "/faq", label: "FAQ" },
-] as const;
+];
