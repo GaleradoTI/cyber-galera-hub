@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { NAV_LINKS } from "@/lib/site-config";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
@@ -19,16 +25,42 @@ export function Navbar() {
 
         <nav className="hidden lg:flex items-center gap-1">
           {NAV_LINKS.map((link) => {
+            if (link.children?.length) {
+              const active = link.children.some((c) => pathname === c.to);
+              return (
+                <DropdownMenu key={link.label}>
+                  <DropdownMenuTrigger
+                    className={cn(
+                      "inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition-colors outline-none",
+                      active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {link.label}
+                    <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[240px]">
+                    {link.children.map((c) => (
+                      <DropdownMenuItem asChild key={c.to} className="cursor-pointer">
+                        <Link to={c.to} className="flex flex-col items-start gap-0.5 py-2">
+                          <span className="text-sm font-medium">{c.label}</span>
+                          {c.description && (
+                            <span className="text-[11px] text-muted-foreground">{c.description}</span>
+                          )}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            }
             const active = pathname === link.to;
             return (
               <Link
                 key={link.to}
-                to={link.to}
+                to={link.to!}
                 className={cn(
                   "relative px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                  active
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {link.label}
@@ -76,16 +108,37 @@ export function Navbar() {
       {open && (
         <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setOpen(false)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {NAV_LINKS.map((link) => {
+              if (link.children?.length) {
+                return (
+                  <div key={link.label} className="py-1">
+                    <div className="px-3 pt-2 pb-1 text-[10px] font-bold tracking-[0.25em] text-muted-foreground/70">
+                      {link.label.toUpperCase()}
+                    </div>
+                    {link.children.map((c) => (
+                      <Link
+                        key={c.to}
+                        to={c.to}
+                        onClick={() => setOpen(false)}
+                        className="block px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                      >
+                        {c.label}
+                      </Link>
+                    ))}
+                  </div>
+                );
+              }
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to!}
+                  onClick={() => setOpen(false)}
+                  className="px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
             <div className="flex gap-2 pt-3 border-t border-border/40 mt-2">
               {isAuthenticated ? (
                 <>
