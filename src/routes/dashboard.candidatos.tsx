@@ -25,14 +25,14 @@ type Candidate = {
 
 function CandidatosPage() {
   const navigate = useNavigate();
-  const { isAdmin, isRecruiter, rolesReady } = useDashboardRoles();
+  const { isAdmin, isRecruiter, isAmbassador, rolesReady } = useDashboardRoles();
   const [search, setSearch] = useState("");
   const [area, setArea] = useState("all");
   const [tech, setTech] = useState("all");
 
   useEffect(() => {
-    if (rolesReady && !isAdmin && !isRecruiter) navigate({ to: "/dashboard" });
-  }, [rolesReady, isAdmin, isRecruiter, navigate]);
+    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassador) navigate({ to: "/dashboard" });
+  }, [rolesReady, isAdmin, isRecruiter, isAmbassador, navigate]);
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ["candidates"],
