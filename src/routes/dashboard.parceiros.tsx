@@ -82,7 +82,7 @@ function ParceirosAdminPage() {
   return (
     <DashboardShell title="Parceiros" description="Gerencie a vitrine de parceiros exibida na home.">
       <div className="flex justify-end mb-4">
-        <Button onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo parceiro</Button>
+        {!readOnly && <Button onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo parceiro</Button>}
       </div>
       <div className="glass rounded-xl border border-primary/20 overflow-x-auto">
         <Table>
@@ -105,10 +105,12 @@ function ParceirosAdminPage() {
                 <TableCell className="font-medium">{p.name}{p.description && <div className="text-xs text-muted-foreground">{p.description}</div>}</TableCell>
                 <TableCell className="text-xs">{p.website_url ? <a href={p.website_url} target="_blank" rel="noreferrer" className="text-primary underline inline-flex items-center gap-1"><ExternalLink className="h-3 w-3" /> abrir</a> : "—"}</TableCell>
                 <TableCell>{p.display_order}</TableCell>
-                <TableCell><Button size="sm" variant="ghost" onClick={() => toggleActive(p)}>{p.is_active ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}</Button></TableCell>
+                <TableCell>{readOnly ? (p.is_active ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />) : (<Button size="sm" variant="ghost" onClick={() => toggleActive(p)}>{p.is_active ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}</Button>)}</TableCell>
                 <TableCell className="text-right space-x-1 whitespace-nowrap">
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setRemoving(p)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  {readOnly ? <span className="text-xs text-muted-foreground">Somente leitura</span> : (<>
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3 w-3" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => setRemoving(p)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  </>)}
                 </TableCell>
               </TableRow>
             ))}
