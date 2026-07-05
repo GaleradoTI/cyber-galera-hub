@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { ShoppingBag, Calendar, Tag, CheckCircle2 } from "lucide-react";
+import { ShoppingBag, Calendar, Tag, CheckCircle2, Ruler, Lock } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { formatPhone } from "@/lib/formatters";
 import { formatDateOnly } from "@/lib/utils";
@@ -40,9 +42,13 @@ type Drop = {
   pix_key: string | null;
   payment_methods: string[];
   images: string[];
+  material: string | null;
+  product_category: string;
+  available_sizes: string[];
+  size_measurements: Record<string, string>;
 };
 
-const interestSchema = z.object({
+const baseSchema = z.object({
   full_name: z.string().trim().min(2, "Nome muito curto").max(100),
   email: z.string().trim().email("Email inválido").max(255),
   phone: z.string().trim()
@@ -50,6 +56,15 @@ const interestSchema = z.object({
     .max(20)
     .regex(/^[\d\s()+-]+$/, "Use apenas números, espaços e ( ) + -"),
   note: z.string().trim().max(500).optional().or(z.literal("")),
+  size: z.string().trim().max(20).optional().or(z.literal("")),
+  delivery_method: z.enum(["pickup", "shipping"]).optional(),
+  address_zip: z.string().trim().max(15).optional().or(z.literal("")),
+  address_street: z.string().trim().max(150).optional().or(z.literal("")),
+  address_number: z.string().trim().max(20).optional().or(z.literal("")),
+  address_complement: z.string().trim().max(80).optional().or(z.literal("")),
+  address_district: z.string().trim().max(80).optional().or(z.literal("")),
+  address_city: z.string().trim().max(80).optional().or(z.literal("")),
+  address_state: z.string().trim().max(2).optional().or(z.literal("")),
 });
 
 const fmtPrice = (cents: number, currency = "BRL") =>
@@ -57,9 +72,15 @@ const fmtPrice = (cents: number, currency = "BRL") =>
 
 function DropsPublicPage() {
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState<Drop | null>(null);
   const [interestOpen, setInterestOpen] = useState<Drop | null>(null);
-  const [form, setForm] = useState({ full_name: "", email: "", phone: "", note: "" });
+  const [form, setForm] = useState({
+    full_name: "", email: "", phone: "", note: "",
+    size: "", delivery_method: "pickup" as "pickup" | "shipping",
+    address_zip: "", address_street: "", address_number: "",
+    address_complement: "", address_district: "", address_city: "", address_state: "",
+  });
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -72,7 +93,11 @@ function DropsPublicPage() {
         .eq("status", "published")
         .order("launch_date", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Drop[];
+      return (data ?? []).map((d: any) => ({
+        ...d,
+        size_measurements: (d.size_measurements ?? {}) as Record<string, string>,
+        available_sizes: (d.available_sizes ?? []) as string[],
+      })) as Drop[];
     },
   });
 
@@ -96,9 +121,23 @@ function DropsPublicPage() {
     })();
   }, [interestOpen, user?.id]);
 
+  const openInterest = (d: Drop) => {
+    if (!isAuthenticated) {
+      toast.info("Faça login para reservar seu drop.");
+      navigate({ to: "/login", search: { redirect: "/drops" } as any });
+      return;
+    }
+    setInterestOpen(d);
+    setOpen(null);
+  };
+
   const submitInterest = async () => {
     if (!interestOpen) return;
-    const parsed = interestSchema.safeParse(form);
+    if (!user?.id) {
+      toast.error("Você precisa estar logado.");
+      return;
+    }
+    const parsed = baseSchema.safeParse(form);
     if (!parsed.success) {
       const errs: Record<string, string> = {};
       for (const issue of parsed.error.issues) {
@@ -108,23 +147,66 @@ function DropsPublicPage() {
       setFieldErrors(errs);
       return toast.error("Corrija os campos destacados");
     }
+    const isApparel = interestOpen.product_category === "apparel";
+    const errs: Record<string, string> = {};
+    if (isApparel) {
+      if (!form.size) errs.size = "Selecione o tamanho";
+      if (!form.delivery_method) errs.delivery_method = "Escolha a forma de entrega";
+      if (form.delivery_method === "shipping") {
+        if (!form.address_zip.trim()) errs.address_zip = "CEP obrigatório";
+        if (!form.address_street.trim()) errs.address_street = "Rua obrigatória";
+        if (!form.address_number.trim()) errs.address_number = "Número obrigatório";
+        if (!form.address_city.trim()) errs.address_city = "Cidade obrigatória";
+        if (!form.address_state.trim()) errs.address_state = "UF obrigatória";
+      }
+    }
+    if (Object.keys(errs).length) {
+      setFieldErrors(errs);
+      return toast.error("Corrija os campos destacados");
+    }
     setFieldErrors({});
     setSubmitting(true);
-    const { error } = await supabase.from("drop_interests").insert({
+    const payload: any = {
       drop_id: interestOpen.id,
-      user_id: user?.id ?? null,
+      user_id: user.id,
       full_name: parsed.data.full_name,
       email: parsed.data.email,
       phone: parsed.data.phone,
       note: parsed.data.note || null,
-    });
+      amount_cents: interestOpen.price_cents,
+      status: "pending",
+      size: isApparel ? form.size : null,
+      delivery_method: isApparel ? form.delivery_method : null,
+    };
+    if (isApparel && form.delivery_method === "shipping") {
+      Object.assign(payload, {
+        address_zip: form.address_zip.trim(),
+        address_street: form.address_street.trim(),
+        address_number: form.address_number.trim(),
+        address_complement: form.address_complement.trim() || null,
+        address_district: form.address_district.trim() || null,
+        address_city: form.address_city.trim(),
+        address_state: form.address_state.trim().toUpperCase(),
+      });
+    }
+    const { error } = await supabase.from("drop_interests").insert(payload);
     setSubmitting(false);
     if (error) return toast.error(`Não foi possível registrar: ${error.message}`);
-    toast.success("Interesse registrado! Em breve entraremos em contato.");
+    toast.success("Reserva registrada! Em breve entraremos em contato.");
     setInterestOpen(null);
-    setForm({ full_name: "", email: "", phone: "", note: "" });
+    setForm({
+      full_name: "", email: "", phone: "", note: "",
+      size: "", delivery_method: "pickup",
+      address_zip: "", address_street: "", address_number: "",
+      address_complement: "", address_district: "", address_city: "", address_state: "",
+    });
     setFieldErrors({});
   };
+
+  const isApparel = interestOpen?.product_category === "apparel";
+  const currentMeasurement = interestOpen && form.size
+    ? interestOpen.size_measurements?.[form.size]
+    : null;
 
   return (
     <PublicLayout>
@@ -196,6 +278,18 @@ function DropsPublicPage() {
               )}
               {open.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{open.description}</p>}
               <div className="grid grid-cols-2 gap-3 text-xs">
+                {open.material && (
+                  <div className="rounded bg-muted/20 p-2">
+                    <div className="text-[10px] tracking-widest text-muted-foreground/70">MATERIAL</div>
+                    <div className="font-semibold">{open.material}</div>
+                  </div>
+                )}
+                {open.available_sizes?.length > 0 && (
+                  <div className="rounded bg-muted/20 p-2">
+                    <div className="text-[10px] tracking-widest text-muted-foreground/70">TAMANHOS</div>
+                    <div className="font-semibold">{open.available_sizes.join(" · ")}</div>
+                  </div>
+                )}
                 {open.launch_date && (
                   <div className="rounded bg-muted/20 p-2">
                     <div className="text-[10px] tracking-widest text-muted-foreground/70">LANÇAMENTO</div>
@@ -217,8 +311,10 @@ function DropsPublicPage() {
                 </div>
               )}
               <DialogFooter>
-                <Button onClick={() => { setInterestOpen(open); setOpen(null); }} className="w-full">
-                  <CheckCircle2 className="h-4 w-4 mr-2" /> Tenho interesse
+                <Button onClick={() => openInterest(open)} className="w-full">
+                  {isAuthenticated
+                    ? <><CheckCircle2 className="h-4 w-4 mr-2" /> Quero este drop</>
+                    : <><Lock className="h-4 w-4 mr-2" /> Faça login para reservar</>}
                 </Button>
               </DialogFooter>
             </>
@@ -228,13 +324,11 @@ function DropsPublicPage() {
 
       {/* Formulário de interesse */}
       <Dialog open={!!interestOpen} onOpenChange={(o) => !o && setInterestOpen(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Tenho interesse — {interestOpen?.title}</DialogTitle>
+            <DialogTitle>Reservar — {interestOpen?.title}</DialogTitle>
             <DialogDescription>
-              {isAuthenticated
-                ? "Confirme seus dados para a gente entrar em contato sobre o drop."
-                : "Deixe seus dados para garantir sua unidade. Receberemos a confirmação aqui."}
+              Confirme seus dados{isApparel ? ", tamanho e forma de entrega" : ""}.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -253,6 +347,89 @@ function DropsPublicPage() {
               <Input inputMode="tel" maxLength={20} placeholder="(11) 90000-0000" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })} />
               {fieldErrors.phone && <p className="text-xs text-destructive mt-1">{fieldErrors.phone}</p>}
             </div>
+
+            {isApparel && (
+              <>
+                <div>
+                  <Label>Tamanho</Label>
+                  <Select value={form.size} onValueChange={(v) => setForm({ ...form, size: v })}>
+                    <SelectTrigger><SelectValue placeholder="Escolha o tamanho" /></SelectTrigger>
+                    <SelectContent>
+                      {(interestOpen?.available_sizes ?? []).map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {currentMeasurement && (
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <Ruler className="h-3 w-3" /> {currentMeasurement}
+                    </p>
+                  )}
+                  {fieldErrors.size && <p className="text-xs text-destructive mt-1">{fieldErrors.size}</p>}
+                </div>
+                <div>
+                  <Label>Como quer receber?</Label>
+                  <RadioGroup
+                    value={form.delivery_method}
+                    onValueChange={(v) => setForm({ ...form, delivery_method: v as "pickup" | "shipping" })}
+                    className="mt-2"
+                  >
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <RadioGroupItem value="pickup" /> Retirar em mãos com a organização
+                    </label>
+                    <label className="flex items-center gap-2 text-sm cursor-pointer">
+                      <RadioGroupItem value="shipping" /> Enviar pelo correio
+                    </label>
+                  </RadioGroup>
+                  {fieldErrors.delivery_method && <p className="text-xs text-destructive mt-1">{fieldErrors.delivery_method}</p>}
+                </div>
+                {form.delivery_method === "shipping" && (
+                  <div className="space-y-2 rounded-md border border-border/40 p-3 bg-muted/10">
+                    <div className="text-[10px] tracking-widest text-muted-foreground/70">ENDEREÇO DE ENTREGA</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-1">
+                        <Label>CEP</Label>
+                        <Input maxLength={9} value={form.address_zip} onChange={(e) => setForm({ ...form, address_zip: e.target.value })} />
+                        {fieldErrors.address_zip && <p className="text-xs text-destructive mt-1">{fieldErrors.address_zip}</p>}
+                      </div>
+                      <div className="col-span-2">
+                        <Label>Rua</Label>
+                        <Input maxLength={150} value={form.address_street} onChange={(e) => setForm({ ...form, address_street: e.target.value })} />
+                        {fieldErrors.address_street && <p className="text-xs text-destructive mt-1">{fieldErrors.address_street}</p>}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label>Nº</Label>
+                        <Input maxLength={20} value={form.address_number} onChange={(e) => setForm({ ...form, address_number: e.target.value })} />
+                        {fieldErrors.address_number && <p className="text-xs text-destructive mt-1">{fieldErrors.address_number}</p>}
+                      </div>
+                      <div className="col-span-2">
+                        <Label>Complemento</Label>
+                        <Input maxLength={80} value={form.address_complement} onChange={(e) => setForm({ ...form, address_complement: e.target.value })} />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Bairro</Label>
+                      <Input maxLength={80} value={form.address_district} onChange={(e) => setForm({ ...form, address_district: e.target.value })} />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="col-span-2">
+                        <Label>Cidade</Label>
+                        <Input maxLength={80} value={form.address_city} onChange={(e) => setForm({ ...form, address_city: e.target.value })} />
+                        {fieldErrors.address_city && <p className="text-xs text-destructive mt-1">{fieldErrors.address_city}</p>}
+                      </div>
+                      <div>
+                        <Label>UF</Label>
+                        <Input maxLength={2} value={form.address_state} onChange={(e) => setForm({ ...form, address_state: e.target.value.toUpperCase() })} />
+                        {fieldErrors.address_state && <p className="text-xs text-destructive mt-1">{fieldErrors.address_state}</p>}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
             <div>
               <Label>Observação (opcional)</Label>
               <Textarea rows={2} maxLength={500} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
@@ -261,7 +438,7 @@ function DropsPublicPage() {
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setInterestOpen(null)}>Cancelar</Button>
-            <Button onClick={submitInterest} disabled={submitting}>{submitting ? "Enviando…" : "Confirmar interesse"}</Button>
+            <Button onClick={submitInterest} disabled={submitting}>{submitting ? "Enviando…" : "Confirmar reserva"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
