@@ -32,9 +32,20 @@ type Drop = {
   payment_methods: string[];
   images: string[];
   created_at: string;
+  material: string | null;
+  product_category: string;
+  available_sizes: string[];
+  size_measurements: Record<string, string>;
 };
 
 const PAYMENTS = ["Pix", "Crédito", "Débito", "Transferência", "Dinheiro"];
+const CATEGORIES = [
+  { value: "apparel", label: "Vestuário (camisa, casaco...)" },
+  { value: "accessory", label: "Acessório" },
+  { value: "sticker", label: "Adesivo" },
+  { value: "other", label: "Outro" },
+];
+const SIZE_PRESETS = ["PP", "P", "M", "G", "GG", "XG"];
 
 function DropsAdminPage() {
   const navigate = useNavigate();
@@ -68,7 +79,11 @@ function DropsAdminPage() {
   });
 
   const startNew = () =>
-    setEditing({ title: "", description: "", price_cents: 0, currency: "BRL", launch_date: null, status: "draft", pix_key: "", payment_methods: ["Pix"], images: [] });
+    setEditing({
+      title: "", description: "", price_cents: 0, currency: "BRL", launch_date: null,
+      status: "draft", pix_key: "", payment_methods: ["Pix"], images: [],
+      material: "", product_category: "other", available_sizes: [], size_measurements: {},
+    });
 
   const save = async () => {
     if (!editing) return;
@@ -98,10 +113,14 @@ function DropsAdminPage() {
       payment_methods: editing.payment_methods ?? [],
       images: editing.images ?? [],
       created_by: user?.id ?? null,
+      material: editing.material?.trim() || null,
+      product_category: editing.product_category || "other",
+      available_sizes: editing.available_sizes ?? [],
+      size_measurements: editing.size_measurements ?? {},
     };
     const { error } = editing.id
-      ? await supabase.from("drops").update(payload).eq("id", editing.id)
-      : await supabase.from("drops").insert(payload);
+      ? await supabase.from("drops").update(payload as any).eq("id", editing.id)
+      : await supabase.from("drops").insert(payload as any);
     if (error) return toast.error(error.message);
     toast.success(editing.id ? "Drop atualizado" : "Drop criado");
     setEditing(null);
@@ -151,8 +170,23 @@ function DropsAdminPage() {
     downloadCSV(`interesses-${interestsOf?.title ?? "drop"}-${new Date().toISOString().slice(0, 10)}.csv`,
       (interests as any[]).map((i) => ({
         data: new Date(i.created_at).toLocaleString("pt-BR"),
-        nome: i.full_name, email: i.email, telefone: i.phone ?? "", nota: i.note ?? "",
+        nome: i.full_name, email: i.email, telefone: i.phone ?? "",
+        tamanho: i.size ?? "", entrega: i.delivery_method ?? "",
+        endereco: [i.address_street, i.address_number, i.address_district, i.address_city, i.address_state, i.address_zip].filter(Boolean).join(", "),
+        valor: centsToMoneyInput(i.amount_cents ?? 0),
+        status: i.status ?? "pending", nota: i.note ?? "",
       })));
+  };
+
+  const toggleSize = (s: string) => {
+    const cur = editing!.available_sizes ?? [];
+    const measurements = { ...(editing!.size_measurements ?? {}) };
+    if (cur.includes(s)) {
+      delete measurements[s];
+      setEditing({ ...editing!, available_sizes: cur.filter((x) => x !== s), size_measurements: measurements });
+    } else {
+      setEditing({ ...editing!, available_sizes: [...cur, s], size_measurements: measurements });
+    }
   };
 
   return (
@@ -244,6 +278,57 @@ function DropsAdminPage() {
                 </div>
                 {errors.payment && <p className="text-xs text-destructive mt-1">{errors.payment}</p>}
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Categoria do produto</Label>
+                  <Select value={editing.product_category ?? "other"} onValueChange={(v) => setEditing({ ...editing, product_category: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Material</Label>
+                  <Input maxLength={120} placeholder="Ex: Algodão 100%" value={editing.material ?? ""} onChange={(e) => setEditing({ ...editing, material: e.target.value })} />
+                </div>
+              </div>
+              {editing.product_category === "apparel" && (
+                <div className="space-y-2 rounded-md border border-border/40 p-3 bg-muted/10">
+                  <Label className="text-xs">Tamanhos disponíveis</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {SIZE_PRESETS.map((s) => {
+                      const on = (editing.available_sizes ?? []).includes(s);
+                      return (
+                        <button key={s} type="button" onClick={() => toggleSize(s)}
+                          className={`text-xs px-2 py-1 rounded border ${on ? "bg-primary/20 border-primary/40 text-primary" : "bg-background/40 border-border/40"}`}>
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {(editing.available_sizes ?? []).length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-xs">Medidas por tamanho (opcional)</Label>
+                      {(editing.available_sizes ?? []).map((s) => (
+                        <div key={s} className="flex items-center gap-2">
+                          <span className="text-xs font-bold w-8">{s}</span>
+                          <Input
+                            className="flex-1"
+                            placeholder="Ex: Largura 52cm · Comprimento 72cm"
+                            maxLength={200}
+                            value={editing.size_measurements?.[s] ?? ""}
+                            onChange={(e) => setEditing({
+                              ...editing,
+                              size_measurements: { ...(editing.size_measurements ?? {}), [s]: e.target.value },
+                            })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <Label>Imagens</Label>
                 <div className="grid grid-cols-3 gap-2 mt-1">
