@@ -278,6 +278,57 @@ function DropsAdminPage() {
                 </div>
                 {errors.payment && <p className="text-xs text-destructive mt-1">{errors.payment}</p>}
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Categoria do produto</Label>
+                  <Select value={editing.product_category ?? "other"} onValueChange={(v) => setEditing({ ...editing, product_category: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Material</Label>
+                  <Input maxLength={120} placeholder="Ex: Algodão 100%" value={editing.material ?? ""} onChange={(e) => setEditing({ ...editing, material: e.target.value })} />
+                </div>
+              </div>
+              {editing.product_category === "apparel" && (
+                <div className="space-y-2 rounded-md border border-border/40 p-3 bg-muted/10">
+                  <Label className="text-xs">Tamanhos disponíveis</Label>
+                  <div className="flex flex-wrap gap-1">
+                    {SIZE_PRESETS.map((s) => {
+                      const on = (editing.available_sizes ?? []).includes(s);
+                      return (
+                        <button key={s} type="button" onClick={() => toggleSize(s)}
+                          className={`text-xs px-2 py-1 rounded border ${on ? "bg-primary/20 border-primary/40 text-primary" : "bg-background/40 border-border/40"}`}>
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {(editing.available_sizes ?? []).length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-xs">Medidas por tamanho (opcional)</Label>
+                      {(editing.available_sizes ?? []).map((s) => (
+                        <div key={s} className="flex items-center gap-2">
+                          <span className="text-xs font-bold w-8">{s}</span>
+                          <Input
+                            className="flex-1"
+                            placeholder="Ex: Largura 52cm · Comprimento 72cm"
+                            maxLength={200}
+                            value={editing.size_measurements?.[s] ?? ""}
+                            onChange={(e) => setEditing({
+                              ...editing,
+                              size_measurements: { ...(editing.size_measurements ?? {}), [s]: e.target.value },
+                            })}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div>
                 <Label>Imagens</Label>
                 <div className="grid grid-cols-3 gap-2 mt-1">
