@@ -169,33 +169,72 @@ export type Database = {
       }
       drop_interests: {
         Row: {
+          address_city: string | null
+          address_complement: string | null
+          address_district: string | null
+          address_number: string | null
+          address_state: string | null
+          address_street: string | null
+          address_zip: string | null
+          amount_cents: number
           created_at: string
+          delivery_method: string | null
           drop_id: string
           email: string
           full_name: string
           id: string
+          linked_user_id: string | null
           note: string | null
           phone: string | null
+          size: string | null
+          status: string
+          updated_at: string
           user_id: string | null
         }
         Insert: {
+          address_city?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          amount_cents?: number
           created_at?: string
+          delivery_method?: string | null
           drop_id: string
           email: string
           full_name: string
           id?: string
+          linked_user_id?: string | null
           note?: string | null
           phone?: string | null
+          size?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
+          address_city?: string | null
+          address_complement?: string | null
+          address_district?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
+          address_zip?: string | null
+          amount_cents?: number
           created_at?: string
+          delivery_method?: string | null
           drop_id?: string
           email?: string
           full_name?: string
           id?: string
+          linked_user_id?: string | null
           note?: string | null
           phone?: string | null
+          size?: string | null
+          status?: string
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: [
@@ -210,6 +249,7 @@ export type Database = {
       }
       drops: {
         Row: {
+          available_sizes: string[]
           created_at: string
           created_by: string | null
           currency: string
@@ -217,14 +257,18 @@ export type Database = {
           id: string
           images: string[]
           launch_date: string | null
+          material: string | null
           payment_methods: string[]
           pix_key: string | null
           price_cents: number
+          product_category: string
+          size_measurements: Json
           status: string
           title: string
           updated_at: string
         }
         Insert: {
+          available_sizes?: string[]
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -232,14 +276,18 @@ export type Database = {
           id?: string
           images?: string[]
           launch_date?: string | null
+          material?: string | null
           payment_methods?: string[]
           pix_key?: string | null
           price_cents?: number
+          product_category?: string
+          size_measurements?: Json
           status?: string
           title: string
           updated_at?: string
         }
         Update: {
+          available_sizes?: string[]
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -247,9 +295,12 @@ export type Database = {
           id?: string
           images?: string[]
           launch_date?: string | null
+          material?: string | null
           payment_methods?: string[]
           pix_key?: string | null
           price_cents?: number
+          product_category?: string
+          size_measurements?: Json
           status?: string
           title?: string
           updated_at?: string
