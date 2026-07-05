@@ -82,7 +82,20 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
 
 ### Drops e uploads
 - Imagens de drops usam o bucket público `project-covers` no prefixo `drops/`.
+- **Reserva de drop exige login**: usuário não autenticado é redirecionado para `/login?redirect=/drops`. O formulário pré-preenche nome/email/telefone do `profiles`.
+- **Categoria do drop** (`apparel | accessory | sticker | other`) + `material`. Quando `apparel`, o admin define `available_sizes` (chips) e `size_measurements` (medidas por tamanho) — o modal público mostra a medida ao selecionar o tamanho.
+- **Entrega**: `pickup` (retirada em mãos) ou `shipping` (correio) com endereço completo (CEP, rua, nº, complemento, bairro, cidade, UF) obrigatório quando correio.
+- Cada reserva grava `amount_cents` (snapshot do preço) e `status` (`pending → paid → delivered | cancelled`).
 - Uploads de drops registram `DROP_IMAGE_UPLOAD_SUCCESS` ou `DROP_IMAGE_UPLOAD_FAILED` em `/dashboard/logs` com usuário, bucket, caminho, arquivo, tipo, tamanho e motivo.
+
+### Financeiro (`/dashboard/financeiro`) — ADMIN/SUPER_ADMIN
+- KPIs: receita confirmada (paid+delivered), pendente, nº de pedidos e ticket médio.
+- Tabela unificada de pedidos com filtros empilháveis: busca (nome/email/telefone), status, categoria, entrega, produto e intervalo de datas. Cada filtro ativo vira chip removível.
+- Mudança de status inline no `Select` da linha (dispara trigger `log_drop_interest_update` → `DROP_INTEREST_STATUS_CHANGED`).
+- **Vincular pedido a usuário** existente: busca por nome/email em `profiles`; grava `linked_user_id` e registra `DROP_INTEREST_LINKED` no audit.
+- Exportação CSV do recorte filtrado (data, produto, categoria, tamanho, entrega, valor, status, comprador, endereço, usuário vinculado).
+- RLS: SELECT/UPDATE full apenas para `is_admin_or_super`; usuário comum só enxerga os próprios; INSERT exige `auth.uid() = user_id` (fim do interesse anônimo).
+
 - Uploads de fotos de embaixadores/administradores e mascotes registram `IMAGE_UPLOAD_SUCCESS` ou `IMAGE_UPLOAD_FAILED` com contexto, caminho, tipo, tamanho e detalhe técnico do Supabase.
 - Erro RLS 403 agora mostra bucket/prefixo exatos e o diagnóstico consulta a policy real do Storage antes do envio.
 - Imagens de configurações do site, mascotes, favicon e perfis públicos usam `project-covers/site/*`; somente ADMIN/SUPER_ADMIN podem gravar nesses caminhos. O dashboard de mascotes tem prévia por item e fallback visual se a imagem quebrar.
