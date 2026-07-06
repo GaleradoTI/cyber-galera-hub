@@ -130,7 +130,7 @@ function DropsPublicPage() {
 
   const variantsByDrop = useMemo(() => {
     const m = new Map<string, Variant[]>();
-    variants.forEach((v) => { const arr = m.get(v.drop_id) ?? []; arr.push(v); m.set(v.drop_id, arr); });
+    (variants as Variant[]).forEach((v) => { const arr = m.get(v.drop_id) ?? []; arr.push(v); m.set(v.drop_id, arr); });
     return m;
   }, [variants]);
 
