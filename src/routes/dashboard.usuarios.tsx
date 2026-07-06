@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X, Eye, Mail, Phone, MapPin, Briefcase, Calendar, Tag } from "lucide-react";
+import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X, Eye, Mail, Phone, MapPin, Briefcase, Calendar, Tag, Sparkles } from "lucide-react";
 import { getGenderLabel, getRegionByState, getAgeRange, BRAZIL_STATES, GENDER_OPTIONS } from "@/lib/profile-demographics";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -114,6 +114,8 @@ function UsuariosPage() {
       ? "ADMIN"
       : rs.includes("MODERADOR")
       ? "MODERADOR"
+      : rs.includes("EMBAIXADOR")
+      ? "EMBAIXADOR"
       : rs.includes("RECRUTADOR")
       ? "RECRUTADOR"
       : "MEMBRO";
@@ -203,6 +205,18 @@ function UsuariosPage() {
     const { error } = await op;
     if (error) return toast.error(error.message);
     toast.success(has ? `${p.email} deixou de ser recrutador` : `${p.email} agora é recrutador`);
+    refresh();
+  };
+
+  const toggleAmbassador = async (p: ProfileRow, currentRoles: string[]) => {
+    if (!isSuperAdmin) return toast.error("Somente SUPER ADMIN.");
+    const has = currentRoles.includes("EMBAIXADOR");
+    const op = has
+      ? supabase.from("user_roles").delete().eq("user_id", p.user_id).eq("role", "EMBAIXADOR")
+      : supabase.from("user_roles").insert({ user_id: p.user_id, role: "EMBAIXADOR" as any });
+    const { error } = await op;
+    if (error) return toast.error(error.message);
+    toast.success(has ? `${p.email} deixou de ser embaixador` : `${p.email} agora é embaixador`);
     refresh();
   };
 
@@ -374,6 +388,12 @@ function UsuariosPage() {
                       <Button size="sm" variant="outline" onClick={() => toggleRecruiter(p, rolesByUser.get(p.user_id) ?? [])}>
                         <Building2 className="h-3 w-3 mr-1" />
                         {(rolesByUser.get(p.user_id) ?? []).includes("RECRUTADOR") ? "Remover recrutador" : "Tornar recrutador"}
+                      </Button>
+                    )}
+                    {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
+                      <Button size="sm" variant="outline" onClick={() => toggleAmbassador(p, rolesByUser.get(p.user_id) ?? [])}>
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        {(rolesByUser.get(p.user_id) ?? []).includes("EMBAIXADOR") ? "Remover embaixador" : "Tornar embaixador"}
                       </Button>
                     )}
                     {isSuperAdmin && (rolesByUser.get(p.user_id) ?? []).includes("RECRUTADOR") && (
