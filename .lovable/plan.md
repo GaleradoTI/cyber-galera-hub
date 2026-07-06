@@ -1,62 +1,53 @@
 ## Escopo
 
-### 1. Login obrigatório para reservar drop
-- Em `src/routes/drops.tsx`, o botão "Tenho interesse" só abre o modal se `isAuthenticated`. Caso contrário, redireciona para `/login?redirect=/drops`.
-- Pré-preenche `full_name`, `email`, `phone` do `profiles` do usuário logado — o formulário vira "confirme seus dados" (campos editáveis, mas já preenchidos).
-- Remove suporte a `user_id: null` em `drop_interests` (interesse anônimo).
+### 1. Financeiro — CRUD completo (`dashboard.financeiro.tsx`)
+- **Ver detalhes**: modal já parcial vira modal completo mostrando TODOS os campos do pedido (comprador, contato, produto, variante, tamanho, medidas do tamanho no momento da compra, material, entrega, endereço completo, valor, status, observação, usuário vinculado, datas de criação/atualização, histórico rápido).
+- **Adicionar pedido manual**: botão "Novo pedido" abre modal com seleção de drop (select), variante, tamanho (populado a partir do drop selecionado), entrega + endereço, comprador (nome/email/telefone) opcionalmente vinculado a usuário existente (busca em `profiles`), valor, status e nota. Grava direto em `drop_interests` respeitando a nova policy de INSERT para admin.
+- **Editar pedido**: mesmo modal em modo edição, permite alterar todos os campos (não só status).
+- **Excluir pedido**: `AlertDialog` de confirmação → `DELETE` em `drop_interests`. Trigger de log registra `DROP_INTEREST_DELETED`.
+- Filtros e KPIs continuam iguais.
 
-### 2. Novos campos no catálogo de drops (admin)
-Migração em `drops`:
-- `material text` (ex: "Algodão 100%")
-- `product_category text` — `'apparel' | 'accessory' | 'sticker' | 'other'`. Quando `apparel`, o formulário exige tamanho + entrega.
-- `available_sizes text[]` (ex: `{P,M,G,GG}`)
-- `size_measurements jsonb` — mapa `{ "M": "Largura 52cm · Altura 72cm", ... }` mostrado quando o comprador seleciona o tamanho.
+### 2. Drops — Variantes (nova modelagem)
+Novo conceito: um drop pode ter **N variantes** (ex.: "Camiseta tradicional", "Baby look", "Oversize"), cada variante com **material**, **preço opcional** (herda do drop se vazio), **imagens próprias** e **tamanhos** com medidas.
 
-Tela `dashboard.drops.tsx`: adicionar esses campos no formulário de criação/edição (categoria como select; tamanhos como chips multi-select; medidas como lista de inputs por tamanho selecionado).
+**Migração** — nova tabela `drop_variants`:
+- `id`, `drop_id` (FK cascade), `name`, `material`, `price_cents` (nullable), `available_sizes text[]`, `size_measurements jsonb`, `images text[]`, `display_order`, `is_active`, `created_at/updated_at`.
+- RLS: SELECT público quando o drop for `published`; INSERT/UPDATE/DELETE apenas ADMIN/SUPER_ADMIN.
+- Trigger de audit `log_drop_variant_changes` (CREATED/UPDATED/DELETED).
+- `drop_interests` ganha coluna `variant_id uuid REFERENCES drop_variants(id) ON DELETE SET NULL`.
 
-### 3. Formulário de compra ampliado
-Migração em `drop_interests`:
-- `size text` (obrigatório se `product_category = 'apparel'`)
-- `delivery_method text` — `'pickup' | 'shipping'`
-- Endereço (usado se `shipping`): `address_zip`, `address_street`, `address_number`, `address_complement`, `address_district`, `address_city`, `address_state`
-- `amount_cents integer` — snapshot do preço no momento da compra
-- `status text` default `'pending'` — `'pending' | 'paid' | 'delivered' | 'cancelled'`
-- `linked_user_id uuid REFERENCES auth.users(id)` — admin pode vincular manualmente ao usuário existente (além do `user_id` que já vem do login).
+**Tela `dashboard.drops.tsx`**:
+- Dentro do editor, seção "Variantes" com lista (drag-order opcional, por enquanto botões ↑↓). Cada variante tem seu próprio bloco: nome, material, preço override, imagens.
+- **Tamanhos dinâmicos**: em vez de presets fixos (PP..XG), input livre — o admin digita `PP`, `GGG`, `4XL`, etc. e clica "+ tamanho"; cada tamanho vira um chip removível com campo de medidas ao lado. Nada é hardcoded.
+- Mantém `product_category` no drop (nível pai) — variante é só para vestuário/afins.
 
-No modal do `drops.tsx` público:
-- Se `product_category = 'apparel'`: mostra select de tamanho (com medidas embaixo) + rádio pickup/correio + campos de endereço quando "correio".
-- Validação zod estendida.
+**Tela pública `drops.tsx`**:
+- No modal de compra, se o drop tiver variantes ativas: RadioGroup "Modelagem" listando variantes; ao escolher, mostra medidas específicas e select de tamanho da variante escolhida.
+- `variant_id` gravado junto no `drop_interests`.
 
-### 4. Tela Financeiro (`/dashboard/financeiro`)
-Nova rota — visível **apenas** para ADMIN/SUPER_ADMIN (`isAdmin` no `useDashboardRoles`, gate na sidebar + no `beforeLoad` do componente).
+**`dashboard.financeiro.tsx`**: coluna extra "Variante" (nome), filtro por variante, detalhe mostra variante + medidas snapshot.
 
-Conteúdo:
-- **KPIs no topo**: Receita total (soma `amount_cents` onde `status='paid'`), pendente, número de pedidos, ticket médio.
-- **Tabela de vendas** unificada (por enquanto só `drop_interests`, mas estrutura preparada para outros tipos):
-  - Colunas: Data, Produto (drop.title), Tipo (drop.product_category), Tamanho, Entrega, Valor, Status, Comprador (nome + email + telefone), Usuário vinculado.
-- **Filtros / pipe de filtros** (chips no topo, empilháveis):
-  - Produto (drop), Categoria, Status, Método de entrega, Período (date range), Busca livre (nome/email/telefone).
-- **Ação: vincular a usuário** — abre popover com busca de `profiles` por nome/email e salva `linked_user_id`. Auto-sugere match por email quando existir.
-- **Ação: mudar status** (pending → paid → delivered / cancelled).
-- Exportar CSV (usando `src/lib/csv.ts` existente).
+### 3. Atribuir papel EMBAIXADOR (`dashboard.usuarios.tsx`)
+- Adiciona valor `EMBAIXADOR` no enum `app_role` (migração).
+- Na linha do usuário, botão "Tornar Embaixador" / "Remover embaixador" — insere/remove em `user_roles` (visível para ADMIN/SUPER_ADMIN, mesma regra atual de `promoteToAdmin`).
+- `RoleBadge`, `primaryOf`, filtro de papel — mapeia o novo valor (rótulo "Embaixador", cor `secondary`).
+- Trigger `log_user_role_changes` já cobre o evento.
 
-### 5. RLS
-- `drop_interests`: SELECT full para ADMIN/SUPER_ADMIN; usuário continua vendo apenas os próprios. UPDATE (status/linked_user_id) apenas ADMIN/SUPER_ADMIN.
-- Nova policy para admin buscar `profiles` por email (já existe policy de admin em `profiles`, reaproveita).
+### 4. Perfis públicos (`dashboard.comunidade-perfis.tsx`) — Ver + Vincular usuário
+- Card ganha botão "Ver detalhes" que abre modal **somente-visualização** com todos os campos (foto grande, história, cargo, redes com links clicáveis, ordem, status, vinculação atual).
+- Dentro do mesmo modal: seção "Vincular a um usuário" com busca por email/nome em `profiles` (autocomplete simples) → grava `user_id` no `community_profiles` (coluna já existe). Botão "Desvincular" limpa o campo. Só ADMIN pode alterar; embaixador só vê.
+- O modal de **edição** existente continua igual (permanece separado).
 
-### 6. Sidebar + navegação
-- Adiciona item "Financeiro" (ícone `DollarSign` do lucide) na seção ADMIN do `dashboard-shell.tsx`, gated por `isAdmin`.
-
-### 7. README + logs
-- README: documenta módulo Financeiro, novos campos de drop, fluxo de compra com login obrigatório.
-- Trigger `log_drop_interest` já existe — estender para logar mudança de status (`DROP_INTEREST_STATUS_CHANGED`) e vinculação de usuário (`DROP_INTEREST_LINKED`).
+### 5. Logs + README
+- Novos eventos de audit: `DROP_INTEREST_CREATED_MANUAL`, `DROP_INTEREST_DELETED`, `DROP_VARIANT_CREATED/UPDATED/DELETED`, `COMMUNITY_PROFILE_LINKED/UNLINKED`, e reuso automático para `ROLE_GRANTED EMBAIXADOR`.
+- README documenta variantes, papel embaixador, financeiro CRUD e vínculo de perfis.
 
 ### Fora de escopo
-- Integração real de pagamento (Stripe/Paddle) — só registro manual do status por admin.
-- Cálculo de frete automático — endereço é só coletado.
-- Notas fiscais / relatórios contábeis.
+- Estoque por tamanho/variante (só descritivo por enquanto).
+- Preço variável dentro de uma variante por tamanho.
+- Fluxo de pagamento real.
 
-### Perguntas em aberto (assumo default; me avise se quiser mudar)
-- Moeda única BRL (já é o padrão do `drops`).
-- CEP: campo livre por enquanto, sem auto-preencher via ViaCEP (posso adicionar depois).
-- "Tipo de venda" = `product_category` do drop (apparel/accessory/sticker/other). Se quiser algo separado (ex: "produto físico vs digital"), me diga.
+### Assumindo (avisa se quiser diferente)
+- Variante NÃO tem estoque nem SKU; é só especificação visual/técnica.
+- Ao excluir uma variante que já tem pedidos, `variant_id` vira NULL nos pedidos (não bloqueia).
+- Papel EMBAIXADOR não dá acesso ao dashboard admin — só marca o usuário (o gate de admin no shell continua igual). Se quiser que embaixador tenha acesso a algo específico, me diga.
