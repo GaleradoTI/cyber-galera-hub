@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ShoppingBag, Calendar, Tag, CheckCircle2, Ruler, Lock } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -48,6 +48,18 @@ type Drop = {
   size_measurements: Record<string, string>;
 };
 
+type Variant = {
+  id: string;
+  drop_id: string;
+  name: string;
+  material: string | null;
+  price_cents: number | null;
+  available_sizes: string[];
+  size_measurements: Record<string, string>;
+  images: string[];
+  display_order: number;
+};
+
 const baseSchema = z.object({
   full_name: z.string().trim().min(2, "Nome muito curto").max(100),
   email: z.string().trim().email("Email inválido").max(255),
@@ -81,6 +93,7 @@ function DropsPublicPage() {
     address_zip: "", address_street: "", address_number: "",
     address_complement: "", address_district: "", address_city: "", address_state: "",
   });
+  const [variantId, setVariantId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -100,6 +113,26 @@ function DropsPublicPage() {
       })) as Drop[];
     },
   });
+
+  const { data: variants = [] } = useQuery({
+    queryKey: ["public-drop-variants"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("drop_variants").select("*").eq("is_active", true).order("display_order");
+      if (error) return [];
+      return (data ?? []).map((v: any) => ({
+        ...v,
+        available_sizes: v.available_sizes ?? [],
+        size_measurements: (v.size_measurements ?? {}) as Record<string, string>,
+        images: v.images ?? [],
+      })) as Variant[];
+    },
+  });
+
+  const variantsByDrop = useMemo(() => {
+    const m = new Map<string, Variant[]>();
+    (variants as Variant[]).forEach((v) => { const arr = m.get(v.drop_id) ?? []; arr.push(v); m.set(v.drop_id, arr); });
+    return m;
+  }, [variants]);
 
   // Pré-preenchimento via profile do usuário
   useEffect(() => {
@@ -129,6 +162,9 @@ function DropsPublicPage() {
     }
     setInterestOpen(d);
     setOpen(null);
+    const dv = variantsByDrop.get(d.id) ?? [];
+    setVariantId(dv[0]?.id ?? null);
+    setForm((f) => ({ ...f, size: "" }));
   };
 
   const submitInterest = async () => {
@@ -148,9 +184,12 @@ function DropsPublicPage() {
       return toast.error("Corrija os campos destacados");
     }
     const isApparel = interestOpen.product_category === "apparel";
+    const dropVariants: Variant[] = variantsByDrop.get(interestOpen.id) ?? [];
+    const chosenVariant = dropVariants.find((v) => v.id === variantId) ?? null;
     const errs: Record<string, string> = {};
     if (isApparel) {
       if (!form.size) errs.size = "Selecione o tamanho";
+      if (dropVariants.length > 0 && !chosenVariant) errs.size = "Escolha a modelagem";
       if (!form.delivery_method) errs.delivery_method = "Escolha a forma de entrega";
       if (form.delivery_method === "shipping") {
         if (!form.address_zip.trim()) errs.address_zip = "CEP obrigatório";
@@ -166,6 +205,7 @@ function DropsPublicPage() {
     }
     setFieldErrors({});
     setSubmitting(true);
+    const priceForOrder = chosenVariant?.price_cents ?? interestOpen.price_cents;
     const payload: any = {
       drop_id: interestOpen.id,
       user_id: user.id,
@@ -173,10 +213,11 @@ function DropsPublicPage() {
       email: parsed.data.email,
       phone: parsed.data.phone,
       note: parsed.data.note || null,
-      amount_cents: interestOpen.price_cents,
+      amount_cents: priceForOrder,
       status: "pending",
       size: isApparel ? form.size : null,
       delivery_method: isApparel ? form.delivery_method : null,
+      variant_id: chosenVariant?.id ?? null,
     };
     if (isApparel && form.delivery_method === "shipping") {
       Object.assign(payload, {
@@ -194,6 +235,7 @@ function DropsPublicPage() {
     if (error) return toast.error(`Não foi possível registrar: ${error.message}`);
     toast.success("Reserva registrada! Em breve entraremos em contato.");
     setInterestOpen(null);
+    setVariantId(null);
     setForm({
       full_name: "", email: "", phone: "", note: "",
       size: "", delivery_method: "pickup",
@@ -204,9 +246,13 @@ function DropsPublicPage() {
   };
 
   const isApparel = interestOpen?.product_category === "apparel";
-  const currentMeasurement = interestOpen && form.size
-    ? interestOpen.size_measurements?.[form.size]
-    : null;
+  const dropVariants: Variant[] = interestOpen ? variantsByDrop.get(interestOpen.id) ?? [] : [];
+  const chosenVariant = dropVariants.find((v) => v.id === variantId) ?? null;
+  const activeSizes = chosenVariant?.available_sizes.length
+    ? chosenVariant.available_sizes
+    : interestOpen?.available_sizes ?? [];
+  const activeMeasurements = chosenVariant?.size_measurements ?? interestOpen?.size_measurements ?? {};
+  const currentMeasurement = form.size ? activeMeasurements?.[form.size] : null;
 
   return (
     <PublicLayout>
@@ -350,12 +396,35 @@ function DropsPublicPage() {
 
             {isApparel && (
               <>
+                {dropVariants.length > 0 && (
+                  <div>
+                    <Label>Modelagem</Label>
+                    <RadioGroup
+                      value={variantId ?? ""}
+                      onValueChange={(v) => { setVariantId(v); setForm({ ...form, size: "" }); }}
+                      className="mt-2 space-y-1"
+                    >
+                      {dropVariants.map((v) => (
+                        <label key={v.id} className="flex items-start gap-2 text-sm cursor-pointer rounded border border-border/40 p-2 hover:border-primary/40">
+                          <RadioGroupItem value={v.id} className="mt-1" />
+                          <div className="flex-1">
+                            <div className="font-semibold">{v.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {v.material ?? ""}
+                              {v.price_cents != null && ` · ${fmtPrice(v.price_cents, interestOpen!.currency)}`}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                )}
                 <div>
                   <Label>Tamanho</Label>
                   <Select value={form.size} onValueChange={(v) => setForm({ ...form, size: v })}>
                     <SelectTrigger><SelectValue placeholder="Escolha o tamanho" /></SelectTrigger>
                     <SelectContent>
-                      {(interestOpen?.available_sizes ?? []).map((s) => (
+                      {activeSizes.map((s) => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
                     </SelectContent>
