@@ -144,7 +144,7 @@ export function DropVariantsDialog({
             </div>
             <SizeManager
               value={{ sizes: editing.available_sizes ?? [], measurements: editing.size_measurements ?? {} }}
-              onChange={(v) => setEditing({ ...editing, available_sizes: v.sizes, measurements: undefined as any, size_measurements: v.measurements })}
+              onChange={(v) => setEditing({ ...editing, available_sizes: v.sizes, size_measurements: v.measurements })}
             />
             <div>
               <Label>Imagens da variante</Label>
@@ -166,7 +166,7 @@ export function DropVariantsDialog({
                   aspect="square"
                   maxBytes={8 * 1024 * 1024}
                   policyKey="drop_images"
-                  auditEntity="drop_variant_image"
+                  auditEntity="drop_image"
                   auditEntityId={editing.id ?? null}
                 />
               </div>
