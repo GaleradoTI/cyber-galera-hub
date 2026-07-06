@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, ShoppingBag, Eye, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, ShoppingBag, Eye, Download, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -17,6 +17,8 @@ import { ImageUploader } from "@/components/ui/image-uploader";
 import { downloadCSV } from "@/lib/csv";
 import { centsToMoneyInput, isValidDateOnly, moneyInputToCents } from "@/lib/formatters";
 import { DateField } from "@/components/ui/date-field";
+import { SizeManager } from "@/components/dashboard/size-manager";
+import { DropVariantsDialog } from "@/components/dashboard/drop-variants-editor";
 
 export const Route = createFileRoute("/dashboard/drops")({ component: DropsAdminPage });
 
@@ -45,7 +47,6 @@ const CATEGORIES = [
   { value: "sticker", label: "Adesivo" },
   { value: "other", label: "Outro" },
 ];
-const SIZE_PRESETS = ["PP", "P", "M", "G", "GG", "XG"];
 
 function DropsAdminPage() {
   const navigate = useNavigate();
@@ -56,6 +57,7 @@ function DropsAdminPage() {
   const [deleteOf, setDeleteOf] = useState<Drop | null>(null);
   const [deleteCount, setDeleteCount] = useState<number | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [variantsOf, setVariantsOf] = useState<Drop | null>(null);
 
   useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
 
@@ -178,17 +180,6 @@ function DropsAdminPage() {
       })));
   };
 
-  const toggleSize = (s: string) => {
-    const cur = editing!.available_sizes ?? [];
-    const measurements = { ...(editing!.size_measurements ?? {}) };
-    if (cur.includes(s)) {
-      delete measurements[s];
-      setEditing({ ...editing!, available_sizes: cur.filter((x) => x !== s), size_measurements: measurements });
-    } else {
-      setEditing({ ...editing!, available_sizes: [...cur, s], size_measurements: measurements });
-    }
-  };
-
   return (
     <DashboardShell title="Drops" description="Lançamentos da comunidade. Apenas administradores criam e editam.">
       <div className="flex items-center justify-between mb-4">
@@ -217,6 +208,7 @@ function DropsAdminPage() {
               <div className="flex gap-1 mt-3">
                 <Button size="sm" variant="ghost" onClick={() => setInterestsOf(d)}><Eye className="h-3 w-3" /></Button>
                 <Button size="sm" variant="ghost" onClick={() => setEditing({ ...d })}><Pencil className="h-3 w-3" /></Button>
+                <Button size="sm" variant="ghost" onClick={() => setVariantsOf(d)} title="Variantes"><Layers className="h-3 w-3" /></Button>
                 <Button size="sm" variant="ghost" className="text-destructive ml-auto" onClick={() => askRemove(d)}><Trash2 className="h-3 w-3" /></Button>
               </div>
             </div>
@@ -294,40 +286,18 @@ function DropsAdminPage() {
                 </div>
               </div>
               {editing.product_category === "apparel" && (
-                <div className="space-y-2 rounded-md border border-border/40 p-3 bg-muted/10">
-                  <Label className="text-xs">Tamanhos disponíveis</Label>
-                  <div className="flex flex-wrap gap-1">
-                    {SIZE_PRESETS.map((s) => {
-                      const on = (editing.available_sizes ?? []).includes(s);
-                      return (
-                        <button key={s} type="button" onClick={() => toggleSize(s)}
-                          className={`text-xs px-2 py-1 rounded border ${on ? "bg-primary/20 border-primary/40 text-primary" : "bg-background/40 border-border/40"}`}>
-                          {s}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {(editing.available_sizes ?? []).length > 0 && (
-                    <div className="space-y-2 pt-2">
-                      <Label className="text-xs">Medidas por tamanho (opcional)</Label>
-                      {(editing.available_sizes ?? []).map((s) => (
-                        <div key={s} className="flex items-center gap-2">
-                          <span className="text-xs font-bold w-8">{s}</span>
-                          <Input
-                            className="flex-1"
-                            placeholder="Ex: Largura 52cm · Comprimento 72cm"
-                            maxLength={200}
-                            value={editing.size_measurements?.[s] ?? ""}
-                            onChange={(e) => setEditing({
-                              ...editing,
-                              size_measurements: { ...(editing.size_measurements ?? {}), [s]: e.target.value },
-                            })}
-                          />
-                        </div>
-                      ))}
-                    </div>
+                <>
+                  <SizeManager
+                    value={{ sizes: editing.available_sizes ?? [], measurements: editing.size_measurements ?? {} }}
+                    onChange={(v) => setEditing({ ...editing, available_sizes: v.sizes, size_measurements: v.measurements })}
+                    label="Tamanhos padrão do drop (usados se não houver variantes)"
+                  />
+                  {editing.id && (
+                    <p className="text-xs text-muted-foreground">
+                      Dica: use <strong>Variantes</strong> (ícone <Layers className="inline h-3 w-3" />) na lista para cadastrar modelagens diferentes (baby look, oversize, tradicional…), cada uma com seus próprios tamanhos e medidas.
+                    </p>
                   )}
-                </div>
+                </>
               )}
               <div>
                 <Label>Imagens</Label>
@@ -363,6 +333,12 @@ function DropsAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DropVariantsDialog
+        drop={variantsOf ? { id: variantsOf.id, title: variantsOf.title } : null}
+        userId={user?.id ?? null}
+        onClose={() => setVariantsOf(null)}
+      />
 
       {/* Interessados */}
       <Dialog open={!!interestsOf} onOpenChange={(o) => !o && setInterestsOf(null)}>
