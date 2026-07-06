@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, ExternalLink, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, ExternalLink, Search, Eye, Link2, Unlink } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,6 +49,7 @@ function CommunityProfilesAdminPage() {
   const qc = useQueryClient();
   const { user, isAdmin, isAmbassador, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Profile> | null>(null);
+  const [viewing, setViewing] = useState<Profile | null>(null);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [areaFilter, setAreaFilter] = useState("__all");
@@ -166,6 +167,7 @@ function CommunityProfilesAdminPage() {
                   <Badge variant={p.is_active ? "default" : "secondary"}>{p.profile_type === "ambassador" ? "Embaixador" : "Admin"}</Badge>
                 </div>
                 <div className="flex gap-1 mt-3">
+                  <Button size="sm" variant="ghost" onClick={() => setViewing(p)}><Eye className="h-3 w-3" /></Button>
                   {canEdit(p) && (
                     <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p, social_links: normalizeLinks(p.social_links) })}><Pencil className="h-3 w-3" /></Button>
                   )}
@@ -203,6 +205,16 @@ function CommunityProfilesAdminPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ProfileDetailDialog
+        profile={viewing}
+        canManage={canManageAll}
+        onClose={() => setViewing(null)}
+        onChanged={() => {
+          qc.invalidateQueries({ queryKey: ["admin-community-profiles"] });
+          qc.invalidateQueries({ queryKey: ["community-profiles"] });
+        }}
+      />
     </DashboardShell>
   );
 }
@@ -210,6 +222,143 @@ function CommunityProfilesAdminPage() {
 function normalizeLinks(value: Profile["social_links"] | undefined): SocialLink[] {
   if (Array.isArray(value)) return value as SocialLink[];
   return Object.entries(value ?? {}).map(([label, url]) => ({ label, url: String(url ?? "") }));
+}
+
+function ProfileDetailDialog({
+  profile, canManage, onClose, onChanged,
+}: { profile: Profile | null; canManage: boolean; onClose: () => void; onChanged: () => void }) {
+  const [term, setTerm] = useState("");
+  const [linked, setLinked] = useState<{ user_id: string; display_name: string | null; email: string } | null>(null);
+  const links = profile ? normalizeLinks(profile.social_links) : [];
+
+  useEffect(() => {
+    (async () => {
+      setLinked(null);
+      setTerm("");
+      if (!profile?.user_id) return;
+      const { data } = await supabase.from("profiles").select("user_id,display_name,email").eq("user_id", profile.user_id).maybeSingle();
+      if (data) setLinked(data as any);
+    })();
+  }, [profile?.id, profile?.user_id]);
+
+  const { data: results = [] } = useQuery({
+    queryKey: ["community-link-search", term],
+    enabled: !!profile && canManage && term.trim().length >= 2,
+    queryFn: async () => {
+      const t = `%${term.trim()}%`;
+      const { data } = await supabase.from("profiles")
+        .select("user_id,display_name,email")
+        .or(`display_name.ilike.${t},email.ilike.${t}`)
+        .limit(10);
+      return data ?? [];
+    },
+  });
+
+  const link = async (userId: string | null) => {
+    if (!profile) return;
+    const { error } = await supabase.from("community_profiles").update({ user_id: userId }).eq("id", profile.id);
+    if (error) return toast.error(error.message);
+    toast.success(userId ? "Usuário vinculado" : "Vínculo removido");
+    onChanged();
+    onClose();
+  };
+
+  return (
+    <Dialog open={!!profile} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        {profile && (
+          <>
+            <DialogHeader>
+              <DialogTitle>{profile.name}</DialogTitle>
+              <DialogDescription>{profile.profile_type === "ambassador" ? "Embaixador" : "Administrador"} · {profile.role_title ?? "—"}</DialogDescription>
+            </DialogHeader>
+            <div className="grid sm:grid-cols-[160px_1fr] gap-4">
+              <div>
+                {profile.photo_url ? (
+                  <img src={profile.photo_url} alt={profile.name} className="w-full aspect-square object-cover rounded-lg border border-border/40" />
+                ) : (
+                  <div className="w-full aspect-square bg-muted/20 rounded-lg flex items-center justify-center text-xs text-muted-foreground">Sem foto</div>
+                )}
+                <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
+                  <span>Ordem: {profile.display_order}</span>
+                  <span>{profile.is_active ? "Publicado" : "Rascunho"}</span>
+                </div>
+              </div>
+              <div className="space-y-3 text-sm">
+                {profile.professional_story && (
+                  <div>
+                    <div className="text-[10px] tracking-widest text-muted-foreground mb-1">HISTÓRIA</div>
+                    <p className="whitespace-pre-wrap text-muted-foreground">{profile.professional_story}</p>
+                  </div>
+                )}
+                {profile.community_role && (
+                  <div>
+                    <div className="text-[10px] tracking-widest text-muted-foreground mb-1">NA COMUNIDADE</div>
+                    <p>{profile.community_role}</p>
+                  </div>
+                )}
+                {links.length > 0 && (
+                  <div>
+                    <div className="text-[10px] tracking-widest text-muted-foreground mb-1">REDES</div>
+                    <div className="flex flex-wrap gap-2">
+                      {links.filter((l) => l.url.trim()).map((l, i) => (
+                        <a key={i} href={l.url.startsWith("http") ? l.url : `https://${l.url}`} target="_blank" rel="noreferrer"
+                          className="text-xs px-2 py-1 rounded border border-border/50 hover:border-primary hover:text-primary">
+                          {l.label || l.url}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-md border border-border/40 p-3 bg-muted/10 mt-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="text-[10px] tracking-widest text-muted-foreground">USUÁRIO VINCULADO</div>
+                {linked && canManage && (
+                  <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => link(null)}>
+                    <Unlink className="h-3 w-3 mr-1" /> Desvincular
+                  </Button>
+                )}
+              </div>
+              {linked ? (
+                <div className="text-sm">
+                  <div className="font-semibold">{linked.display_name ?? "(sem nome)"}</div>
+                  <div className="text-xs text-muted-foreground">{linked.email}</div>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground italic">Nenhum usuário vinculado.</div>
+              )}
+
+              {canManage && (
+                <div className="pt-2 border-t border-border/30 space-y-2">
+                  <Label className="text-xs">Buscar usuário para vincular</Label>
+                  <Input value={term} onChange={(e) => setTerm(e.target.value)} placeholder="Nome ou email…" />
+                  {term.length >= 2 && (
+                    <div className="max-h-52 overflow-y-auto space-y-1">
+                      {results.map((p: any) => (
+                        <button key={p.user_id} type="button" onClick={() => link(p.user_id)}
+                          className="w-full text-left p-2 rounded border border-border/40 hover:border-primary hover:bg-primary/5 text-xs">
+                          <div className="font-semibold">{p.display_name ?? "(sem nome)"}</div>
+                          <div className="text-muted-foreground">{p.email}</div>
+                        </button>
+                      ))}
+                      {results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhum usuário</p>}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>Fechar</Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 function ProfileForm({ value, onChange }: { value: Partial<Profile>; onChange: (value: Partial<Profile>) => void }) {
