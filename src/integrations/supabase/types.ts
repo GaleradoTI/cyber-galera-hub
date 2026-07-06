@@ -190,6 +190,7 @@ export type Database = {
           status: string
           updated_at: string
           user_id: string | null
+          variant_id: string | null
         }
         Insert: {
           address_city?: string | null
@@ -213,6 +214,7 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+          variant_id?: string | null
         }
         Update: {
           address_city?: string | null
@@ -236,10 +238,71 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+          variant_id?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "drop_interests_drop_id_fkey"
+            columns: ["drop_id"]
+            isOneToOne: false
+            referencedRelation: "drops"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drop_interests_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "drop_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drop_variants: {
+        Row: {
+          available_sizes: string[]
+          created_at: string
+          display_order: number
+          drop_id: string
+          id: string
+          images: string[]
+          is_active: boolean
+          material: string | null
+          name: string
+          price_cents: number | null
+          size_measurements: Json
+          updated_at: string
+        }
+        Insert: {
+          available_sizes?: string[]
+          created_at?: string
+          display_order?: number
+          drop_id: string
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          material?: string | null
+          name: string
+          price_cents?: number | null
+          size_measurements?: Json
+          updated_at?: string
+        }
+        Update: {
+          available_sizes?: string[]
+          created_at?: string
+          display_order?: number
+          drop_id?: string
+          id?: string
+          images?: string[]
+          is_active?: boolean
+          material?: string | null
+          name?: string
+          price_cents?: number | null
+          size_measurements?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drop_variants_drop_id_fkey"
             columns: ["drop_id"]
             isOneToOne: false
             referencedRelation: "drops"
