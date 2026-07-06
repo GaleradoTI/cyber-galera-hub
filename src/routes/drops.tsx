@@ -184,7 +184,7 @@ function DropsPublicPage() {
       return toast.error("Corrija os campos destacados");
     }
     const isApparel = interestOpen.product_category === "apparel";
-    const dropVariants = variantsByDrop.get(interestOpen.id) ?? [];
+    const dropVariants: Variant[] = variantsByDrop.get(interestOpen.id) ?? [];
     const chosenVariant = dropVariants.find((v) => v.id === variantId) ?? null;
     const errs: Record<string, string> = {};
     if (isApparel) {
@@ -246,7 +246,7 @@ function DropsPublicPage() {
   };
 
   const isApparel = interestOpen?.product_category === "apparel";
-  const dropVariants = interestOpen ? variantsByDrop.get(interestOpen.id) ?? [] : [];
+  const dropVariants: Variant[] = interestOpen ? variantsByDrop.get(interestOpen.id) ?? [] : [];
   const chosenVariant = dropVariants.find((v) => v.id === variantId) ?? null;
   const activeSizes = chosenVariant?.available_sizes.length
     ? chosenVariant.available_sizes
