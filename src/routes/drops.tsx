@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ShoppingBag, Calendar, Tag, CheckCircle2, Ruler, Lock } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
