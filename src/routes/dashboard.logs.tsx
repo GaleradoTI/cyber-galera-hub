@@ -290,6 +290,9 @@ function EntityContext({ entity, entityId }: { entity: string; entityId: string 
         drop_interests: { table: "drop_interests", cols: "id,drop_id,full_name,email,phone" },
         community_profiles: { table: "community_profiles", cols: "id,name,profile_type,is_active" },
         member_feed_posts: { table: "member_feed_posts", cols: "id,author_id,status,created_at" },
+        finance_entries: { table: "finance_entries", cols: "id,kind,title,amount_cents,entry_date,status" },
+        finance_categories: { table: "finance_categories", cols: "id,name,kind,is_active" },
+        finance_tags: { table: "finance_tags", cols: "id,name,is_active" },
       };
       const conf = map[entity];
       if (!conf || !entityId) return null;
