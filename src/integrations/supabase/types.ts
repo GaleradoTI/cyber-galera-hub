@@ -601,6 +601,202 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          kind: Database["public"]["Enums"]["finance_entry_kind"]
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          kind: Database["public"]["Enums"]["finance_entry_kind"]
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["finance_entry_kind"]
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_entries: {
+        Row: {
+          amount_cents: number
+          attachment_url: string | null
+          category_id: string | null
+          counterparty_email: string | null
+          counterparty_name: string | null
+          counterparty_phone: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          drop_interest_id: string | null
+          entry_date: string
+          id: string
+          kind: Database["public"]["Enums"]["finance_entry_kind"]
+          linked_user_id: string | null
+          note: string | null
+          payment_method: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          attachment_url?: string | null
+          category_id?: string | null
+          counterparty_email?: string | null
+          counterparty_name?: string | null
+          counterparty_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          drop_interest_id?: string | null
+          entry_date?: string
+          id?: string
+          kind: Database["public"]["Enums"]["finance_entry_kind"]
+          linked_user_id?: string | null
+          note?: string | null
+          payment_method?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          attachment_url?: string | null
+          category_id?: string | null
+          counterparty_email?: string | null
+          counterparty_name?: string | null
+          counterparty_phone?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          drop_interest_id?: string | null
+          entry_date?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["finance_entry_kind"]
+          linked_user_id?: string | null
+          note?: string | null
+          payment_method?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_entries_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_drop_interest_id_fkey"
+            columns: ["drop_interest_id"]
+            isOneToOne: true
+            referencedRelation: "drop_interests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_entries_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      finance_entry_tags: {
+        Row: {
+          entry_id: string
+          tag_id: string
+        }
+        Insert: {
+          entry_id: string
+          tag_id: string
+        }
+        Update: {
+          entry_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_entry_tags_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "finance_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_entry_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "finance_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       job_applications: {
         Row: {
           created_at: string
@@ -1765,6 +1961,7 @@ export type Database = {
       app_role: "SUPER_ADMIN" | "ADMIN" | "MEMBRO" | "RECRUTADOR" | "EMBAIXADOR"
       content_status: "rascunho" | "publicado" | "pausado" | "encerrado"
       event_modality: "online" | "presencial" | "hibrido"
+      finance_entry_kind: "RECEITA" | "DESPESA" | "DOACAO"
       recruiting_status: "open" | "closed" | "waitlist"
       seniority_level:
         | "estagio"
@@ -1903,6 +2100,7 @@ export const Constants = {
       app_role: ["SUPER_ADMIN", "ADMIN", "MEMBRO", "RECRUTADOR", "EMBAIXADOR"],
       content_status: ["rascunho", "publicado", "pausado", "encerrado"],
       event_modality: ["online", "presencial", "hibrido"],
+      finance_entry_kind: ["RECEITA", "DESPESA", "DOACAO"],
       recruiting_status: ["open", "closed", "waitlist"],
       seniority_level: ["estagio", "junior", "pleno", "senior", "especialista"],
       work_modality: ["remoto", "hibrido", "presencial"],
