@@ -41,7 +41,6 @@ import { Route as DashboardMeusProjetosRouteImport } from './routes/dashboard.me
 import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meus-eventos'
 import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensagens'
 import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
-import { Route as DashboardFinanceiroRouteImport } from './routes/dashboard.financeiro'
 import { Route as DashboardFeedRouteImport } from './routes/dashboard.feed'
 import { Route as DashboardExplorarProjetosRouteImport } from './routes/dashboard.explorar-projetos'
 import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
@@ -214,11 +213,6 @@ const DashboardLogsRoute = DashboardLogsRouteImport.update({
   path: '/logs',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardFinanceiroRoute = DashboardFinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardFeedRoute = DashboardFeedRouteImport.update({
   id: '/feed',
   path: '/feed',
@@ -306,7 +300,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/feed': typeof DashboardFeedRoute
-  '/dashboard/financeiro': typeof DashboardFinanceiroRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -351,7 +344,6 @@ export interface FileRoutesByTo {
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/feed': typeof DashboardFeedRoute
-  '/dashboard/financeiro': typeof DashboardFinanceiroRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -398,7 +390,6 @@ export interface FileRoutesById {
   '/dashboard/eventos': typeof DashboardEventosRoute
   '/dashboard/explorar-projetos': typeof DashboardExplorarProjetosRoute
   '/dashboard/feed': typeof DashboardFeedRoute
-  '/dashboard/financeiro': typeof DashboardFinanceiroRoute
   '/dashboard/logs': typeof DashboardLogsRoute
   '/dashboard/mensagens': typeof DashboardMensagensRoute
   '/dashboard/meus-eventos': typeof DashboardMeusEventosRoute
@@ -446,7 +437,6 @@ export interface FileRouteTypes {
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
     | '/dashboard/feed'
-    | '/dashboard/financeiro'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -491,7 +481,6 @@ export interface FileRouteTypes {
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
     | '/dashboard/feed'
-    | '/dashboard/financeiro'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -537,7 +526,6 @@ export interface FileRouteTypes {
     | '/dashboard/eventos'
     | '/dashboard/explorar-projetos'
     | '/dashboard/feed'
-    | '/dashboard/financeiro'
     | '/dashboard/logs'
     | '/dashboard/mensagens'
     | '/dashboard/meus-eventos'
@@ -803,13 +791,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLogsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/financeiro': {
-      id: '/dashboard/financeiro'
-      path: '/financeiro'
-      fullPath: '/dashboard/financeiro'
-      preLoaderRoute: typeof DashboardFinanceiroRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/feed': {
       id: '/dashboard/feed'
       path: '/feed'
@@ -902,7 +883,6 @@ interface DashboardRouteChildren {
   DashboardEventosRoute: typeof DashboardEventosRoute
   DashboardExplorarProjetosRoute: typeof DashboardExplorarProjetosRoute
   DashboardFeedRoute: typeof DashboardFeedRoute
-  DashboardFinanceiroRoute: typeof DashboardFinanceiroRoute
   DashboardLogsRoute: typeof DashboardLogsRoute
   DashboardMensagensRoute: typeof DashboardMensagensRoute
   DashboardMeusEventosRoute: typeof DashboardMeusEventosRoute
@@ -930,7 +910,6 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardEventosRoute: DashboardEventosRoute,
   DashboardExplorarProjetosRoute: DashboardExplorarProjetosRoute,
   DashboardFeedRoute: DashboardFeedRoute,
-  DashboardFinanceiroRoute: DashboardFinanceiroRoute,
   DashboardLogsRoute: DashboardLogsRoute,
   DashboardMensagensRoute: DashboardMensagensRoute,
   DashboardMeusEventosRoute: DashboardMeusEventosRoute,
