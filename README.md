@@ -397,3 +397,25 @@ Removido `background-attachment: fixed` no body abaixo de 1024 px — corrige o 
 
 #### Logs de auditoria envolvidos
 - `COMMUNITY_PROFILE_UPDATED` continua sendo o registro para qualquer edição de card, incluindo a auto-edição feita por embaixador (o trigger `audit_community_profiles_changes` captura `auth.uid()` como ator).
+
+## Financeiro (jul/2026)
+
+Livro-caixa completo em `/dashboard/financeiro` (somente ADMIN/SUPER_ADMIN).
+
+- **Tipos** de lançamento: `RECEITA`, `DESPESA`, `DOACAO`.
+- **Categorias** e **tags** totalmente personalizáveis (aba "Categorias & Tags") — nome, cor e ativo/inativo. Categorias iniciais: Drops, Torneio, Serviço prestado, Doação recebida, Infraestrutura, Marketing, Material.
+- **CRUD completo** por lançamento (criar, editar, excluir, visualizar em modal detalhado) com filtros (busca, tipo, categoria, tag, status, origem, período) e exportação CSV.
+- **Contraparte** com nome/email/telefone e **vínculo opcional** a um usuário da plataforma (autocomplete em `profiles`).
+- **Sincronização automática drops → financeiro**: cada pedido em `drop_interests` gera/atualiza uma entry `RECEITA` (categoria "Drops"). Entries geradas por drop só permitem editar status, observação e comprovante — os demais campos vêm do pedido.
+- **KPIs**: Receita, Despesas, Doações, Saldo, Pendente (todos respeitam filtros).
+
+### Auditoria — novos eventos
+
+- `FINANCE_ENTRY_CREATED/UPDATED/DELETED`
+- `FINANCE_CATEGORY_CREATED/UPDATED/DELETED`
+- `FINANCE_TAG_CREATED/UPDATED/DELETED`
+- `DROP_VARIANT_CREATED/UPDATED/DELETED`
+- `COMMUNITY_PROFILE_LINKED/UNLINKED`
+- `ROLE_GRANTED EMBAIXADOR` / `ROLE_REVOKED EMBAIXADOR`
+
+Todos aparecem em `/dashboard/logs` com contexto exportável (as tabelas `finance_entries`, `finance_categories` e `finance_tags` foram adicionadas ao mapa de contexto).
