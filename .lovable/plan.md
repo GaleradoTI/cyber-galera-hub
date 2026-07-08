@@ -1,78 +1,139 @@
 ## Escopo
 
-Transformar o Financeiro em um **livro-caixa completo** (não só pedidos de drops), com CRUD total, categorização flexível e integração com o que já existe (pedidos de drops entram como receita automaticamente).
+Cinco frentes, entregues numa mesma sequência de mudanças. Cada uma tem migração + UI própria.
 
 ---
 
-### 1. Nova modelagem — `finance_*`
+### 1. Responsividade — navbar pública e layouts quebrados
 
-**Migração** cria três tabelas + enum:
-
-- `finance_entry_kind` enum: `RECEITA`, `DESPESA`, `DOACAO`.
-- **`finance_categories`** — CRUD pelo admin. Colunas: `id`, `name`, `kind` (enum acima), `color` (hex opcional p/ chip), `is_active`, `display_order`, `created_at/updated_at`. Ex.: "Torneio", "Drops", "Doação de material", "Serviço", "Infra/servidor", "Marketing".
-- **`finance_tags`** — CRUD pelo admin. Colunas: `id`, `name`, `color`, `is_active`, `created_at`. Livre (ex.: "campeonato-abril", "patrocínio-x", "nota-fiscal").
-- **`finance_entries`** — o lançamento em si.
-  - `id`, `kind` (enum), `category_id` (FK, nullable p/ tolerar limpeza), `title`, `description`, `amount_cents` (positivo sempre; o sinal vem do `kind`), `entry_date` (date, default hoje), `status` (`pending` | `confirmed` | `cancelled`), `payment_method` (texto livre: pix, dinheiro, cartão…), `counterparty_name` (nome de quem pagou/recebeu), `counterparty_email`, `counterparty_phone`, `linked_user_id` (FK profiles.user_id ON DELETE SET NULL — comprador/doador vinculado à plataforma), `drop_interest_id` (FK opcional p/ pedido de drop origem), `attachment_url` (comprovante), `note`, `created_by`, `created_at/updated_at`.
-- **`finance_entry_tags`** — junção N:N `entry_id` / `tag_id` (PK composta, cascade).
-
-Todas com **RLS admin-only** (SELECT/INSERT/UPDATE/DELETE via `is_admin_or_super(auth.uid())`; `service_role` full). GRANTs para `authenticated` + `service_role` (sem `anon`). `updated_at` trigger.
-
-**Audit triggers** (novos, logam em `audit_logs`):
-- `log_finance_entry_changes` → `FINANCE_ENTRY_CREATED/UPDATED/DELETED` com título e valor formatado.
-- `log_finance_category_changes` → `FINANCE_CATEGORY_CREATED/UPDATED/DELETED`.
-- `log_finance_tag_changes` → `FINANCE_TAG_CREATED/UPDATED/DELETED`.
-
-**Sincronização com drops**: trigger `sync_drop_interest_to_finance()` em `drop_interests`:
-- Ao INSERT: cria automaticamente uma `finance_entries` (`kind='RECEITA'`, `category_id` = categoria "Drops" via seed, `title = 'Drop: '||titulo`, `amount_cents`, `status` = 'confirmed' se drop_interest for `paid/delivered` senão `pending`, `linked_user_id`, `drop_interest_id`, `counterparty_*`).
-- Ao UPDATE de `status/amount_cents`: sincroniza a `finance_entries` correspondente.
-- Ao DELETE: remove a entry (`ON DELETE CASCADE` na FK).
-
-**Seed** (via migration): categorias iniciais "Drops" (RECEITA), "Torneio" (RECEITA), "Doação recebida" (DOACAO), "Serviço prestado" (RECEITA), "Infraestrutura" (DESPESA), "Marketing" (DESPESA), "Material" (DESPESA).
-
-### 2. Tela `dashboard.financeiro.tsx` — reescrita
-
-Duas abas (Tabs shadcn):
-
-**Aba "Lançamentos"** (padrão):
-- KPIs recalculados: **Receita**, **Despesas**, **Doações**, **Saldo** (receita+doação−despesa), **Pendente**. Todos respeitando filtros.
-- Filtros: busca (título/contraparte), tipo (RECEITA/DESPESA/DOACAO/todos), categoria (select popular dinâmico), tag (multi-select), status, método pagamento, período (de/até por `entry_date`), origem (manual / drop). Chips ativos + "limpar tudo".
-- Tabela: data, tipo (badge colorido), categoria (chip cor), título, contraparte + usuário vinculado (ícone), tags, valor (colorido: verde receita/doação, vermelho despesa), status, ações (Ver / Editar / Excluir).
-- **Botão "Novo lançamento"** abre modal com todos os campos. Categoria/Tag têm botão "+ criar" inline.
-- **Editar**: mesmo modal populado. **Não** permite editar entries geradas por drop (drop_interest_id != null) para os campos `amount_cents/counterparty_*/kind/category` — mostra aviso "Sincronizado com pedido do drop". Só permite editar `note`, `tags`, `attachment_url`, `status`.
-- **Excluir**: AlertDialog. Bloqueia exclusão de entries com `drop_interest_id` (exclua o pedido em vez disso).
-- **Ver detalhes**: modal read-only com tudo, incluindo timeline (created_at/updated_at, criador), pedido do drop vinculado (link).
-
-**Aba "Categorias & Tags"**:
-- Duas listas gerenciáveis. Cada categoria/tag: nome + cor + tipo (categoria) + toggle ativo + editar/excluir. Excluir com AlertDialog.
-- Import: `HexColorPicker` — não; usa `<input type="color">` nativo pra não adicionar dep.
-
-### 3. Vincular embaixadores/administradores a usuários
-
-Na `dashboard.usuarios.tsx` (admins/embaixadores) e `dashboard.comunidade-perfis.tsx` (community_profiles) — a segunda já está no plano anterior (autocomplete de `profiles` no modal "Ver detalhes"). Confirmar ambos:
-
-- **`dashboard.usuarios.tsx`**: onde estão os "admins" já é a tabela `profiles` filtrada por role. O "vínculo com usuário" **já é intrínseco** (todo admin/embaixador é um profile). Extra pedido: mostrar no modal de detalhes o **community_profile vinculado** (se houver) e permitir "vincular perfil da comunidade a este usuário" (busca em `community_profiles` que ainda não têm `user_id` e atribui). Mesmo endpoint da tela de comunidade, invertido.
-- Confirma que a promoção `EMBAIXADOR` já feita no ciclo anterior está funcional.
-
-### 4. Logs Supabase — normalização
-
-- Padroniza descrições dos novos triggers com formato `"<verbo> <entidade>: <título> (R$ X,XX)"`.
-- No `dashboard.logs.tsx` — adiciona `finance_entries`, `finance_categories`, `finance_tags` ao `ENTITY_MAP` (para exportação e contexto), com colunas relevantes.
-
-### 5. README
-
-Seção nova **"Financeiro"** explicando: livro-caixa, tipos (receita/despesa/doação), categorias e tags customizáveis, sincronização automática com pedidos de drops, vínculo com usuários, filtros salvos em URL futuramente (não agora). Atualiza também seção de auditoria listando os novos eventos.
+- **`src/components/public/navbar.tsx`**: hoje o menu só aparece a partir de `lg` (1024px), então em tablets/notebooks pequenos (como o viewport atual 1034px, e principalmente entre 768–1023px) o menu fica escondido e o botão hambúrguer quebra por falta de espaço com os dropdowns.
+  - Trocar breakpoint para `md:` no menu desktop e no bloco de ações (Entrar/Cadastrar/Dashboard).
+  - Compactar padding/gap dos links no range md–lg (`px-2 lg:px-4`), reduzir label do botão Dashboard para ícone-only em md.
+  - Header em grid `grid-cols-[auto_1fr_auto]` com `min-w-0` no bloco central para permitir truncar.
+  - Ajustar menu mobile: adicionar `max-h-[calc(100vh-4rem)] overflow-y-auto` e fechar automaticamente ao trocar de rota (`useEffect` em `pathname`).
+- **`src/components/dashboard/dashboard-shell.tsx`** (varredura rápida): garantir que o header do dashboard também siga o padrão `grid + min-w-0 + shrink-0` do knowledge de responsive.
+- Passar Playwright headless em 375, 768 e 1034 pra confirmar visualmente antes de encerrar.
 
 ---
 
-### Fora de escopo (avisa se quiser)
-- Recorrência de lançamentos.
-- Anexo real de comprovante (por enquanto só URL manual).
-- Relatórios agregados por mês/gráficos.
-- Conciliação bancária, múltiplas contas, moedas.
-- Split de valor entre categorias no mesmo lançamento.
+### 2. Feed social completo (curtir, comentar, repostar)
 
-### Assunções
-- Doação com valor 0 (ex.: doação de material) é permitida — `amount_cents >= 0`.
-- Ao excluir uma categoria em uso, os lançamentos ficam com `category_id NULL` (não bloqueia).
-- Entry gerado por drop é imutável nos campos financeiros (ver acima). Se quiser desacoplar totalmente (drop segue seu fluxo, financeiro é 100% manual), me diga.
-- Só ADMIN/SUPER_ADMIN acessam a tela e o dado. Embaixador NÃO vê.
+Reaproveita `member_feed_posts`, `post_reactions`, `post_comments` que já existem, e adiciona repost.
+
+**Migração:**
+- Adicionar coluna `reposted_from_id uuid REFERENCES member_feed_posts(id) ON DELETE SET NULL` em `member_feed_posts`.
+- Adicionar coluna `kind text NOT NULL DEFAULT 'user'` em `member_feed_posts` com CHECK em `('user','news','repost')` — pra diferenciar posts normais, notícias oficiais (item 4) e reposts.
+- View/RPC opcional `feed_post_stats(post_id)` — mas vamos calcular no client via queries já existentes pra manter simples.
+- Audit trigger para reposts em `audit_logs`.
+
+**UI — `src/routes/dashboard.feed.tsx` + novo `src/components/dashboard/feed-post-card.tsx`:**
+- Reescrever card: header com avatar, nome, timestamp, badge de tipo (Notícia oficial / Repost).
+- Ações inline: 👍 curtir (usa `post_reactions` com emoji fixo `👍` — mantém compatível), 💬 comentar (expande lista com `post_comments`), 🔁 repostar (abre um pequeno modal opcional pra adicionar comentário e cria novo post com `reposted_from_id` + `kind='repost'`).
+- Render de post repostado: card aninhado com o post original embutido.
+- Contadores em tempo real via `useQuery` por post (`post-reactions`, `post-comments`, e `reposts` = count de `member_feed_posts` com `reposted_from_id`).
+- Placeholder de comentário permite links (autolinkify simples) e ⌘/Ctrl+Enter envia.
+- Ordenação: notícias oficiais fixadas no topo (últimas 24h), depois cronológico.
+
+---
+
+### 3. Sistema de seguidores
+
+**Migração — nova tabela `user_follows`:**
+```
+follower_id uuid NOT NULL       -- profiles.user_id
+following_id uuid NOT NULL      -- profiles.user_id
+created_at timestamptz default now()
+PK (follower_id, following_id)
+CHECK (follower_id <> following_id)
+```
+- Grants `authenticated`/`service_role`.
+- RLS: SELECT liberado para authenticated (contadores públicos entre membros), INSERT/DELETE apenas quando `follower_id = auth.uid()`.
+- Índices em `following_id` (pra listar seguidores de alguém) e `follower_id`.
+- Notificação: trigger que insere em `notifications` para o `following_id` quando alguém segue.
+
+**UI:**
+- Novo hook `src/hooks/use-follow.ts` com `{ isFollowing, followerCount, followingCount, toggle }`.
+- Botão "Seguir/Seguindo" em:
+  - `src/components/profile/member-detail-dialog.tsx` (modal de membro).
+  - `src/components/public/community-profile-card.tsx` (quando logado).
+  - Novo `feed-post-card.tsx` (ao lado do nome do autor).
+- Contadores no perfil próprio (`dashboard.perfil.tsx` — adicionar mini seção "X seguidores · Y seguindo").
+
+---
+
+### 4. Notícias diárias da comunidade (admin-only)
+
+**Reuso:** posts com `kind='news'` na mesma tabela `member_feed_posts` — assim aparecem no feed sem duplicar infra. Campo extra:
+- `title text` (nullable pra posts comuns, obrigatório via check quando `kind='news'`).
+- `pinned_until timestamptz` (pra destacar por N horas).
+- `cover_url text` (opcional).
+
+**RLS:** apenas ADMIN/SUPER_ADMIN podem inserir/editar/deletar posts com `kind='news'`. Posts `user`/`repost` seguem regra atual.
+
+**UI — nova rota `src/routes/dashboard.noticias.tsx`:**
+- Listagem tabela: título, data, pinned, autor, ações (visualizar em modal, editar, deletar).
+- Modal de criação/edição: título, conteúdo (textarea), cover_url, pinned_until (date-time).
+- Modal de visualização com preview igual ao render do feed.
+- Item no `dashboard-shell` sidebar (visível só para admin).
+
+No feed geral, notícias renderizam com destaque visual (borda neon, badge "📰 Notícia oficial").
+
+---
+
+### 5. UX melhor em projetos (links de tarefas + comentários)
+
+**Migração — nova tabela `project_task_links`:**
+```
+id uuid pk
+project_id uuid NOT NULL REFERENCES projects
+user_id uuid NOT NULL           -- quem anexou
+title text NOT NULL
+url text NOT NULL
+note text
+created_at timestamptz
+```
+- Grants + RLS: membros do projeto podem SELECT/INSERT/DELETE (via `is_project_member(project_id, auth.uid())` — provavelmente já existe; senão criar security-definer).
+
+**Reuso `project_posts` (já existe)** para comentários entre membros — só melhorar UI em `dashboard.meus-projetos.tsx` / `explorar-projetos.tsx`:
+- Aba "Discussão" com stream de `project_posts` (thread simples) — quem é membro comenta.
+- Aba "Entregas" com lista de `project_task_links` — botão "Adicionar entrega" (título + url + nota).
+- Notificação para líder quando membro adiciona entrega (trigger em `project_task_links`).
+
+---
+
+## Arquivos afetados
+
+**Novos:**
+- `supabase/migrations/<timestamp>_social_feed_follows_news.sql`
+- `src/components/dashboard/feed-post-card.tsx`
+- `src/components/dashboard/repost-dialog.tsx`
+- `src/hooks/use-follow.ts`
+- `src/routes/dashboard.noticias.tsx`
+- `src/components/dashboard/news-editor-dialog.tsx`
+
+**Editados:**
+- `src/components/public/navbar.tsx` (responsividade)
+- `src/components/dashboard/dashboard-shell.tsx` (item sidebar Notícias, checagem responsiva)
+- `src/routes/dashboard.feed.tsx` (usa novo card, ordena notícias)
+- `src/components/profile/member-detail-dialog.tsx` (botão seguir)
+- `src/components/public/community-profile-card.tsx` (botão seguir)
+- `src/routes/dashboard.perfil.tsx` (contadores)
+- `src/routes/dashboard.meus-projetos.tsx` + `dashboard.explorar-projetos.tsx` (abas entregas/discussão)
+- `src/routes/dashboard.logs.tsx` (`ENTITY_MAP` para user_follows, project_task_links)
+- `README.md` (seções novas)
+
+---
+
+## Fora de escopo
+
+- Notificações push/email (só in-app via `notifications`).
+- Feed algorítmico (mantém cronológico + pinned).
+- Rich text/imagens no editor de notícias — só texto + cover_url.
+- Threads aninhadas em comentários — mantém 1 nível.
+- Repost com quote elaborado — só comentário curto opcional.
+
+## Verificação
+
+- Playwright headless em 375/768/1034 px conferindo navbar e feed.
+- Build + typecheck.
+- Testar fluxo: criar notícia como admin, ver no feed como usuário comum, curtir, comentar, repostar, seguir autor.
