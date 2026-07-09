@@ -36,7 +36,7 @@ function FeedPage() {
   const [content, setContent] = useState("");
   const links = useMemo(() => extractLinks(content), [content]);
 
-  const { data: posts = [], isLoading } = useQuery({
+  const { data: posts = [] as FeedPost[], isLoading } = useQuery({
     queryKey: ["member-feed"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -46,7 +46,7 @@ function FeedPage() {
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
-      const rows = (data ?? []) as FeedPost[];
+      const rows = ((data ?? []) as unknown) as FeedPost[];
       const now = Date.now();
       // Ordenação: notícias fixadas > outras notícias recentes > cronológico
       rows.sort((a, b) => {
@@ -88,7 +88,7 @@ function FeedPage() {
         .from("member_feed_posts")
         .select("*")
         .in("id", repostSourceIds);
-      return new Map(((data ?? []) as FeedPost[]).map((p) => [p.id, p]));
+      return new Map((((data ?? []) as unknown) as FeedPost[]).map((p) => [p.id, p]));
     },
   });
 
