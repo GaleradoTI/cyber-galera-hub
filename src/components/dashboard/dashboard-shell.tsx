@@ -34,6 +34,7 @@ import {
   Rss,
   IdCard,
   DollarSign,
+  Newspaper,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
@@ -126,6 +127,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/perfil", label: "Meu Perfil", icon: UserIcon, show: true },
         { to: "/dashboard/mensagens", label: "Mensagens", icon: MessageSquare, show: true },
         { to: "/dashboard/feed", label: "Feed", icon: Rss, show: true },
+        { to: "/dashboard/noticias", label: "Notícias", icon: Newspaper, show: true },
       ],
     },
     {
@@ -178,6 +180,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
         { to: "/dashboard/drops", label: "Drops", icon: ShoppingBag, show: isAdmin },
         { to: "/dashboard/financeiro", label: "Financeiro", icon: DollarSign, show: isAdmin },
+        { to: "/dashboard/noticias", label: "Notícias", icon: Newspaper, show: isAdmin },
         { to: "/dashboard/logs", label: "Logs de Auditoria", icon: FileText, show: isAdmin },
       ],
     },
