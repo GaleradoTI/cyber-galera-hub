@@ -39,11 +39,11 @@ export function MemberDetailDialog({
   role?: string | null;
   squadName?: string | null;
 }) {
+  const stats = useFollowStats(profile?.user_id ?? null);
   if (!profile) return null;
   const initial = (profile.display_name ?? "?").slice(0, 1).toUpperCase();
   const social = (profile.social_links ?? {}) as Record<string, string>;
   const socialEntries = Object.entries(social).filter(([, v]) => v && v.trim().length > 0);
-  const stats = useFollowStats(profile.user_id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
