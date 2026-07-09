@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Badge } from "@/components/ui/badge";
 import { PostCard } from "@/components/dashboard/post-card";
 import { MemberDetailDialog, type MemberProfile } from "@/components/profile/member-detail-dialog";
+import { ProjectDeliveries } from "@/components/dashboard/project-deliveries";
 
 export const Route = createFileRoute("/dashboard/meus-projetos")({ component: MeusProjetosPage });
 
@@ -509,6 +510,7 @@ function MeusProjetosPage() {
 
               {/* Mural */}
               <div className="mt-5 pt-4 border-t border-border/40">
+                <ProjectDeliveries projectId={p.id} profileById={profileById} />
                 <div className="text-[10px] font-bold tracking-[0.25em] text-muted-foreground/70 mb-2 flex items-center gap-1">
                   <MessageSquare className="h-3 w-3" /> MURAL
                 </div>
