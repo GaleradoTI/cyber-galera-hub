@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, X, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
@@ -18,12 +18,14 @@ export function Navbar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isAuthenticated, loading } = useAuth();
 
+  useEffect(() => { setOpen(false); }, [pathname]);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-xl">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Logo />
+      <div className="container mx-auto grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4">
+        <div className="shrink-0"><Logo /></div>
 
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden md:flex items-center justify-center gap-0.5 lg:gap-1 min-w-0">
           {NAV_LINKS.map((link) => {
             if (link.children?.length) {
               const active = link.children.some((c) => pathname === c.to);
@@ -31,7 +33,7 @@ export function Navbar() {
                 <DropdownMenu key={link.label}>
                   <DropdownMenuTrigger
                     className={cn(
-                      "inline-flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-md transition-colors outline-none",
+                      "inline-flex items-center gap-1 px-2 lg:px-3 py-2 text-sm font-medium rounded-md transition-colors outline-none whitespace-nowrap",
                       active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                     )}
                   >
@@ -59,7 +61,7 @@ export function Navbar() {
                 key={link.to}
                 to={link.to!}
                 className={cn(
-                  "relative px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                  "relative px-2 lg:px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap",
                   active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -72,12 +74,13 @@ export function Navbar() {
           })}
         </nav>
 
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-1.5 lg:gap-2 justify-end shrink-0">
           {loading ? null : isAuthenticated ? (
             <>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="px-2 lg:px-3">
                 <Link to="/dashboard">
-                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  <LayoutDashboard className="h-4 w-4 lg:mr-2" />
+                  <span className="hidden lg:inline">Dashboard</span>
                 </Link>
               </Button>
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
@@ -86,10 +89,10 @@ export function Navbar() {
             </>
           ) : (
             <>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="px-2 lg:px-3">
                 <Link to="/login">Entrar</Link>
               </Button>
-              <Button asChild variant="neon" size="sm">
+              <Button asChild variant="neon" size="sm" className="px-2 lg:px-3">
                 <Link to="/cadastro">Cadastrar</Link>
               </Button>
             </>
@@ -97,7 +100,7 @@ export function Navbar() {
         </div>
 
         <button
-          className="lg:hidden text-foreground"
+          className="md:hidden text-foreground justify-self-end"
           onClick={() => setOpen(!open)}
           aria-label="Menu"
         >
@@ -106,7 +109,7 @@ export function Navbar() {
       </div>
 
       {open && (
-        <div className="lg:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl">
+        <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
             {NAV_LINKS.map((link) => {
               if (link.children?.length) {

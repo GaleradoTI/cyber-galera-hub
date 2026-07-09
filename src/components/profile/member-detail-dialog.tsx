@@ -3,6 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FollowButton } from "@/components/dashboard/follow-button";
+import { useFollowStats } from "@/hooks/use-follow";
 
 export type MemberProfile = {
   user_id: string;
@@ -37,6 +39,7 @@ export function MemberDetailDialog({
   role?: string | null;
   squadName?: string | null;
 }) {
+  const stats = useFollowStats(profile?.user_id ?? null);
   if (!profile) return null;
   const initial = (profile.display_name ?? "?").slice(0, 1).toUpperCase();
   const social = (profile.social_links ?? {}) as Record<string, string>;
@@ -71,6 +74,11 @@ export function MemberDetailDialog({
                 <Briefcase className="h-3 w-3" /> {profile.work_area}
               </p>
             )}
+            <div className="mt-2 flex items-center gap-3 text-[10px] text-muted-foreground">
+              <span><strong className="text-foreground">{stats.followers}</strong> seguidores</span>
+              <span><strong className="text-foreground">{stats.following}</strong> seguindo</span>
+              <div className="ml-auto"><FollowButton userId={profile.user_id} /></div>
+            </div>
           </div>
         </div>
 

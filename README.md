@@ -35,7 +35,10 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   ou de terceiros para aprovação por um admin
 - **Meus Projetos**: squads que participo, mural de posts, modal de membro com contatos
 - **Depoimentos**: enviar/editar/excluir depoimento (passa por moderação antes de aparecer no site público)
-- **Feed da Galera** (`/dashboard/feed`): membros publicam textos e links; autor remove o próprio post e ADMIN/SUPER_ADMIN moderam
+- **Feed da Galera** (`/dashboard/feed`): textos e links com **curtir**, **comentar** e **repostar**; notícias oficiais (kind `news`) aparecem em destaque no topo, com badge e opção de fixar até uma data; autor remove o próprio post e ADMIN/SUPER_ADMIN moderam
+- **Notícias** (`/dashboard/noticias`, admin): criar, editar, visualizar (modal) e apagar notícias oficiais que entram no feed geral com destaque, capa opcional e prazo de fixação
+- **Seguir membros**: botão de seguir/deixar de seguir nos cards da comunidade e no modal de perfil, com contagem de seguidores/seguindo; ao ser seguido, o usuário recebe notificação in-app
+- **Projetos — Entregas**: em cada projeto, membros anexam links de tarefas concluídas (título + URL + observação); o criador do projeto recebe notificação e o autor pode remover a própria entrega
 - Cartão de **participação** no perfil com check-ins, conversão e badges
   por marcos (Explorador → Embaixador)
 

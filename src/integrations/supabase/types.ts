@@ -953,31 +953,54 @@ export type Database = {
         Row: {
           author_id: string
           content: string
+          cover_url: string | null
           created_at: string
           id: string
+          kind: string
           links: Json
+          pinned_until: string | null
+          reposted_from_id: string | null
           status: string
+          title: string | null
           updated_at: string
         }
         Insert: {
           author_id: string
           content: string
+          cover_url?: string | null
           created_at?: string
           id?: string
+          kind?: string
           links?: Json
+          pinned_until?: string | null
+          reposted_from_id?: string | null
           status?: string
+          title?: string | null
           updated_at?: string
         }
         Update: {
           author_id?: string
           content?: string
+          cover_url?: string | null
           created_at?: string
           id?: string
+          kind?: string
           links?: Json
+          pinned_until?: string | null
+          reposted_from_id?: string | null
           status?: string
+          title?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "member_feed_posts_reposted_from_id_fkey"
+            columns: ["reposted_from_id"]
+            isOneToOne: false
+            referencedRelation: "member_feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -1296,6 +1319,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "project_posts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_task_links: {
+        Row: {
+          created_at: string
+          id: string
+          note: string | null
+          project_id: string
+          title: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          project_id: string
+          title: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          note?: string | null
+          project_id?: string
+          title?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_task_links_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
@@ -1781,6 +1845,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

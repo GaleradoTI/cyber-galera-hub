@@ -125,6 +125,8 @@ function LogsPage() {
       drop_interests: { table: "drop_interests", cols: "id,drop_id,full_name,email" },
       community_profiles: { table: "community_profiles", cols: "id,name,profile_type,is_active" },
       member_feed_posts: { table: "member_feed_posts", cols: "id,author_id,status,created_at" },
+      user_follows: { table: "user_follows", cols: "follower_id,following_id,created_at", key: "following_id" },
+      project_task_links: { table: "project_task_links", cols: "id,project_id,user_id,title,url" },
     };
     const byEntity = new Map<string, string[]>();
     // finance_* também exportáveis
@@ -297,6 +299,8 @@ function EntityContext({ entity, entityId }: { entity: string; entityId: string 
         finance_entries: { table: "finance_entries", cols: "id,kind,title,amount_cents,entry_date,status" },
         finance_categories: { table: "finance_categories", cols: "id,name,kind,is_active" },
         finance_tags: { table: "finance_tags", cols: "id,name,is_active" },
+        user_follows: { table: "user_follows", cols: "follower_id,following_id,created_at", key: "following_id" },
+        project_task_links: { table: "project_task_links", cols: "id,project_id,user_id,title,url,note,created_at" },
       };
       const conf = map[entity];
       if (!conf || !entityId) return null;
