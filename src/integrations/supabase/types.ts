@@ -19,6 +19,7 @@ export type Database = {
           action: string
           created_at: string
           description: string | null
+          diff: Json | null
           entity: string
           entity_id: string | null
           id: string
@@ -30,6 +31,7 @@ export type Database = {
           action: string
           created_at?: string
           description?: string | null
+          diff?: Json | null
           entity: string
           entity_id?: string | null
           id?: string
@@ -41,6 +43,7 @@ export type Database = {
           action?: string
           created_at?: string
           description?: string | null
+          diff?: Json | null
           entity?: string
           entity_id?: string | null
           id?: string
@@ -637,6 +640,7 @@ export type Database = {
       finance_entries: {
         Row: {
           amount_cents: number
+          assigned_user_id: string | null
           attachment_url: string | null
           category_id: string | null
           counterparty_email: string | null
@@ -654,10 +658,12 @@ export type Database = {
           payment_method: string | null
           status: string
           title: string
+          tournament_id: string | null
           updated_at: string
         }
         Insert: {
           amount_cents?: number
+          assigned_user_id?: string | null
           attachment_url?: string | null
           category_id?: string | null
           counterparty_email?: string | null
@@ -675,10 +681,12 @@ export type Database = {
           payment_method?: string | null
           status?: string
           title: string
+          tournament_id?: string | null
           updated_at?: string
         }
         Update: {
           amount_cents?: number
+          assigned_user_id?: string | null
           attachment_url?: string | null
           category_id?: string | null
           counterparty_email?: string | null
@@ -696,6 +704,7 @@ export type Database = {
           payment_method?: string | null
           status?: string
           title?: string
+          tournament_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -740,6 +749,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1080,6 +1096,7 @@ export type Database = {
           created_at: string
           id: string
           post_id: string
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -1087,6 +1104,7 @@ export type Database = {
           created_at?: string
           id?: string
           post_id: string
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -1094,6 +1112,7 @@ export type Database = {
           created_at?: string
           id?: string
           post_id?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: [
@@ -1817,6 +1836,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tournaments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          name: string
+          note: string | null
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          name: string
+          note?: string | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          name?: string
+          note?: string | null
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_event_interests: {
         Row: {
           created_at: string
@@ -1946,6 +2001,7 @@ export type Database = {
         }[]
       }
       get_public_home_stats: { Args: never; Returns: Json }
+      get_public_profile: { Args: { _user_id: string }; Returns: Json }
       get_recruiter_candidates: {
         Args: never
         Returns: {
