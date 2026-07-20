@@ -52,6 +52,9 @@ function UsuariosPage() {
   const [newBadge, setNewBadge] = useState({ label: "", color: "primary" });
   const [viewing, setViewing] = useState<ProfileRow | null>(null);
   const resetPwdFn = useServerFn(resetUserPassword);
+  const [resetting, setResetting] = useState<ProfileRow | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
 
   useEffect(() => {
     if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
@@ -248,13 +251,14 @@ function UsuariosPage() {
 
   const doResetPassword = async () => {
     if (!resetting) return;
+    setResetLoading(true);
     try {
-      const res = await resetPwdFn({ data: { targetUserId: resetting.user_id, newPassword: customPwd || undefined } });
-      toast.success(`Senha resetada. Nova senha: ${res.password}`);
-      setResetting(null);
-      setCustomPwd("");
+      const res = await resetPwdFn({ data: { targetUserId: resetting.user_id } });
+      setTempPassword(res.tempPassword);
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao resetar");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -498,26 +502,41 @@ function UsuariosPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={!!resetting} onOpenChange={(o) => { if (!o) { setResetting(null); setCustomPwd(""); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Resetar senha</DialogTitle>
-            <DialogDescription>
-              {resetting?.email}<br />
-              Deixe em branco para usar a senha padrão definida em Configurações &rarr; password_policy.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Nova senha (opcional)</Label>
-            <Input type="text" value={customPwd} onChange={(e) => setCustomPwd(e.target.value)} placeholder="Mínimo 8 caracteres" />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => { setResetting(null); setCustomPwd(""); }}>Cancelar</Button>
-            <Button onClick={doResetPassword}>Resetar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      <AlertDialog open={!!resetting && !tempPassword} onOpenChange={(o) => !o && !resetLoading && setResetting(null)}>
+      <AlertDialogContent preventClose={resetLoading}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Resetar senha de {resetting?.email}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Uma senha temporária será gerada automaticamente. O usuário precisará trocá-la no próximo login.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={resetLoading}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction asyncAction loading={resetLoading} onClick={doResetPassword}>
+            {resetLoading ? "Resetando..." : "Confirmar reset"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    
+    {/* Etapa 2: exibição segura da senha temporária */}
+    <Dialog open={!!tempPassword} onOpenChange={(o) => { if (!o) { setResetting(null); setTempPassword(null); } }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Senha temporária gerada</DialogTitle>
+          <DialogDescription>Copie e envie ao usuário por um canal seguro. Ela não será exibida novamente.</DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-2">
+          <code className="px-2 py-1 rounded bg-muted text-sm">{tempPassword}</code>
+          <Button size="sm" onClick={() => { navigator.clipboard.writeText(tempPassword!); toast.success("Copiado"); }}>
+            Copiar
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { setResetting(null); setTempPassword(null); }}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
       <UserDetailDialog user={viewing} onClose={() => setViewing(null)} />
     </DashboardShell>
   );
