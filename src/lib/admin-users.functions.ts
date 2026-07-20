@@ -13,47 +13,81 @@ function getAdminClient() {
   });
 }
 
-async function assertAdmin(supabase: ReturnType<typeof getAdminClient>, userId: string) {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
+const ROLE_RANK: Record<string, number> = {
+  SUPER_ADMIN: 3,
+  ADMIN: 2,
+  MODERADOR: 1,
+  EMBAIXADOR: 1,
+  RECRUTADOR: 1,
+  MEMBRO: 0,
+};
+
+function primaryRole(roles: string[]) {
+  if (roles.includes("SUPER_ADMIN")) return "SUPER_ADMIN";
+  if (roles.includes("ADMIN")) return "ADMIN";
+  if (roles.includes("MODERADOR")) return "MODERADOR";
+  if (roles.includes("EMBAIXADOR")) return "EMBAIXADOR";
+  if (roles.includes("RECRUTADOR")) return "RECRUTADOR";
+  return "MEMBRO";
+}
+
+async function getRolesOf(admin: ReturnType<typeof getAdminClient>, userId: string) {
+  const { data, error } = await admin.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw new Error(error.message);
-  const roles = (data ?? []).map((r) => r.role as string);
-  if (!roles.includes("ADMIN") && !roles.includes("SUPER_ADMIN")) {
-    throw new Error("Permissão negada");
-  }
-  return roles;
+  return (data ?? []).map((r) => r.role as string);
+}
+
+function generateTempPassword() {
+  // Senha temporária aleatória, forte e imprevisível — nunca fixa/hardcoded
+  const raw = crypto.randomUUID().replace(/-/g, "");
+  return `${raw.slice(0, 12)}!Aa1`;
 }
 
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { targetUserId: string; newPassword?: string }) =>
+  .inputValidator((input: { targetUserId: string }) =>
     z
       .object({
         targetUserId: z.string().uuid(),
-        newPassword: z.string().min(8).max(72).optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
     const admin = getAdminClient();
-    await assertAdmin(admin, context.userId);
 
-    // Pega senha padrão das configurações se nada vier
-    let password = data.newPassword;
-    if (!password) {
-      const { data: setting } = await admin
-        .from("public_site_settings")
-        .select("setting_value")
-        .eq("setting_key", "password_policy")
-        .maybeSingle();
-      const policy = (setting?.setting_value ?? {}) as { default_reset_password?: string };
-      password = policy.default_reset_password || "GaleraTI@2026";
+    // 1) Papel de quem está chamando, obtido a partir da sessão autenticada (nunca do cliente)
+    const callerRoles = await getRolesOf(admin, context.userId);
+    const callerRole = primaryRole(callerRoles);
+
+    if (callerRole !== "ADMIN" && callerRole !== "SUPER_ADMIN") {
+      throw new Error("Permissão negada.");
     }
 
+    // 2) Bloqueia reset da própria senha por este fluxo administrativo
+    if (data.targetUserId === context.userId) {
+      throw new Error("Use o fluxo de recuperação de senha para redefinir a própria senha.");
+    }
+
+    // 3) Papel do usuário alvo
+    const targetRoles = await getRolesOf(admin, data.targetUserId);
+    const targetRole = primaryRole(targetRoles);
+
+    // 4) Matriz de permissões: SUPER_ADMIN nunca é resetável por outro admin
+    if (targetRole === "SUPER_ADMIN") {
+      throw new Error("Senha de SUPER_ADMIN não pode ser resetada por outro administrador.");
+    }
+
+    // 5) ADMIN comum não pode resetar outro ADMIN (nem qualquer papel de rank igual/superior)
+    if (callerRole === "ADMIN" && ROLE_RANK[targetRole] >= ROLE_RANK["ADMIN"]) {
+      throw new Error("ADMIN não pode resetar senha de outro ADMIN.");
+    }
+
+    // 6) Senha sempre temporária e aleatória — nunca customizada pelo cliente nem senha padrão fixa
+    const tempPassword = generateTempPassword();
+
     const { error } = await admin.auth.admin.updateUserById(data.targetUserId, {
-      password,
+      password: tempPassword,
+      user_metadata: { must_change_password: true },
     });
     if (error) throw new Error(error.message);
 
@@ -62,8 +96,8 @@ export const resetUserPassword = createServerFn({ method: "POST" })
       action: "password_reset",
       entity: "auth.users",
       entity_id: data.targetUserId,
-      description: `Senha resetada por admin`,
+      description: `Senha resetada por ${callerRole} (${context.userId}) para usuário ${data.targetUserId}`,
     });
 
-    return { ok: true, password };
+    return { ok: true, tempPassword };
   });
