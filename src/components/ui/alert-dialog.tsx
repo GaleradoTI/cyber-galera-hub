@@ -25,14 +25,28 @@ const AlertDialogOverlay = React.forwardRef<
 ));
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 
+interface AlertDialogContentProps
+  extends React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content> {
+  /** Impede que o diálogo seja fechado via ESC ou clique fora enquanto uma ação assíncrona está em andamento (ex: reset de senha). */
+  preventClose?: boolean;
+}
+
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
+  AlertDialogContentProps
+>(({ className, preventClose, onEscapeKeyDown, onInteractOutside, ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
     <AlertDialogPrimitive.Content
       ref={ref}
+      onEscapeKeyDown={(e) => {
+        if (preventClose) e.preventDefault();
+        onEscapeKeyDown?.(e);
+      }}
+      onInteractOutside={(e) => {
+        if (preventClose) e.preventDefault();
+        onInteractOutside?.(e);
+      }}
       className={cn(
         "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
         className,
@@ -80,20 +94,39 @@ const AlertDialogDescription = React.forwardRef<
 ));
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
 
+interface AlertDialogActionProps
+  extends React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action> {
+  /** Quando true, impede o fechamento automático do diálogo — necessário para ações assíncronas (ex: reset de senha). */
+  asyncAction?: boolean;
+  loading?: boolean;
+}
+
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
->(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Action ref={ref} className={cn(buttonVariants(), className)} {...props} />
+  AlertDialogActionProps
+>(({ className, asyncAction, loading, onClick, disabled, ...props }, ref) => (
+  <AlertDialogPrimitive.Action
+    ref={ref}
+    disabled={disabled || loading}
+    className={cn(buttonVariants(), className)}
+    onClick={(e) => {
+      // Evita o fechamento automático do Radix quando a ação é assíncrona,
+      // deixando o componente pai controlar o open/close via estado.
+      if (asyncAction) e.preventDefault();
+      onClick?.(e);
+    }}
+    {...props}
+  />
 ));
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName;
 
 const AlertDialogCancel = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel> & { disabled?: boolean }
+>(({ className, disabled, ...props }, ref) => (
   <AlertDialogPrimitive.Cancel
     ref={ref}
+    disabled={disabled}
     className={cn(buttonVariants({ variant: "outline" }), "mt-2 sm:mt-0", className)}
     {...props}
   />
