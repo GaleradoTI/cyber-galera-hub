@@ -42,7 +42,6 @@ function CommunityProfilesPage({ type, title, eyebrow, description }: { type: st
         .select("*")
         .eq("profile_type", type)
         .eq("is_active", true)
-        .order("display_order", { ascending: true })
         .order("name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as CommunityProfile[];

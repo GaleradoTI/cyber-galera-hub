@@ -42,7 +42,6 @@ function AdministradoresPage() {
         .select("*")
         .eq("profile_type", "administrator")
         .eq("is_active", true)
-        .order("display_order", { ascending: true })
         .order("name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as CommunityProfile[];
