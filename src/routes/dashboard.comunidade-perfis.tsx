@@ -157,7 +157,7 @@ function CommunityProfilesAdminPage() {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {rows.map((p) => (
             <div key={p.id} className="glass rounded-xl border border-primary/20 overflow-hidden">
-              {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-44 object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : <div className="w-full h-44 bg-muted/20 flex items-center justify-center text-muted-foreground">Sem foto</div>}
+              {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-44 object-contain bg-muted/20" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : <div className="w-full h-44 bg-muted/20 flex items-center justify-center text-muted-foreground">Sem foto</div>}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -275,7 +275,7 @@ function ProfileDetailDialog({
             <div className="grid sm:grid-cols-[160px_1fr] gap-4">
               <div>
                 {profile.photo_url ? (
-                  <img src={profile.photo_url} alt={profile.name} className="w-full aspect-square object-cover rounded-lg border border-border/40" />
+                  <img src={profile.photo_url} alt={profile.name} className="w-full aspect-square object-contain bg-muted/20 rounded-lg border border-border/40" />
                 ) : (
                   <div className="w-full aspect-square bg-muted/20 rounded-lg flex items-center justify-center text-xs text-muted-foreground">Sem foto</div>
                 )}
