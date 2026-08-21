@@ -1061,6 +1061,7 @@ export type Database = {
           is_active: boolean
           logo_url: string | null
           name: string
+          social_links: Json
           updated_at: string
           website_url: string | null
         }
@@ -1073,6 +1074,7 @@ export type Database = {
           is_active?: boolean
           logo_url?: string | null
           name: string
+          social_links?: Json
           updated_at?: string
           website_url?: string | null
         }
@@ -1085,6 +1087,7 @@ export type Database = {
           is_active?: boolean
           logo_url?: string | null
           name?: string
+          social_links?: Json
           updated_at?: string
           website_url?: string | null
         }

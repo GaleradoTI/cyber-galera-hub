@@ -65,8 +65,8 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
     <>
       <article className="glass rounded-xl border border-primary/20 p-5 hover-glow-cyan flex flex-col h-full">
         <div className="flex flex-col items-center text-center gap-3">
-          <Avatar className="h-20 w-20 border border-secondary/30">
-            <AvatarImage src={profile.photo_url ?? undefined} alt={profile.name} className="object-cover" />
+          <Avatar className="h-20 w-20 border border-secondary/30 bg-muted/20">
+            <AvatarImage src={profile.photo_url ?? undefined} alt={profile.name} className="object-contain" />
             <AvatarFallback>{profile.name.slice(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 w-full">
@@ -110,8 +110,8 @@ export function CommunityProfileCard({ profile }: { profile: CommunityProfile })
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4">
-              <Avatar className="h-20 w-20 shrink-0 border border-secondary/40">
-                <AvatarImage src={profile.photo_url ?? undefined} alt={profile.name} className="object-cover" />
+              <Avatar className="h-20 w-20 shrink-0 border border-secondary/40 bg-muted/20">
+                <AvatarImage src={profile.photo_url ?? undefined} alt={profile.name} className="object-contain" />
                 <AvatarFallback>{profile.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="min-w-0">

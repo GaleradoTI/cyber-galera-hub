@@ -157,7 +157,7 @@ function CommunityProfilesAdminPage() {
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {rows.map((p) => (
             <div key={p.id} className="glass rounded-xl border border-primary/20 overflow-hidden">
-              {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-44 object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : <div className="w-full h-44 bg-muted/20 flex items-center justify-center text-muted-foreground">Sem foto</div>}
+              {p.photo_url ? <img src={p.photo_url} alt={p.name} className="w-full h-44 object-contain bg-muted/20" onError={(e) => { e.currentTarget.style.display = "none"; }} /> : <div className="w-full h-44 bg-muted/20 flex items-center justify-center text-muted-foreground">Sem foto</div>}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -275,7 +275,7 @@ function ProfileDetailDialog({
             <div className="grid sm:grid-cols-[160px_1fr] gap-4">
               <div>
                 {profile.photo_url ? (
-                  <img src={profile.photo_url} alt={profile.name} className="w-full aspect-square object-cover rounded-lg border border-border/40" />
+                  <img src={profile.photo_url} alt={profile.name} className="w-full aspect-square object-contain bg-muted/20 rounded-lg border border-border/40" />
                 ) : (
                   <div className="w-full aspect-square bg-muted/20 rounded-lg flex items-center justify-center text-xs text-muted-foreground">Sem foto</div>
                 )}
@@ -371,7 +371,7 @@ function ProfileForm({ value, onChange }: { value: Partial<Profile>; onChange: (
       <div><Label>Ordem</Label><Input type="number" value={value.display_order ?? 0} onChange={(e) => onChange({ ...value, display_order: Number(e.target.value) })} /></div>
       <div className="sm:col-span-2"><Label>Nome *</Label><Input value={value.name ?? ""} onChange={(e) => onChange({ ...value, name: e.target.value })} /></div>
       <div className="sm:col-span-2"><Label>Cargo / título profissional</Label><Input value={value.role_title ?? ""} onChange={(e) => onChange({ ...value, role_title: e.target.value })} /></div>
-      <div className="sm:col-span-2"><ImageUploader bucket="project-covers" folder="site/community-profiles" value={value.photo_url ?? null} onChange={(url) => onChange({ ...value, photo_url: url ?? "" })} label="Foto" aspect="square" policyKey="project_covers" resizeMax={1200} auditEntity="community_profile_photo" auditEntityId={value.id ?? value.profile_type ?? null} showDiagnostics hint="JPG/PNG/WebP · pasta project-covers/site/community-profiles · use Diagnóstico se o Storage negar por RLS" /></div>
+      <div className="sm:col-span-2"><ImageUploader bucket="project-covers" folder="site/community-profiles" value={value.photo_url ?? null} onChange={(url) => onChange({ ...value, photo_url: url ?? "" })} label="Foto" aspect="square" imageFit="contain" policyKey="project_covers" resizeMax={1200} auditEntity="community_profile_photo" auditEntityId={value.id ?? value.profile_type ?? null} showDiagnostics hint="JPG/PNG/WebP · pasta project-covers/site/community-profiles · use Diagnóstico se o Storage negar por RLS" /></div>
       <div className="sm:col-span-2"><Label>História profissional</Label><Textarea rows={5} value={value.professional_story ?? ""} onChange={(e) => onChange({ ...value, professional_story: e.target.value })} /></div>
       <div className="sm:col-span-2"><Label>O que faz na comunidade</Label><Input value={value.community_role ?? ""} onChange={(e) => onChange({ ...value, community_role: e.target.value })} /></div>
       <div className="sm:col-span-2 space-y-2">
