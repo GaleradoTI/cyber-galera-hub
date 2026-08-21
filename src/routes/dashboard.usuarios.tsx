@@ -45,8 +45,6 @@ function UsuariosPage() {
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editName, setEditName] = useState("");
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
-  const [resetting, setResetting] = useState<ProfileRow | null>(null);
-  const [customPwd, setCustomPwd] = useState("");
   const [badgeFilter, setBadgeFilter] = useState<string>("__all");
   const [addBadgeFor, setAddBadgeFor] = useState<ProfileRow | null>(null);
   const [newBadge, setNewBadge] = useState({ label: "", color: "primary" });
@@ -410,7 +408,7 @@ function UsuariosPage() {
                       {p.is_blocked ? "Reativar" : "Bloquear"}
                     </Button>
                     {canActOnTarget && role !== "SUPER_ADMIN" && (
-                      <Button size="sm" variant="outline" onClick={() => { setResetting(p); setCustomPwd(""); }}>
+                      <Button size="sm" variant="outline" onClick={() => setResetting(p)}>
                         <KeyRound className="h-3 w-3 mr-1" /> Resetar senha
                       </Button>
                     )}
