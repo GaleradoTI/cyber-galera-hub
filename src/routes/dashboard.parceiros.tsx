@@ -16,12 +16,19 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/parceiros")({ component: ParceirosAdminPage });
 
+type SocialLink = { label: string; url: string };
 type Partner = {
   id: string; name: string; description: string | null; logo_url: string | null;
-  website_url: string | null; display_order: number; is_active: boolean;
+  website_url: string | null; social_links: SocialLink[] | Record<string, string>;
+  display_order: number; is_active: boolean;
 };
 
-const empty: Partial<Partner> = { name: "", description: "", logo_url: "", website_url: "", display_order: 0, is_active: true };
+const empty: Partial<Partner> = { name: "", description: "", logo_url: "", website_url: "", social_links: [], display_order: 0, is_active: true };
+
+function normalizeLinks(value: Partner["social_links"] | undefined): SocialLink[] {
+  if (Array.isArray(value)) return value as SocialLink[];
+  return Object.entries(value ?? {}).map(([label, url]) => ({ label, url: String(url ?? "") }));
+}
 
 function ParceirosAdminPage() {
   const navigate = useNavigate();
@@ -54,6 +61,7 @@ function ParceirosAdminPage() {
       description: editing.description || null,
       logo_url: editing.logo_url || null,
       website_url: editing.website_url || null,
+      social_links: normalizeLinks(editing.social_links).filter((l) => l.label.trim() && l.url.trim()),
       display_order: Number(editing.display_order ?? 0),
       is_active: editing.is_active ?? true,
     };
@@ -108,7 +116,7 @@ function ParceirosAdminPage() {
                 <TableCell>{readOnly ? (p.is_active ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />) : (<Button size="sm" variant="ghost" onClick={() => toggleActive(p)}>{p.is_active ? <Eye className="h-4 w-4 text-primary" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}</Button>)}</TableCell>
                 <TableCell className="text-right space-x-1 whitespace-nowrap">
                   {readOnly ? <span className="text-xs text-muted-foreground">Somente leitura</span> : (<>
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(p)}><Pencil className="h-3 w-3" /></Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p, social_links: normalizeLinks(p.social_links) })}><Pencil className="h-3 w-3" /></Button>
                     <Button size="sm" variant="ghost" onClick={() => setRemoving(p)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                   </>)}
                 </TableCell>
@@ -127,6 +135,24 @@ function ParceirosAdminPage() {
               <div className="sm:col-span-2"><Label>Descrição (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={4} maxLength={500} /></div>
               <div className="sm:col-span-2"><Label>Logo (URL)</Label><Input value={editing.logo_url ?? ""} onChange={(e) => setEditing({ ...editing, logo_url: e.target.value })} placeholder="https://…/logo.png" /></div>
               <div className="sm:col-span-2"><Label>Site oficial</Label><Input value={editing.website_url ?? ""} onChange={(e) => setEditing({ ...editing, website_url: e.target.value })} placeholder="https://…" /></div>
+              <div className="sm:col-span-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Links (redes sociais, etc. — exibidos abaixo do logo)</Label>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setEditing({ ...editing, social_links: [...normalizeLinks(editing.social_links), { label: "", url: "" }] })}>
+                    <Plus className="h-3 w-3 mr-1" /> Link
+                  </Button>
+                </div>
+                {normalizeLinks(editing.social_links).map((link, idx) => {
+                  const links = normalizeLinks(editing.social_links);
+                  return (
+                    <div key={idx} className="grid sm:grid-cols-[140px_1fr_auto] gap-2">
+                      <Input placeholder="Rede (ex: Instagram)" value={link.label} onChange={(e) => setEditing({ ...editing, social_links: links.map((l, i) => i === idx ? { ...l, label: e.target.value } : l) })} />
+                      <Input placeholder="https://…" value={link.url} onChange={(e) => setEditing({ ...editing, social_links: links.map((l, i) => i === idx ? { ...l, url: e.target.value } : l) })} />
+                      <Button type="button" variant="ghost" size="icon" className="text-destructive" onClick={() => setEditing({ ...editing, social_links: links.filter((_, i) => i !== idx) })}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                  );
+                })}
+              </div>
               <div><Label>Ordem de exibição</Label><Input type="number" value={editing.display_order ?? 0} onChange={(e) => setEditing({ ...editing, display_order: Number(e.target.value) })} /></div>
               <div className="flex items-end gap-2"><Switch checked={editing.is_active ?? true} onCheckedChange={(v) => setEditing({ ...editing, is_active: v })} /><Label>Ativo (visível na home)</Label></div>
             </div>
