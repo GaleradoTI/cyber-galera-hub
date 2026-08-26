@@ -63,17 +63,20 @@ function NoticiasPage() {
     const content = (editing.content ?? "").trim();
     if (title.length < 2) return toast.error("Título obrigatório.");
     if (content.length < 2) return toast.error("Conteúdo obrigatório.");
+    const links = mergeLinks(parseLinkLines(linkLines), extractLinks(content));
     const payload = {
       title,
       content,
       cover_url: editing.cover_url?.trim() || null,
       pinned_until: editing.pinned_until || null,
+      links,
+      status: editing.status === "draft" ? "draft" : "published",
     };
     const { error } = editing.id
       ? await supabase.from("member_feed_posts").update(payload).eq("id", editing.id)
       : await supabase
           .from("member_feed_posts")
-          .insert({ ...payload, author_id: user.id, kind: "news", status: "published", links: [] });
+          .insert({ ...payload, author_id: user.id, kind: "news" });
     if (error) return toast.error(error.message);
     toast.success(editing.id ? "Notícia atualizada." : "Notícia publicada.");
     setEditing(null);
