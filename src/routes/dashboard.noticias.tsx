@@ -123,12 +123,12 @@ function NoticiasPage() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">Carregando…</TableCell>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Carregando…</TableCell>
               </TableRow>
             )}
             {!isLoading && news.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhuma notícia ainda.</TableCell>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma notícia ainda.</TableCell>
               </TableRow>
             )}
             {news.map((n) => {
