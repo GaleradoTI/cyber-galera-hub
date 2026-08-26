@@ -191,7 +191,42 @@ function NoticiasPage() {
               </div>
               <div>
                 <Label>Conteúdo *</Label>
-                <Textarea rows={6} value={editing.content ?? ""} onChange={(e) => setEditing({ ...editing, content: e.target.value })} maxLength={2000} />
+                <Textarea
+                  rows={7}
+                  value={editing.content ?? ""}
+                  onChange={(e) => setEditing({ ...editing, content: e.target.value })}
+                  maxLength={4000}
+                  placeholder={"Escreva a notícia.\n\nLinha em branco cria um novo parágrafo.\n- comece com hífen para criar listas\nURLs coladas viram links automaticamente."}
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Parágrafos, listas com “- ” e links automáticos. {(editing.content ?? "").length}/4000
+                </p>
+              </div>
+              <div>
+                <Label>Links (um por linha — “Rótulo | https://…”)</Label>
+                <Textarea
+                  rows={3}
+                  value={linkLines}
+                  onChange={(e) => setLinkLines(e.target.value)}
+                  placeholder={"Inscrições | https://exemplo.com/inscricao\nhttps://instagram.com/galeradoti"}
+                />
+              </div>
+              {(editing.content ?? "").trim().length > 0 && (
+                <div className="rounded-lg border border-primary/20 bg-muted/20 p-3">
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Pré-visualização</p>
+                  {editing.title && <p className="font-bold mb-1">{editing.title}</p>}
+                  <RichText text={editing.content ?? ""} className="text-sm" />
+                </div>
+              )}
+              <div className="flex items-center justify-between rounded-lg border border-primary/20 p-3">
+                <div>
+                  <Label className="cursor-pointer">Exibir no feed da comunidade</Label>
+                  <p className="text-[11px] text-muted-foreground">Desligue para manter como rascunho, sem aparecer no feed.</p>
+                </div>
+                <Switch
+                  checked={editing.status !== "draft"}
+                  onCheckedChange={(v) => setEditing({ ...editing, status: v ? "published" : "draft" })}
+                />
               </div>
               <div>
                 <Label>URL da capa (opcional)</Label>
