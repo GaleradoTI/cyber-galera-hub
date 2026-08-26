@@ -36,7 +36,7 @@ export function TestimonialsSection() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("public_profiles")
-        .select("user_id,display_name,avatar_url")
+        .select("user_id,display_name,avatar_url,work_area")
         .in("user_id", userIds);
       if (error) return [];
       return (data ?? []) as Profile[];
