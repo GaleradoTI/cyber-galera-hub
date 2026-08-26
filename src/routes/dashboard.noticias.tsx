@@ -1,17 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, Pencil, Plus, Pin, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, Pencil, Plus, Pin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { RichText, extractLinks, mergeLinks, parseLinkLines, linksToLines } from "@/lib/rich-text";
 
 export const Route = createFileRoute("/dashboard/noticias")({ component: NoticiasPage });
 
@@ -26,6 +28,7 @@ type News = {
   updated_at: string;
   kind: string;
   status: string;
+  links: { url: string; label?: string }[] | null;
 };
 
 function NoticiasPage() {
