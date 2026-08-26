@@ -99,7 +99,7 @@ function ResetPage() {
             <p className="text-sm text-muted-foreground mt-2">
               Solicite um novo link de redefinição de senha.
             </p>
-            <Button className="mt-4 w-full" onClick={() => navigate({ to: "/forgot-password" })}>
+            <Button className="mt-4 w-full" onClick={() => navigate({ to: "/login" })}>
               Solicitar novo link
             </Button>
           </div>
