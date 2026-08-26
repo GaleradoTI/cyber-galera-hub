@@ -167,7 +167,7 @@ function NoticiasPage() {
                   <TableCell>
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => setViewing(n)}><Eye className="h-3 w-3" /></Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditing(n)}><Pencil className="h-3 w-3" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => openEditor(n)}><Pencil className="h-3 w-3" /></Button>
                       <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(n)}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                   </TableCell>
