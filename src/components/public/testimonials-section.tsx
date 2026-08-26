@@ -12,7 +12,7 @@ type Testimonial = {
   role_title: string | null;
   created_at: string;
 };
-type Profile = { user_id: string; display_name: string; avatar_url: string | null };
+type Profile = { user_id: string; display_name: string; avatar_url: string | null; work_area: string | null };
 
 export function TestimonialsSection() {
   const { data: items = [] } = useQuery({
