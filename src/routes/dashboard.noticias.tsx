@@ -114,6 +114,7 @@ function NoticiasPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Título</TableHead>
+              <TableHead className="hidden md:table-cell">No feed</TableHead>
               <TableHead className="hidden md:table-cell">Publicado</TableHead>
               <TableHead className="hidden md:table-cell">Destaque até</TableHead>
               <TableHead className="w-[160px]">Ações</TableHead>
