@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/dashboard/follow-button";
+import { RichText, prettyUrl } from "@/lib/rich-text";
 
 export const Route = createFileRoute("/dashboard/feed")({ component: FeedPage });
 
@@ -20,7 +21,7 @@ type FeedPost = {
   content: string;
   title: string | null;
   cover_url: string | null;
-  links: { url: string }[];
+  links: { url: string; label?: string }[];
   status: string;
   created_at: string;
   kind: "user" | "news" | "repost";
@@ -42,7 +43,7 @@ function FeedPage() {
       const { data, error } = await supabase
         .from("member_feed_posts")
         .select("*")
-        .neq("status", "deleted")
+        .eq("status", "published")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -260,7 +261,7 @@ function PostCard({
       )}
 
       {post.content && (
-        <p className="text-sm text-foreground/90 whitespace-pre-wrap mt-3">{post.content}</p>
+        <RichText text={post.content} className="text-sm text-foreground/90 mt-3" />
       )}
 
       {isRepost && source && (
