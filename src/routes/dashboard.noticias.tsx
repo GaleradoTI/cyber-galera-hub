@@ -36,7 +36,15 @@ function NoticiasPage() {
   const qc = useQueryClient();
   const { user, isAdmin, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<News> | null>(null);
+  const [linkLines, setLinkLines] = useState("");
   const [viewing, setViewing] = useState<News | null>(null);
+
+  const openEditor = (n?: News) => {
+    setLinkLines(linksToLines(n?.links));
+    setEditing(
+      n ?? { title: "", content: "", cover_url: "", pinned_until: "", status: "published", links: [] },
+    );
+  };
 
   useEffect(() => {
     if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
