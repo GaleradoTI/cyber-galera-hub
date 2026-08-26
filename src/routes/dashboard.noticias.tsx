@@ -141,6 +141,22 @@ function NoticiasPage() {
                       <span className="font-semibold">{n.title}</span>
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{n.content}</p>
+                    {(n.links?.length ?? 0) > 0 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-primary mt-1">
+                        <ExternalLink className="h-3 w-3" /> {n.links!.length} link(s)
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {n.status === "published" ? (
+                      <Badge variant="outline" className="text-[10px] border-emerald-500/50 text-emerald-400">
+                        <Eye className="h-3 w-3 mr-1" /> Sim
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                        <EyeOff className="h-3 w-3 mr-1" /> Rascunho
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                     {new Date(n.created_at).toLocaleString("pt-BR")}
