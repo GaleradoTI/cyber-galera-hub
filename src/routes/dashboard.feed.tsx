@@ -276,10 +276,10 @@ function PostCard({
               href={l.url}
               target="_blank"
               rel="noreferrer"
-              className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+              className="text-xs inline-flex items-center gap-1 rounded-full border border-primary/30 px-3 py-1 text-primary hover:bg-primary/10 max-w-full"
             >
-              <ExternalLink className="h-3 w-3" />
-              {l.url}
+              <ExternalLink className="h-3 w-3 shrink-0" />
+              <span className="truncate">{l.label || prettyUrl(l.url)}</span>
             </a>
           ))}
         </div>
