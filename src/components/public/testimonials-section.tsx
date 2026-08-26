@@ -12,7 +12,7 @@ type Testimonial = {
   role_title: string | null;
   created_at: string;
 };
-type Profile = { user_id: string; display_name: string; avatar_url: string | null };
+type Profile = { user_id: string; display_name: string; avatar_url: string | null; work_area: string | null };
 
 export function TestimonialsSection() {
   const { data: items = [] } = useQuery({
@@ -36,7 +36,7 @@ export function TestimonialsSection() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("public_profiles")
-        .select("user_id,display_name,avatar_url")
+        .select("user_id,display_name,avatar_url,work_area")
         .in("user_id", userIds);
       if (error) return [];
       return (data ?? []) as Profile[];
@@ -81,15 +81,25 @@ export function TestimonialsSection() {
               <p className="text-sm leading-relaxed flex-1 whitespace-pre-wrap">"{t.content}"</p>
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border/40">
                 {p?.avatar_url ? (
-                  <img src={p.avatar_url} alt="" loading="lazy" className="w-10 h-10 rounded-full object-cover" />
+                  <img
+                    src={p.avatar_url}
+                    alt={`Foto de ${p.display_name ?? "membro da comunidade"}`}
+                    loading="lazy"
+                    className="w-11 h-11 rounded-full object-cover border border-primary/30 shrink-0"
+                  />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 flex items-center justify-center text-xs font-black">
+                  <div className="w-11 h-11 shrink-0 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 flex items-center justify-center text-xs font-black">
                     {(p?.display_name ?? "?").slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold truncate">{p?.display_name ?? "Membro da galera"}</div>
-                  {t.role_title && <div className="text-[11px] text-muted-foreground truncate">{t.role_title}</div>}
+                  {(t.role_title || p?.work_area) && (
+                    <div className="text-[11px] text-primary/90 truncate">{t.role_title || p?.work_area}</div>
+                  )}
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    {new Date(t.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                  </div>
                 </div>
               </div>
             </motion.article>
