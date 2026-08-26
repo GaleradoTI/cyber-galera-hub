@@ -104,7 +104,7 @@ function NoticiasPage() {
   return (
     <DashboardShell title="Notícias da Comunidade" description="Publique novidades oficiais que aparecem em destaque no feed.">
       <div className="flex justify-end mb-3">
-        <Button onClick={() => setEditing({ title: "", content: "", cover_url: "", pinned_until: "" })}>
+        <Button onClick={() => openEditor()}>
           <Plus className="h-4 w-4 mr-1" /> Nova notícia
         </Button>
       </div>
