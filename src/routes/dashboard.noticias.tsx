@@ -263,7 +263,22 @@ function NoticiasPage() {
                 Publicada em {new Date(viewing.created_at).toLocaleString("pt-BR")}
                 {viewing.pinned_until && ` · Fixada até ${new Date(viewing.pinned_until).toLocaleString("pt-BR")}`}
               </p>
-              <p className="text-sm whitespace-pre-wrap">{viewing.content}</p>
+              <RichText text={viewing.content} className="text-sm" />
+              {(viewing.links?.length ?? 0) > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
+                  {viewing.links!.map((l) => (
+                    <a
+                      key={l.url}
+                      href={l.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs rounded-full border border-primary/30 px-3 py-1 hover:bg-primary/10"
+                    >
+                      <ExternalLink className="h-3 w-3" /> {l.label || l.url.replace(/^https?:\/\//, "").slice(0, 40)}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
