@@ -176,7 +176,7 @@ function DepoimentosPage() {
         <TabsContent value="meus" className="mt-5 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">{mine.length} depoimento(s)</p>
-            <Button onClick={() => setEditing({ rating: 5, content: "", role_title: "" })}>
+            <Button onClick={() => setEditing({ rating: 5, content: "", role_title: "", company: "" })}>
               <Plus className="h-4 w-4 mr-1" /> Novo depoimento
             </Button>
           </div>
@@ -249,7 +249,11 @@ function DepoimentosPage() {
                     </div>
                   </div>
                   <p className="text-sm mt-3 whitespace-pre-wrap">{t.content}</p>
-                  {t.role_title && <p className="text-xs text-muted-foreground mt-1">— {t.role_title}</p>}
+                  {(t.role_title || t.company) && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      — {[t.role_title, t.company].filter(Boolean).join(" @ ")}
+                    </p>
+                  )}
                   <p className="text-[10px] text-muted-foreground mt-2">
                     Enviado em {new Date(t.created_at).toLocaleString("pt-BR")}
                   </p>
