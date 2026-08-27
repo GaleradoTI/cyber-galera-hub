@@ -119,6 +119,7 @@ function DepoimentosPage() {
       content: editing.content.trim(),
       rating: editing.rating,
       role_title: editing.role_title?.trim() || null,
+      company: editing.company?.trim() || null,
     };
     const { error } = editing.id
       ? await supabase.from("testimonials").update(payload).eq("id", editing.id)
@@ -193,7 +194,11 @@ function DepoimentosPage() {
                   <StatusBadge status={t.status} />
                 </div>
                 <p className="text-sm mt-2 whitespace-pre-wrap">{t.content}</p>
-                {t.role_title && <p className="text-xs text-muted-foreground mt-2">— {t.role_title}</p>}
+                {(t.role_title || t.company) && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    — {[t.role_title, t.company].filter(Boolean).join(" @ ")}
+                  </p>
+                )}
                 {t.status === "rejected" && t.moderator_note && (
                   <p className="text-xs text-destructive mt-2">Nota do moderador: {t.moderator_note}</p>
                 )}
@@ -274,10 +279,19 @@ function DepoimentosPage() {
               <Label>Sua nota</Label>
               <div className="mt-1"><Stars value={editing?.rating ?? 5} onChange={(n) => setEditing({ ...editing!, rating: n })} /></div>
             </div>
-            <div>
-              <Label>Cargo / atuação (opcional)</Label>
-              <Input placeholder="Ex.: Dev Front-end @ Empresa" value={editing?.role_title ?? ""} onChange={(e) => setEditing({ ...editing!, role_title: e.target.value })} />
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <Label>Cargo (opcional)</Label>
+                <Input placeholder="Ex.: Dev Front-end" value={editing?.role_title ?? ""} onChange={(e) => setEditing({ ...editing!, role_title: e.target.value })} />
+              </div>
+              <div>
+                <Label>Empresa (opcional)</Label>
+                <Input placeholder="Ex.: Accenture Brasil" value={editing?.company ?? ""} onChange={(e) => setEditing({ ...editing!, company: e.target.value })} />
+              </div>
             </div>
+            <p className="text-[10px] text-muted-foreground -mt-1">
+              Seu nome e foto do perfil aparecem junto ao depoimento na página inicial.
+            </p>
             <div>
               <Label>Seu depoimento</Label>
               <Textarea
