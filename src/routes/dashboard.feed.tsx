@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Send, Trash2, MessageCircle, Heart, Repeat2, Pin, Newspaper } from "lucide-react";
+import { ExternalLink, Send, Trash2, MessageCircle, Heart, Repeat2, Pin, Newspaper, SmilePlus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { supabase } from "@/integrations/supabase/client";
@@ -165,6 +165,7 @@ function FeedPage() {
               source={post.reposted_from_id ? (sourcePosts as Map<string, FeedPost>).get(post.reposted_from_id) ?? null : null}
               profileMap={profileMap as Map<string, Profile>}
               currentUserId={user?.id ?? null}
+              isAdmin={!!isAdmin}
               canRemove={isAdmin || post.author_id === user?.id}
               onRemove={() => remove(post)}
               onRepost={() => repost(post)}
