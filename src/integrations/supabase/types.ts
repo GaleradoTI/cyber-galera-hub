@@ -604,6 +604,73 @@ export type Database = {
         }
         Relationships: []
       }
+      feed_post_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "member_feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_post_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "member_feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_categories: {
         Row: {
           color: string | null
@@ -1799,6 +1866,7 @@ export type Database = {
       }
       testimonials: {
         Row: {
+          company: string | null
           content: string
           created_at: string
           id: string
@@ -1812,6 +1880,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company?: string | null
           content: string
           created_at?: string
           id?: string
@@ -1825,6 +1894,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          company?: string | null
           content?: string
           created_at?: string
           id?: string
@@ -1972,6 +2042,21 @@ export type Database = {
           tech_tags?: string[] | null
           user_id?: string | null
           work_area?: string | null
+        }
+        Relationships: []
+      }
+      public_testimonials: {
+        Row: {
+          author_avatar_url: string | null
+          author_name: string | null
+          author_work_area: string | null
+          company: string | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          rating: number | null
+          role_title: string | null
+          user_id: string | null
         }
         Relationships: []
       }
