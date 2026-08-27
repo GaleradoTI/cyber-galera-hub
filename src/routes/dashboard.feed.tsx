@@ -193,6 +193,7 @@ function PostCard({
   source,
   profileMap,
   currentUserId,
+  isAdmin,
   canRemove,
   onRemove,
   onRepost,
@@ -201,6 +202,7 @@ function PostCard({
   source: FeedPost | null;
   profileMap: Map<string, Profile>;
   currentUserId: string | null;
+  isAdmin: boolean;
   canRemove: boolean;
   onRemove: () => void;
   onRepost: () => void;
