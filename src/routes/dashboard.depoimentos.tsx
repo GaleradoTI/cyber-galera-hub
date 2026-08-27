@@ -22,6 +22,7 @@ type Testimonial = {
   rating: number;
   content: string;
   role_title: string | null;
+  company: string | null;
   status: "pending" | "approved" | "rejected";
   moderator_note: string | null;
   moderated_at: string | null;
