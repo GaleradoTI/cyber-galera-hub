@@ -1866,6 +1866,9 @@ export type Database = {
       }
       testimonials: {
         Row: {
+          author_avatar_url: string | null
+          author_name: string | null
+          author_work_area: string | null
           company: string | null
           content: string
           created_at: string
@@ -1880,6 +1883,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          author_avatar_url?: string | null
+          author_name?: string | null
+          author_work_area?: string | null
           company?: string | null
           content: string
           created_at?: string
@@ -1894,6 +1900,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          author_avatar_url?: string | null
+          author_name?: string | null
+          author_work_area?: string | null
           company?: string | null
           content?: string
           created_at?: string
@@ -2042,21 +2051,6 @@ export type Database = {
           tech_tags?: string[] | null
           user_id?: string | null
           work_area?: string | null
-        }
-        Relationships: []
-      }
-      public_testimonials: {
-        Row: {
-          author_avatar_url: string | null
-          author_name: string | null
-          author_work_area: string | null
-          company: string | null
-          content: string | null
-          created_at: string | null
-          id: string | null
-          rating: number | null
-          role_title: string | null
-          user_id: string | null
         }
         Relationships: []
       }
