@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle, ArrowLeft } from "lucide-react";
+import { ProfileSocial } from "@/components/dashboard/profile-social";
+
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
