@@ -93,6 +93,8 @@ function PerfilPage() {
     social_links: {} as Record<string, string>,
   });
   const [saving, setSaving] = useState(false);
+  const [mode, setMode] = useState<"profile" | "settings">("profile");
+
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
