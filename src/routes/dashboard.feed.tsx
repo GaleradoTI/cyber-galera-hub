@@ -288,7 +288,7 @@ function PostCard({
         </div>
       )}
 
-      <PostActions post={post} currentUserId={currentUserId} onRepost={onRepost} />
+      <PostActions post={post} currentUserId={currentUserId} isAdmin={isAdmin} onRepost={onRepost} />
     </article>
   );
 }
