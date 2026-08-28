@@ -338,12 +338,21 @@ function PerfilPage() {
   };
 
   return (
-    <DashboardShell title="Meu Perfil" description="Atualize seus dados, links e disponibilidade.">
+    <DashboardShell title="Meu Perfil" description="Seu espaço na comunidade: publicações, mídias e conexões.">
       {!user || !rolesReady || isLoading ? (
         <div className="text-muted-foreground">Carregando…</div>
+      ) : mode === "profile" ? (
+        <ProfileSocial userId={user.id} profile={{ ...profile, ...form }} onOpenSettings={() => setMode("settings")} />
       ) : (
         <div className="grid gap-5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground">CONFIGURAÇÕES</h2>
+            <Button variant="outline" size="sm" onClick={() => setMode("profile")}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Voltar ao perfil
+            </Button>
+          </div>
           <section className="glass rounded-xl p-5 border border-primary/20">
+
             <h2 className="font-bold text-sm mb-4">Dados básicos</h2>
             <div className="mb-5">
               <ImageUploader
