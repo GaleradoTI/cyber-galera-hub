@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle, ArrowLeft } from "lucide-react";
+import { ProfileSocial } from "@/components/dashboard/profile-social";
+
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -91,6 +93,8 @@ function PerfilPage() {
     social_links: {} as Record<string, string>,
   });
   const [saving, setSaving] = useState(false);
+  const [mode, setMode] = useState<"profile" | "settings">("profile");
+
   const [pwd, setPwd] = useState({ next: "", confirm: "" });
   const [cepLoading, setCepLoading] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
@@ -338,12 +342,21 @@ function PerfilPage() {
   };
 
   return (
-    <DashboardShell title="Meu Perfil" description="Atualize seus dados, links e disponibilidade.">
+    <DashboardShell title="Meu Perfil" description="Seu espaço na comunidade: publicações, mídias e conexões.">
       {!user || !rolesReady || isLoading ? (
         <div className="text-muted-foreground">Carregando…</div>
+      ) : mode === "profile" ? (
+        <ProfileSocial userId={user.id} profile={{ ...profile, ...form }} onOpenSettings={() => setMode("settings")} />
       ) : (
         <div className="grid gap-5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground">CONFIGURAÇÕES</h2>
+            <Button variant="outline" size="sm" onClick={() => setMode("profile")}>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Voltar ao perfil
+            </Button>
+          </div>
           <section className="glass rounded-xl p-5 border border-primary/20">
+
             <h2 className="font-bold text-sm mb-4">Dados básicos</h2>
             <div className="mb-5">
               <ImageUploader

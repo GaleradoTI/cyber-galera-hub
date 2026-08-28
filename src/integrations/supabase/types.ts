@@ -1039,6 +1039,7 @@ export type Database = {
           cover_url: string | null
           created_at: string
           id: string
+          images: string[]
           kind: string
           links: Json
           pinned_until: string | null
@@ -1053,6 +1054,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           id?: string
+          images?: string[]
           kind?: string
           links?: Json
           pinned_until?: string | null
@@ -1067,6 +1069,7 @@ export type Database = {
           cover_url?: string | null
           created_at?: string
           id?: string
+          images?: string[]
           kind?: string
           links?: Json
           pinned_until?: string | null
