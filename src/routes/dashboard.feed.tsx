@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Send, Trash2, MessageCircle, Heart, Repeat2, Pin, Newspaper, SmilePlus, Pencil } from "lucide-react";
+import { X, ExternalLink, Send, Trash2, MessageCircle, Heart, Repeat2, Pin, Newspaper, SmilePlus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/dashboard/follow-button";
 import { RichText, prettyUrl } from "@/lib/rich-text";
+import { ImageUploader } from "@/components/ui/image-uploader";
 
 export const Route = createFileRoute("/dashboard/feed")({ component: FeedPage });
 
@@ -21,6 +22,7 @@ type FeedPost = {
   content: string;
   title: string | null;
   cover_url: string | null;
+  images: string[] | null;
   links: { url: string; label?: string }[];
   status: string;
   created_at: string;
@@ -35,6 +37,8 @@ function FeedPage() {
   const qc = useQueryClient();
   const { user, isAdmin } = useDashboardRoles();
   const [content, setContent] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+
   const links = useMemo(() => extractLinks(content), [content]);
 
   const { data: posts = [] as FeedPost[], isLoading } = useQuery({
@@ -99,10 +103,11 @@ function FeedPage() {
     if (content.length > 2000) return toast.error("O post pode ter no máximo 2000 caracteres.");
     const { error } = await supabase
       .from("member_feed_posts")
-      .insert({ author_id: user.id, content: content.trim(), links, status: "published", kind: "user" });
+      .insert({ author_id: user.id, content: content.trim(), links, images, status: "published", kind: "user" } as any);
     if (error) return toast.error(error.message);
     toast.success("Publicado no feed.");
     setContent("");
+    setImages([]);
     qc.invalidateQueries({ queryKey: ["member-feed"] });
   };
 
@@ -142,6 +147,37 @@ function FeedPage() {
           onChange={(e) => setContent(e.target.value)}
           placeholder="Escreva uma atualização, dica, link ou novidade…"
         />
+        {images.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
+            {images.map((src) => (
+              <div key={src} className="relative">
+                <img src={src} alt="" className="w-full h-24 object-cover rounded-lg border border-border/50" />
+                <button
+                  type="button"
+                  aria-label="Remover imagem"
+                  onClick={() => setImages((prev) => prev.filter((i) => i !== src))}
+                  className="absolute top-1 right-1 rounded-full bg-background/90 border border-border p-1"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {user?.id && images.length < 4 && (
+          <div className="mt-3">
+            <ImageUploader
+              bucket="avatars"
+              folder={`${user.id}/feed`}
+              value={null}
+              onChange={(url) => { if (url) setImages((prev) => [...prev, url].slice(0, 4)); }}
+              label="Adicionar foto"
+              hint="Até 4 imagens por post."
+            />
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
           <div className="flex flex-wrap gap-1">
             {links.map((l) => (
@@ -265,6 +301,16 @@ function PostCard({
 
       {post.content && (
         <RichText text={post.content} className="text-sm text-foreground/90 mt-3" />
+      )}
+
+      {(post.images ?? []).length > 0 && (
+        <div className={`grid gap-2 mt-3 ${(post.images ?? []).length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+          {(post.images ?? []).map((src) => (
+            <a key={src} href={src} target="_blank" rel="noreferrer">
+              <img src={src} alt="" loading="lazy" className="rounded-lg w-full max-h-72 object-cover border border-border/40" />
+            </a>
+          ))}
+        </div>
       )}
 
       {isRepost && source && (

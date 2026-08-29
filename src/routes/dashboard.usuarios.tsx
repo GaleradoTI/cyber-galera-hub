@@ -42,6 +42,8 @@ function UsuariosPage() {
   const [genderFilter, setGenderFilter] = useState("__all");
   const [ageFilter, setAgeFilter] = useState("__all");
   const [page, setPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState("__all");
+  const [sortBy, setSortBy] = useState("recent");
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editName, setEditName] = useState("");
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
@@ -141,14 +143,22 @@ function UsuariosPage() {
     if (ageFilter !== "__all") {
       if (getAgeRange(p.birth_date) !== ageFilter) return false;
     }
+    if (roleFilter !== "__all") {
+      if (primaryOf(p.user_id) !== roleFilter) return false;
+    }
     return true;
+  }).sort((a, b) => {
+    if (sortBy === "az") return (a.display_name ?? a.email).localeCompare(b.display_name ?? b.email, "pt-BR");
+    if (sortBy === "za") return (b.display_name ?? b.email).localeCompare(a.display_name ?? a.email, "pt-BR");
+    if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  useEffect(() => { setPage(1); }, [search, regionFilter, genderFilter, ageFilter, badgeFilter]);
+  useEffect(() => { setPage(1); }, [search, regionFilter, genderFilter, ageFilter, badgeFilter, roleFilter, sortBy]);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
@@ -260,15 +270,127 @@ function UsuariosPage() {
     }
   };
 
+  const renderIdentity = (p: ProfileRow) => {
+    const userBadges = badgesByUser.get(p.user_id) ?? [];
+    return (
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 flex items-center justify-center text-xs font-black">
+          {(p.display_name ?? p.email).slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <div className="text-sm font-medium truncate flex items-center gap-1">
+            <span className="truncate">{p.display_name}</span>
+            {p.is_verified_recruiter && (
+              <span title="Recrutador verificado"><BadgeCheck className="h-3.5 w-3.5 shrink-0 text-primary" /></span>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground truncate">{p.email}</div>
+          {(userBadges.length > 0 || isSuperAdmin) && (
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              {userBadges.map((b) => (
+                <span key={b.id} className={`group inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border text-[9px] font-bold tracking-wider border-${b.color} text-${b.color}`}>
+                  {b.label.toUpperCase()}
+                  {isSuperAdmin && (
+                    <button onClick={() => removeBadge(b.id)} className="opacity-50 hover:opacity-100">
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  )}
+                </span>
+              ))}
+              {isSuperAdmin && (
+                <button
+                  onClick={() => { setAddBadgeFor(p); setNewBadge({ label: "", color: "primary" }); }}
+                  className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-dashed border-muted-foreground/40 text-[9px] text-muted-foreground hover:border-primary hover:text-primary"
+                >
+                  <Plus className="h-2.5 w-2.5" /> CARGO
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderActions = (p: ProfileRow, role: string) => {
+    const isTargetAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
+    const canActOnTarget = isSuperAdmin || !isTargetAdmin;
+    const userRoles = rolesByUser.get(p.user_id) ?? [];
+    return (
+      <>
+        <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setEditName(p.display_name ?? ""); }}>
+          <Pencil className="h-3 w-3 mr-1" /> Editar
+        </Button>
+        <Button size="sm" variant="neon-outline" onClick={() => setViewing(p)}>
+          <Eye className="h-3 w-3 mr-1" /> Detalhes
+        </Button>
+        {isSuperAdmin && role === "MEMBRO" && (
+          <Button size="sm" variant="outline" onClick={() => promoteToAdmin(p)}>
+            <ArrowUp className="h-3 w-3 mr-1" /> Tornar ADMIN
+          </Button>
+        )}
+        {isSuperAdmin && role === "ADMIN" && (
+          <Button size="sm" variant="outline" onClick={() => demoteFromAdmin(p)}>
+            <ArrowDown className="h-3 w-3 mr-1" /> Rebaixar
+          </Button>
+        )}
+        {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
+          <Button size="sm" variant="outline" onClick={() => toggleRecruiter(p, userRoles)}>
+            <Building2 className="h-3 w-3 mr-1" />
+            {userRoles.includes("RECRUTADOR") ? "Remover recrutador" : "Tornar recrutador"}
+          </Button>
+        )}
+        {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
+          <Button size="sm" variant="outline" onClick={() => toggleAmbassador(p, userRoles)}>
+            <Sparkles className="h-3 w-3 mr-1" />
+            {userRoles.includes("EMBAIXADOR") ? "Remover embaixador" : "Tornar embaixador"}
+          </Button>
+        )}
+        {isSuperAdmin && userRoles.includes("RECRUTADOR") && (
+          <Button size="sm" variant="outline" onClick={() => toggleVerified(p)}>
+            <BadgeCheck className="h-3 w-3 mr-1" />
+            {p.is_verified_recruiter ? "Remover verificação" : "Verificar"}
+          </Button>
+        )}
+        <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => setConfirm(p)}>
+          {p.is_blocked ? "Reativar" : "Bloquear"}
+        </Button>
+        {canActOnTarget && role !== "SUPER_ADMIN" && (
+          <Button size="sm" variant="outline" onClick={() => setResetting(p)}>
+            <KeyRound className="h-3 w-3 mr-1" /> Resetar senha
+          </Button>
+        )}
+      </>
+    );
+  };
+
   return (
     <DashboardShell title="Usuários" description={isSuperAdmin ? "Gerencie todos os usuários, papéis e status." : "Gerencie membros (ativar/bloquear)."}>
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <div className="relative flex-1 min-w-[220px] max-w-md">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center gap-2 mb-4">
+        <div className="relative col-span-2 sm:col-span-3 lg:flex-1 lg:min-w-[220px] lg:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou email" className="pl-9" />
         </div>
+        <Select value={roleFilter} onValueChange={setRoleFilter}>
+          <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="Papel" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">Todos os papéis</SelectItem>
+            {["SUPER_ADMIN", "ADMIN", "MODERADOR", "EMBAIXADOR", "RECRUTADOR", "MEMBRO"].map((r) => (
+              <SelectItem key={r} value={r}>{r.replace("_", " ")}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-full lg:w-44"><SelectValue placeholder="Ordenar" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Mais recentes</SelectItem>
+            <SelectItem value="oldest">Mais antigos</SelectItem>
+            <SelectItem value="az">Nome (A–Z)</SelectItem>
+            <SelectItem value="za">Nome (Z–A)</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={regionFilter} onValueChange={setRegionFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Região" /></SelectTrigger>
+          <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="Região" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="__all">Todas regiões</SelectItem>
             {REGIONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
@@ -276,7 +398,7 @@ function UsuariosPage() {
           </SelectContent>
         </Select>
         <Select value={genderFilter} onValueChange={setGenderFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Sexo" /></SelectTrigger>
+          <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="Sexo" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="__all">Todos os sexos</SelectItem>
             {GENDER_OPTIONS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
@@ -284,7 +406,7 @@ function UsuariosPage() {
           </SelectContent>
         </Select>
         <Select value={ageFilter} onValueChange={setAgeFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Idade" /></SelectTrigger>
+          <SelectTrigger className="w-full lg:w-40"><SelectValue placeholder="Idade" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="__all">Todas idades</SelectItem>
             {AGE_RANGES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
@@ -292,17 +414,46 @@ function UsuariosPage() {
         </Select>
         {allBadgeLabels.length > 0 && (
           <Select value={badgeFilter} onValueChange={setBadgeFilter}>
-            <SelectTrigger className="w-48"><SelectValue placeholder="Filtrar por cargo" /></SelectTrigger>
+            <SelectTrigger className="w-full lg:w-48"><SelectValue placeholder="Cargo" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="__all">Todos os cargos</SelectItem>
               {allBadgeLabels.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
-        <div className="text-xs text-muted-foreground ml-auto">{filtered.length} usuário(s)</div>
+        <div className="col-span-2 sm:col-span-3 lg:col-auto text-xs text-muted-foreground lg:ml-auto">{filtered.length} usuário(s)</div>
       </div>
 
-      <div className="glass rounded-xl border border-primary/20 overflow-hidden">
+      {isLoading && <div className="text-center text-muted-foreground py-8">Carregando…</div>}
+      {!isLoading && filtered.length === 0 && (
+        <div className="glass rounded-xl p-8 text-center text-muted-foreground">Nenhum usuário encontrado.</div>
+      )}
+
+      {/* Mobile: cards */}
+      <div className="grid gap-3 md:hidden">
+        {!isLoading && paginated.map((p) => {
+          const role = primaryOf(p.user_id);
+          return (
+            <div key={p.id} className="glass rounded-xl border border-primary/20 p-4">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                <div className="min-w-0">{renderIdentity(p)}</div>
+                <RoleBadge role={role} />
+              </div>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                {p.is_blocked ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-destructive"><ShieldOff className="h-3 w-3" /> Bloqueado</span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs text-primary"><Shield className="h-3 w-3" /> Ativo</span>
+                )}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">{renderActions(p, role)}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: table */}
+      <div className="glass rounded-xl border border-primary/20 overflow-x-auto hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -313,54 +464,11 @@ function UsuariosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>
-            )}
             {!isLoading && paginated.map((p) => {
               const role = primaryOf(p.user_id);
-              const isTargetAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
-              const canActOnTarget = isSuperAdmin || !isTargetAdmin;
-              const userBadges = badgesByUser.get(p.user_id) ?? [];
               return (
                 <TableRow key={p.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 flex items-center justify-center text-xs font-black">
-                        {(p.display_name ?? p.email).slice(0, 1).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-medium truncate flex items-center gap-1">
-                          {p.display_name}
-                          {p.is_verified_recruiter && (
-                            <span title="Recrutador verificado"><BadgeCheck className="h-3.5 w-3.5 text-primary" /></span>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground truncate">{p.email}</div>
-                        {(userBadges.length > 0 || isSuperAdmin) && (
-                          <div className="flex flex-wrap items-center gap-1 mt-1">
-                            {userBadges.map((b) => (
-                              <span key={b.id} className={`group inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border text-[9px] font-bold tracking-wider border-${b.color} text-${b.color}`}>
-                                {b.label.toUpperCase()}
-                                {isSuperAdmin && (
-                                  <button onClick={() => removeBadge(b.id)} className="opacity-50 hover:opacity-100">
-                                    <X className="h-2.5 w-2.5" />
-                                  </button>
-                                )}
-                              </span>
-                            ))}
-                            {isSuperAdmin && (
-                              <button
-                                onClick={() => { setAddBadgeFor(p); setNewBadge({ label: "", color: "primary" }); }}
-                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-dashed border-muted-foreground/40 text-[9px] text-muted-foreground hover:border-primary hover:text-primary"
-                              >
-                                <Plus className="h-2.5 w-2.5" /> CARGO
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
+                  <TableCell>{renderIdentity(p)}</TableCell>
                   <TableCell><RoleBadge role={role} /></TableCell>
                   <TableCell>
                     {p.is_blocked ? (
@@ -369,56 +477,12 @@ function UsuariosPage() {
                       <span className="inline-flex items-center gap-1 text-xs text-primary"><Shield className="h-3 w-3" /> Ativo</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setEditName(p.display_name ?? ""); }}>
-                      <Pencil className="h-3 w-3 mr-1" /> Editar
-                    </Button>
-                    <Button size="sm" variant="neon-outline" onClick={() => setViewing(p)}>
-                      <Eye className="h-3 w-3 mr-1" /> Ver detalhes
-                    </Button>
-                    {isSuperAdmin && role === "MEMBRO" && (
-                      <Button size="sm" variant="outline" onClick={() => promoteToAdmin(p)}>
-                        <ArrowUp className="h-3 w-3 mr-1" /> Tornar ADMIN
-                      </Button>
-                    )}
-                    {isSuperAdmin && role === "ADMIN" && (
-                      <Button size="sm" variant="outline" onClick={() => demoteFromAdmin(p)}>
-                        <ArrowDown className="h-3 w-3 mr-1" /> Rebaixar
-                      </Button>
-                    )}
-                    {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
-                      <Button size="sm" variant="outline" onClick={() => toggleRecruiter(p, rolesByUser.get(p.user_id) ?? [])}>
-                        <Building2 className="h-3 w-3 mr-1" />
-                        {(rolesByUser.get(p.user_id) ?? []).includes("RECRUTADOR") ? "Remover recrutador" : "Tornar recrutador"}
-                      </Button>
-                    )}
-                    {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
-                      <Button size="sm" variant="outline" onClick={() => toggleAmbassador(p, rolesByUser.get(p.user_id) ?? [])}>
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        {(rolesByUser.get(p.user_id) ?? []).includes("EMBAIXADOR") ? "Remover embaixador" : "Tornar embaixador"}
-                      </Button>
-                    )}
-                    {isSuperAdmin && (rolesByUser.get(p.user_id) ?? []).includes("RECRUTADOR") && (
-                      <Button size="sm" variant="outline" onClick={() => toggleVerified(p)}>
-                        <BadgeCheck className="h-3 w-3 mr-1" />
-                        {p.is_verified_recruiter ? "Remover verificação" : "Verificar"}
-                      </Button>
-                    )}
-                    <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => setConfirm(p)}>
-                      {p.is_blocked ? "Reativar" : "Bloquear"}
-                    </Button>
-                    {canActOnTarget && role !== "SUPER_ADMIN" && (
-                      <Button size="sm" variant="outline" onClick={() => setResetting(p)}>
-                        <KeyRound className="h-3 w-3 mr-1" /> Resetar senha
-                      </Button>
-                    )}
+                  <TableCell>
+                    <div className="flex flex-wrap justify-end gap-2">{renderActions(p, role)}</div>
                   </TableCell>
                 </TableRow>
               );
             })}
-            {!isLoading && filtered.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-8">Nenhum usuário encontrado.</TableCell></TableRow>
-            )}
           </TableBody>
         </Table>
       </div>
