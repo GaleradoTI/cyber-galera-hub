@@ -42,6 +42,8 @@ function UsuariosPage() {
   const [genderFilter, setGenderFilter] = useState("__all");
   const [ageFilter, setAgeFilter] = useState("__all");
   const [page, setPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState("__all");
+  const [sortBy, setSortBy] = useState("recent");
   const [editing, setEditing] = useState<ProfileRow | null>(null);
   const [editName, setEditName] = useState("");
   const [confirm, setConfirm] = useState<ProfileRow | null>(null);
@@ -141,14 +143,22 @@ function UsuariosPage() {
     if (ageFilter !== "__all") {
       if (getAgeRange(p.birth_date) !== ageFilter) return false;
     }
+    if (roleFilter !== "__all") {
+      if (primaryOf(p.user_id) !== roleFilter) return false;
+    }
     return true;
+  }).sort((a, b) => {
+    if (sortBy === "az") return (a.display_name ?? a.email).localeCompare(b.display_name ?? b.email, "pt-BR");
+    if (sortBy === "za") return (b.display_name ?? b.email).localeCompare(a.display_name ?? a.email, "pt-BR");
+    if (sortBy === "oldest") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  useEffect(() => { setPage(1); }, [search, regionFilter, genderFilter, ageFilter, badgeFilter]);
+  useEffect(() => { setPage(1); }, [search, regionFilter, genderFilter, ageFilter, badgeFilter, roleFilter, sortBy]);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-profiles"] });
