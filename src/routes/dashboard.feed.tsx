@@ -37,6 +37,8 @@ function FeedPage() {
   const qc = useQueryClient();
   const { user, isAdmin } = useDashboardRoles();
   const [content, setContent] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+
   const links = useMemo(() => extractLinks(content), [content]);
 
   const { data: posts = [] as FeedPost[], isLoading } = useQuery({
