@@ -45,6 +45,7 @@ export function ProfileSocial({
 }) {
   const [tab, setTab] = useState<TabKey>("posts");
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [openPost, setOpenPost] = useState<Post | null>(null);
   const { followers, following } = useFollowStats(userId);
 
   const { data: posts = [] } = useQuery({
