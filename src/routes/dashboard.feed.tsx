@@ -1,18 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, ExternalLink, Send, Trash2, MessageCircle, Heart, Repeat2, Pin, Newspaper, SmilePlus, Pencil } from "lucide-react";
+import { X, ExternalLink, Send, Trash2, MessageCircle, Heart, Repeat2, Pin, Newspaper, SmilePlus } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/components/dashboard/follow-button";
 import { RichText, prettyUrl } from "@/lib/rich-text";
 import { ImageUploader } from "@/components/ui/image-uploader";
+import { FeedCommentsDialog, useCommentCount } from "@/components/dashboard/feed-comments";
 
 export const Route = createFileRoute("/dashboard/feed")({ component: FeedPage });
 
@@ -355,25 +355,8 @@ function RepostedInline({ post, profile }: { post: FeedPost; profile: Profile | 
 }
 
 type Reaction = { id: string; post_id: string; user_id: string; emoji: string };
-type Comment = {
-  id: string;
-  post_id: string;
-  user_id: string;
-  content: string;
-  created_at: string;
-  updated_at: string;
-};
 
 const EMOJIS = ["👍", "❤️", "🔥", "🎉", "👏", "🤯"];
-
-function timeAgo(iso: string) {
-  const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-  if (diff < 60) return "agora";
-  if (diff < 3600) return `${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} h`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)} d`;
-  return new Date(iso).toLocaleDateString("pt-BR");
-}
 
 function PostActions({
   post,
@@ -387,29 +370,15 @@ function PostActions({
   onRepost: () => void;
 }) {
   const qc = useQueryClient();
-  const [showComments, setShowComments] = useState(false);
+  const [openComments, setOpenComments] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const [commentText, setCommentText] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState("");
+  const commentCount = useCommentCount(post.id);
 
   const { data: reactions = [] } = useQuery({
     queryKey: ["feed-reactions", post.id],
     queryFn: async () => {
       const { data } = await supabase.from("feed_post_reactions").select("*").eq("post_id", post.id);
       return (data ?? []) as Reaction[];
-    },
-  });
-
-  const { data: comments = [] } = useQuery({
-    queryKey: ["feed-comments", post.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("feed_post_comments")
-        .select("*")
-        .eq("post_id", post.id)
-        .order("created_at");
-      return (data ?? []) as Comment[];
     },
   });
 
@@ -425,27 +394,12 @@ function PostActions({
     },
   });
 
-  const commenterIds = useMemo(() => Array.from(new Set(comments.map((c) => c.user_id))), [comments]);
-  const { data: commenterProfiles = new Map<string, Profile>() } = useQuery({
-    queryKey: ["feed-comment-profiles", commenterIds.join(",")],
-    enabled: commenterIds.length > 0,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,avatar_url,email")
-        .in("user_id", commenterIds);
-      return new Map((data ?? []).map((p: any) => [p.user_id, p as Profile]));
-    },
-  });
-
   const myReaction = currentUserId ? reactions.find((r) => r.user_id === currentUserId) ?? null : null;
   const grouped = useMemo(() => {
     const map = new Map<string, number>();
     for (const r of reactions) map.set(r.emoji, (map.get(r.emoji) ?? 0) + 1);
     return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
   }, [reactions]);
-
-  const refreshReactions = () => qc.invalidateQueries({ queryKey: ["feed-reactions", post.id] });
 
   const react = async (emoji: string) => {
     if (!currentUserId) return toast.error("Entre para reagir.");
@@ -462,38 +416,11 @@ function PostActions({
         .insert({ post_id: post.id, user_id: currentUserId, emoji });
       if (error) return toast.error(error.message);
     }
-    refreshReactions();
-  };
-
-  const sendComment = async () => {
-    if (!currentUserId) return toast.error("Entre para comentar.");
-    const t = commentText.trim();
-    if (!t) return;
-    const { error } = await supabase
-      .from("feed_post_comments")
-      .insert({ post_id: post.id, user_id: currentUserId, content: t });
-    if (error) return toast.error(error.message);
-    setCommentText("");
-    qc.invalidateQueries({ queryKey: ["feed-comments", post.id] });
-  };
-
-  const saveEdit = async (id: string) => {
-    const t = editingText.trim();
-    if (!t) return;
-    const { error } = await supabase.from("feed_post_comments").update({ content: t }).eq("id", id);
-    if (error) return toast.error(error.message);
-    setEditingId(null);
-    qc.invalidateQueries({ queryKey: ["feed-comments", post.id] });
-  };
-
-  const deleteComment = async (id: string) => {
-    const { error } = await supabase.from("feed_post_comments").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["feed-comments", post.id] });
+    qc.invalidateQueries({ queryKey: ["feed-reactions", post.id] });
   };
 
   return (
-    <div className="mt-3 pt-3 border-t border-border/30">
+    <div className="mt-3 pt-2 border-t border-border/30">
       {grouped.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 mb-2">
           {grouped.map(([emoji, count]) => (
@@ -515,25 +442,31 @@ function PostActions({
         </div>
       )}
 
-      <div className="flex items-center gap-1 flex-wrap relative">
+      <div className="relative flex items-center justify-between gap-1 text-muted-foreground">
         <Button
           size="sm"
-          variant={myReaction ? "default" : "ghost"}
-          onClick={() => react(myReaction?.emoji ?? "👍")}
-          className="h-8 text-xs gap-1"
+          variant="ghost"
+          onClick={() => react(myReaction?.emoji ?? "❤️")}
+          className={`h-8 flex-1 text-xs gap-1.5 ${myReaction ? "text-primary" : ""}`}
         >
-          {myReaction ? <span className="text-sm leading-none">{myReaction.emoji}</span> : <Heart className="h-3.5 w-3.5" />}
-          <span>{myReaction ? "Reagiu" : "Curtir"}</span>
+          {myReaction ? (
+            <span className="text-sm leading-none">{myReaction.emoji}</span>
+          ) : (
+            <Heart className="h-4 w-4" />
+          )}
+          <span>{reactions.length > 0 ? reactions.length : "Curtir"}</span>
         </Button>
+
         <Button
           size="icon"
           variant="ghost"
-          className="h-8 w-8"
+          className="h-8 w-8 shrink-0"
           onClick={() => setShowPicker((v) => !v)}
           aria-label="Escolher reação"
         >
-          <SmilePlus className="h-3.5 w-3.5" />
+          <SmilePlus className="h-4 w-4" />
         </Button>
+
         {showPicker && (
           <div className="absolute bottom-9 left-0 z-20 flex gap-1 rounded-full border border-border/60 bg-background/95 px-2 py-1 shadow-lg backdrop-blur">
             {EMOJIS.map((e) => (
@@ -549,108 +482,44 @@ function PostActions({
             ))}
           </div>
         )}
-        <Button size="sm" variant="ghost" onClick={() => setShowComments((v) => !v)} className="h-8 text-xs gap-1">
-          <MessageCircle className="h-3.5 w-3.5" />
-          <span>{showComments ? "Ocultar" : `Comentar${comments.length ? ` · ${comments.length}` : ""}`}</span>
+
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setOpenComments(true)}
+          className="h-8 flex-1 text-xs gap-1.5"
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span>{commentCount > 0 ? commentCount : "Comentar"}</span>
         </Button>
-        <Button size="sm" variant="ghost" onClick={onRepost} className="h-8 text-xs gap-1" disabled={!currentUserId}>
-          <Repeat2 className="h-3.5 w-3.5" />
-          <span>Repostar{repostCount > 0 ? ` · ${repostCount}` : ""}</span>
+
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onRepost}
+          className="h-8 flex-1 text-xs gap-1.5"
+          disabled={!currentUserId}
+        >
+          <Repeat2 className="h-4 w-4" />
+          <span>{repostCount > 0 ? repostCount : "Repostar"}</span>
         </Button>
       </div>
 
-      {showComments && (
-        <div className="mt-3 space-y-2">
-          {comments.length === 0 && (
-            <p className="text-xs text-muted-foreground">Nenhum comentário ainda. Seja o primeiro.</p>
-          )}
-          {comments.map((c) => {
-            const u = (commenterProfiles as Map<string, Profile>).get(c.user_id);
-            const name = u?.display_name || u?.email || "Membro";
-            const mine = c.user_id === currentUserId;
-            const editable = mine;
-            const removable = mine || isAdmin;
-            return (
-              <div key={c.id} className="flex items-start gap-2 text-xs">
-                <Avatar className="h-6 w-6 shrink-0">
-                  <AvatarImage src={u?.avatar_url ?? undefined} />
-                  <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0 bg-background/50 rounded-lg px-2.5 py-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold truncate">{name}</span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {timeAgo(c.created_at)}
-                      {c.updated_at !== c.created_at ? " · editado" : ""}
-                    </span>
-                  </div>
-                  {editingId === c.id ? (
-                    <div className="flex gap-1 mt-1">
-                      <Input
-                        value={editingText}
-                        onChange={(e) => setEditingText(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") { e.preventDefault(); saveEdit(c.id); }
-                          if (e.key === "Escape") setEditingId(null);
-                        }}
-                        className="h-7 text-xs"
-                        autoFocus
-                      />
-                      <Button size="sm" className="h-7 px-2" onClick={() => saveEdit(c.id)}>Salvar</Button>
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => setEditingId(null)}>
-                        Cancelar
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="text-foreground/80 whitespace-pre-wrap break-words">{c.content}</div>
-                  )}
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                  {editable && editingId !== c.id && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0"
-                      onClick={() => { setEditingId(c.id); setEditingText(c.content); }}
-                      aria-label="Editar comentário"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                  )}
-                  {removable && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 w-6 p-0 text-destructive"
-                      onClick={() => deleteComment(c.id)}
-                      aria-label="Excluir comentário"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          <div className="flex gap-1">
-            <Input
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && (e.metaKey || e.ctrlKey || !e.shiftKey)) {
-                  e.preventDefault();
-                  sendComment();
-                }
-              }}
-              placeholder="Comentar…"
-              className="h-8 text-xs"
-            />
-            <Button size="sm" className="h-8" onClick={sendComment} disabled={!commentText.trim()}>
-              <Send className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <FeedCommentsDialog
+        postId={post.id}
+        open={openComments}
+        onOpenChange={setOpenComments}
+        currentUserId={currentUserId}
+        isAdmin={isAdmin}
+        header={
+          post.content || post.title ? (
+            <div className="text-sm text-foreground/80">
+              {post.title && <div className="font-bold mb-1">{post.title}</div>}
+              <RichText text={post.content} className="text-sm" />
+            </div>
+          ) : null
+        }
+      />
     </div>
   );
 }
