@@ -96,17 +96,41 @@ export function ProfileSocial({
               <Stat label="seguindo" value={following} />
             </div>
 
-            {profile?.bio && (
-              <p className="text-sm text-foreground/85 whitespace-pre-wrap break-words">{profile.bio}</p>
-            )}
-
-            {(profile?.tech_tags ?? []).length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {(profile.tech_tags as string[]).map((t) => (
-                  <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
-                ))}
+            <div className="rounded-lg border border-border/50 bg-muted/10 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-muted-foreground">
+                <BadgeCheck className="h-3.5 w-3.5 text-primary" /> BIO PÚBLICA
               </div>
-            )}
+              <p className="text-sm text-foreground/85 whitespace-pre-wrap break-words">
+                {profile?.bio || "Você ainda não escreveu sua bio. Conte sua trajetória, stack e o que procura."}
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <Info label="Cargo / área" value={profile?.work_area || "—"} />
+                <Info
+                  label="Nível"
+                  value={profile?.seniority || (profile?.tech_tags ?? []).length > 6 ? "Sênior" : "—"}
+                />
+                <Info
+                  label="Disponibilidade"
+                  value={profile?.looking_for_job ? "Aberto a oportunidades" : "Não buscando agora"}
+                />
+              </div>
+
+              {(profile?.tech_tags ?? []).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {(profile.tech_tags as string[]).map((t) => (
+                    <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                  ))}
+                </div>
+              )}
+
+              <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground pt-1 border-t border-border/40">
+                <Lock className="h-3 w-3 mt-0.5 shrink-0" />
+                Telefone, endereço completo e data de nascimento são dados pessoais (LGPD) e nunca aparecem aqui —
+                recrutadores só veem bio, cargo, nível, stack e disponibilidade. Região/UF só é compartilhada com seu
+                consentimento nas configurações.
+              </p>
+            </div>
 
             {socials.length > 0 && (
               <div className="flex flex-wrap gap-2">
