@@ -139,54 +139,78 @@ function FeedPage() {
 
   return (
     <DashboardShell title="Feed da Galera" description="Compartilhe textos, links, curta, comente e reposte.">
-      <section className="glass rounded-xl border border-primary/20 p-4 mb-5">
-        <Textarea
-          rows={3}
-          maxLength={2000}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Escreva uma atualização, dica, link ou novidade…"
-        />
-        {images.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-            {images.map((src) => (
-              <div key={src} className="relative">
-                <img src={src} alt="" className="w-full h-24 object-cover rounded-lg border border-border/50" />
-                <button
-                  type="button"
-                  aria-label="Remover imagem"
-                  onClick={() => setImages((prev) => prev.filter((i) => i !== src))}
-                  className="absolute top-1 right-1 rounded-full bg-background/90 border border-border p-1"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+      <section className="glass rounded-xl border border-primary/20 p-3 sm:p-4 mb-5">
+        <div className="flex gap-3">
+          <Avatar className="h-10 w-10 shrink-0 hidden sm:block">
+            <AvatarImage src={(myProfile as any)?.avatar_url ?? undefined} alt="Seu avatar" />
+            <AvatarFallback>{((myProfile as any)?.display_name ?? "EU").slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
 
-        {user?.id && images.length < 4 && (
-          <div className="mt-3">
-            <ImageUploader
-              bucket="avatars"
-              folder={`${user.id}/feed`}
-              value={null}
-              onChange={(url) => { if (url) setImages((prev) => [...prev, url].slice(0, 4)); }}
-              label="Adicionar foto"
-              hint="Até 4 imagens por post."
+          <div className="min-w-0 flex-1">
+            <Textarea
+              rows={2}
+              maxLength={2000}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="O que está acontecendo?"
+              className="resize-none border-0 bg-transparent px-0 text-base focus-visible:ring-0 min-h-[52px]"
             />
-          </div>
-        )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
-          <div className="flex flex-wrap gap-1">
-            {links.map((l) => (
-              <Badge key={l.url} variant="outline" className="text-[10px]">
-                <ExternalLink className="h-3 w-3 mr-1" /> {l.url.replace(/^https?:\/\//, "").slice(0, 28)}
-              </Badge>
-            ))}
+            {images.length > 0 && (
+              <div className={`grid gap-2 mt-2 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-4"}`}>
+                {images.map((src) => (
+                  <div key={src} className="relative">
+                    <img src={src} alt="" className="w-full h-28 sm:h-24 object-cover rounded-xl border border-border/50" />
+                    <button
+                      type="button"
+                      aria-label="Remover imagem"
+                      onClick={() => setImages((prev) => prev.filter((i) => i !== src))}
+                      className="absolute top-1 right-1 rounded-full bg-background/90 border border-border p-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {links.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {links.map((l) => (
+                  <Badge key={l.url} variant="outline" className="text-[10px]">
+                    <ExternalLink className="h-3 w-3 mr-1" /> {l.url.replace(/^https?:\/\//, "").slice(0, 28)}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border/30">
+              {user?.id && images.length < 4 ? (
+                <ImageUploader
+                  compact
+                  compactLabel="Adicionar foto ao post"
+                  bucket="avatars"
+                  folder={`${user.id}/feed`}
+                  value={null}
+                  onChange={(url) => { if (url) setImages((prev) => [...prev, url].slice(0, 4)); }}
+                  label=""
+                />
+              ) : (
+                <span className="text-[11px] text-muted-foreground px-2">Máximo de 4 imagens</span>
+              )}
+              <span className="hidden sm:inline text-[11px] text-muted-foreground tabular-nums ml-1">
+                {content.length}/2000
+              </span>
+              <Button
+                onClick={publish}
+                size="sm"
+                className="ml-auto rounded-full px-5"
+                disabled={content.trim().length < 2}
+              >
+                <Send className="h-4 w-4 mr-1" /> Publicar
+              </Button>
+            </div>
           </div>
-          <Button onClick={publish} className="ml-auto"><Send className="h-4 w-4 mr-1" /> Publicar</Button>
         </div>
       </section>
 
