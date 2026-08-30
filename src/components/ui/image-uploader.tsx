@@ -98,6 +98,7 @@ export function ImageUploader({
   bucket, folder, value, onChange, label = "Imagem", aspect = "square",
   maxBytes = DEFAULT_MAX_BYTES, accept = DEFAULT_ACCEPT, resizeMax, minWidth, hint,
   policyKey, auditEntity, auditEntityId, showDiagnostics, imageFit = "cover",
+  compact = false, compactLabel = "Adicionar imagem",
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
