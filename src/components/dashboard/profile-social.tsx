@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Settings, Grid3X3, ImageIcon, Users, UserPlus, ExternalLink } from "lucide-react";
+import {
+  Settings, Grid3X3, ImageIcon, Users, UserPlus, ExternalLink, BadgeCheck, Lock, MessageCircle,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,7 @@ export function ProfileSocial({
 }) {
   const [tab, setTab] = useState<TabKey>("posts");
   const [lightbox, setLightbox] = useState<string | null>(null);
+  const [openPost, setOpenPost] = useState<Post | null>(null);
   const { followers, following } = useFollowStats(userId);
 
   const { data: posts = [] } = useQuery({
@@ -96,17 +99,38 @@ export function ProfileSocial({
               <Stat label="seguindo" value={following} />
             </div>
 
-            {profile?.bio && (
-              <p className="text-sm text-foreground/85 whitespace-pre-wrap break-words">{profile.bio}</p>
-            )}
-
-            {(profile?.tech_tags ?? []).length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {(profile.tech_tags as string[]).map((t) => (
-                  <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
-                ))}
+            <div className="rounded-lg border border-border/50 bg-muted/10 p-3 space-y-2">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-muted-foreground">
+                <BadgeCheck className="h-3.5 w-3.5 text-primary" /> BIO PÚBLICA
               </div>
-            )}
+              <p className="text-sm text-foreground/85 whitespace-pre-wrap break-words">
+                {profile?.bio || "Você ainda não escreveu sua bio. Conte sua trajetória, stack e o que procura."}
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <Info label="Cargo / área" value={profile?.work_area || "—"} />
+                <Info label="Stack principal" value={(profile?.tech_tags ?? [])[0] || "—"} />
+                <Info
+                  label="Disponibilidade"
+                  value={profile?.looking_for_job ? "Aberto a oportunidades" : "Não buscando agora"}
+                />
+              </div>
+
+              {(profile?.tech_tags ?? []).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {(profile.tech_tags as string[]).map((t) => (
+                    <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                  ))}
+                </div>
+              )}
+
+              <p className="flex items-start gap-1.5 text-[10px] text-muted-foreground pt-1 border-t border-border/40">
+                <Lock className="h-3 w-3 mt-0.5 shrink-0" />
+                Telefone, endereço completo e data de nascimento são dados pessoais (LGPD) e nunca aparecem aqui —
+                recrutadores só veem bio, cargo, nível, stack e disponibilidade. Região/UF só é compartilhada com seu
+                consentimento nas configurações.
+              </p>
+            </div>
 
             {socials.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -158,7 +182,7 @@ export function ProfileSocial({
               {p.title && <h3 className="font-bold mt-1">{p.title}</h3>}
               {p.content && <RichText text={p.content} className="text-sm mt-2" />}
               {(p.images ?? []).length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className={`grid gap-2 mt-3 ${(p.images ?? []).length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   {(p.images ?? []).map((src) => (
                     <button key={src} type="button" onClick={() => setLightbox(src)}>
                       <img src={src} alt="" loading="lazy" className="rounded-lg w-full h-40 object-cover" />
@@ -166,6 +190,16 @@ export function ProfileSocial({
                   ))}
                 </div>
               )}
+              <div className="mt-3 pt-2 border-t border-border/30">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2 text-xs gap-1.5"
+                  onClick={() => setOpenPost(p)}
+                >
+                  <MessageCircle className="h-4 w-4" /> Abrir publicação e comentários
+                </Button>
+              </div>
             </article>
           ))}
           <div className="text-center">

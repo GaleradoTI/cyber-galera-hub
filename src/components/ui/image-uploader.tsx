@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Upload, X, Loader2, Info } from "lucide-react";
+import { Upload, X, Loader2, Info, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,10 @@ type Props = {
   showDiagnostics?: boolean;
   /** How the preview image should fit inside its box. */
   imageFit?: "cover" | "contain";
+  /** Renders only a compact icon button (X/Twitter-style composer actions). */
+  compact?: boolean;
+  /** Accessible label for the compact button. */
+  compactLabel?: string;
 };
 
 const DEFAULT_MAX_BYTES = 4 * 1024 * 1024; // 4MB
@@ -94,6 +98,7 @@ export function ImageUploader({
   bucket, folder, value, onChange, label = "Imagem", aspect = "square",
   maxBytes = DEFAULT_MAX_BYTES, accept = DEFAULT_ACCEPT, resizeMax, minWidth, hint,
   policyKey, auditEntity, auditEntityId, showDiagnostics, imageFit = "cover",
+  compact = false, compactLabel = "Adicionar imagem",
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -288,6 +293,36 @@ export function ImageUploader({
       setTimeout(() => setProgress(0), 600);
     }
   };
+
+  if (compact) {
+    return (
+      <>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={effective.accept.join(",")}
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+            e.target.value = "";
+          }}
+        />
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="h-9 w-9 rounded-full text-primary hover:bg-primary/10"
+          aria-label={compactLabel}
+          title={compactLabel}
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+        </Button>
+      </>
+    );
+  }
 
   return (
     <div>
