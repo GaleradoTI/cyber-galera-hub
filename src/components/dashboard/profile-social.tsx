@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Settings, Grid3X3, ImageIcon, Users, UserPlus, ExternalLink } from "lucide-react";
+import {
+  Settings, Grid3X3, ImageIcon, Users, UserPlus, ExternalLink, BadgeCheck, Lock, MessageCircle,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
