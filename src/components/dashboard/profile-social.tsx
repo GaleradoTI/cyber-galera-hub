@@ -106,10 +106,7 @@ export function ProfileSocial({
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <Info label="Cargo / área" value={profile?.work_area || "—"} />
-                <Info
-                  label="Nível"
-                  value={profile?.seniority || (profile?.tech_tags ?? []).length > 6 ? "Sênior" : "—"}
-                />
+                <Info label="Stack principal" value={(profile?.tech_tags ?? [])[0] || "—"} />
                 <Info
                   label="Disponibilidade"
                   value={profile?.looking_for_job ? "Aberto a oportunidades" : "Não buscando agora"}
