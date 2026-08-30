@@ -41,6 +41,19 @@ function FeedPage() {
 
   const links = useMemo(() => extractLinks(content), [content]);
 
+  const { data: myProfile = null } = useQuery({
+    queryKey: ["my-mini-profile", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("user_id,display_name,avatar_url")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data ?? null;
+    },
+  });
+
   const { data: posts = [] as FeedPost[], isLoading } = useQuery({
     queryKey: ["member-feed"],
     queryFn: async () => {
