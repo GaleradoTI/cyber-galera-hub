@@ -36,6 +36,10 @@ type Props = {
   showDiagnostics?: boolean;
   /** How the preview image should fit inside its box. */
   imageFit?: "cover" | "contain";
+  /** Renders only a compact icon button (X/Twitter-style composer actions). */
+  compact?: boolean;
+  /** Accessible label for the compact button. */
+  compactLabel?: string;
 };
 
 const DEFAULT_MAX_BYTES = 4 * 1024 * 1024; // 4MB
