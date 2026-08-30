@@ -181,7 +181,7 @@ export function ProfileSocial({
               {p.title && <h3 className="font-bold mt-1">{p.title}</h3>}
               {p.content && <RichText text={p.content} className="text-sm mt-2" />}
               {(p.images ?? []).length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-3">
+                <div className={`grid gap-2 mt-3 ${(p.images ?? []).length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
                   {(p.images ?? []).map((src) => (
                     <button key={src} type="button" onClick={() => setLightbox(src)}>
                       <img src={src} alt="" loading="lazy" className="rounded-lg w-full h-40 object-cover" />
@@ -189,6 +189,16 @@ export function ProfileSocial({
                   ))}
                 </div>
               )}
+              <div className="mt-3 pt-2 border-t border-border/30">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2 text-xs gap-1.5"
+                  onClick={() => setOpenPost(p)}
+                >
+                  <MessageCircle className="h-4 w-4" /> Abrir publicação e comentários
+                </Button>
+              </div>
             </article>
           ))}
           <div className="text-center">
