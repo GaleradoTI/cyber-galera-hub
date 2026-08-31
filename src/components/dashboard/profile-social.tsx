@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RichText } from "@/lib/rich-text";
 import { useFollowStats } from "@/hooks/use-follow";
+import { FeedCommentsDialog } from "@/components/dashboard/feed-comments";
 import { cn } from "@/lib/utils";
 
 type Post = {
