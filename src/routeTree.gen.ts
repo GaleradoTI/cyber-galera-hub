@@ -9,13 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerificarCodigoRouteImport } from './routes/verificar-codigo'
 import { Route as VagasRouteImport } from './routes/vagas'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as SobreRouteImport } from './routes/sobre'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as ParceirosRouteImport } from './routes/parceiros'
+import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as EventosRouteImport } from './routes/eventos'
@@ -55,6 +58,11 @@ import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
 import { Route as DashboardCandidaturasRouteImport } from './routes/dashboard.candidaturas'
 import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.candidatos'
 
+const VerificarCodigoRoute = VerificarCodigoRouteImport.update({
+  id: '/verificar-codigo',
+  path: '/verificar-codigo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VagasRoute = VagasRouteImport.update({
   id: '/vagas',
   path: '/vagas',
@@ -80,6 +88,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
+  id: '/recuperar-senha',
+  path: '/recuperar-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
   id: '/privacidade',
   path: '/privacidade',
@@ -88,6 +101,11 @@ const PrivacidadeRoute = PrivacidadeRouteImport.update({
 const ParceirosRoute = ParceirosRouteImport.update({
   id: '/parceiros',
   path: '/parceiros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovaSenhaRoute = NovaSenhaRouteImport.update({
+  id: '/nova-senha',
+  path: '/nova-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -294,13 +312,16 @@ export interface FileRoutesByFullPath {
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
+  '/nova-senha': typeof NovaSenhaRoute
   '/parceiros': typeof ParceirosRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
@@ -340,13 +361,16 @@ export interface FileRoutesByTo {
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
+  '/nova-senha': typeof NovaSenhaRoute
   '/parceiros': typeof ParceirosRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
@@ -388,13 +412,16 @@ export interface FileRoutesById {
   '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
+  '/nova-senha': typeof NovaSenhaRoute
   '/parceiros': typeof ParceirosRoute
   '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
@@ -437,13 +464,16 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/faq'
     | '/login'
+    | '/nova-senha'
     | '/parceiros'
     | '/privacidade'
+    | '/recuperar-senha'
     | '/reset-password'
     | '/sitemap.xml'
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
@@ -483,13 +513,16 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/faq'
     | '/login'
+    | '/nova-senha'
     | '/parceiros'
     | '/privacidade'
+    | '/recuperar-senha'
     | '/reset-password'
     | '/sitemap.xml'
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
@@ -530,13 +563,16 @@ export interface FileRouteTypes {
     | '/eventos'
     | '/faq'
     | '/login'
+    | '/nova-senha'
     | '/parceiros'
     | '/privacidade'
+    | '/recuperar-senha'
     | '/reset-password'
     | '/sitemap.xml'
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
@@ -578,19 +614,29 @@ export interface RootRouteChildren {
   EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
+  NovaSenhaRoute: typeof NovaSenhaRoute
   ParceirosRoute: typeof ParceirosRoute
   PrivacidadeRoute: typeof PrivacidadeRoute
+  RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
   VagasRoute: typeof VagasRoute
+  VerificarCodigoRoute: typeof VerificarCodigoRoute
   ProjetosSlugRoute: typeof ProjetosSlugRoute
   ProjetosIndexRoute: typeof ProjetosIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verificar-codigo': {
+      id: '/verificar-codigo'
+      path: '/verificar-codigo'
+      fullPath: '/verificar-codigo'
+      preLoaderRoute: typeof VerificarCodigoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vagas': {
       id: '/vagas'
       path: '/vagas'
@@ -626,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/recuperar-senha': {
+      id: '/recuperar-senha'
+      path: '/recuperar-senha'
+      fullPath: '/recuperar-senha'
+      preLoaderRoute: typeof RecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacidade': {
       id: '/privacidade'
       path: '/privacidade'
@@ -638,6 +691,13 @@ declare module '@tanstack/react-router' {
       path: '/parceiros'
       fullPath: '/parceiros'
       preLoaderRoute: typeof ParceirosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nova-senha': {
+      id: '/nova-senha'
+      path: '/nova-senha'
+      fullPath: '/nova-senha'
+      preLoaderRoute: typeof NovaSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -982,13 +1042,16 @@ const rootRouteChildren: RootRouteChildren = {
   EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
+  NovaSenhaRoute: NovaSenhaRoute,
   ParceirosRoute: ParceirosRoute,
   PrivacidadeRoute: PrivacidadeRoute,
+  RecuperarSenhaRoute: RecuperarSenhaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
   VagasRoute: VagasRoute,
+  VerificarCodigoRoute: VerificarCodigoRoute,
   ProjetosSlugRoute: ProjetosSlugRoute,
   ProjetosIndexRoute: ProjetosIndexRoute,
 }

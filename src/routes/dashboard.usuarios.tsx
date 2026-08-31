@@ -17,6 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordChecklist, validatePassword } from "@/lib/password-policy";
+
 
 export const Route = createFileRoute("/dashboard/usuarios")({ component: UsuariosPage });
 
@@ -55,6 +58,9 @@ function UsuariosPage() {
   const [resetting, setResetting] = useState<ProfileRow | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [newPwd, setNewPwd] = useState("");
+  const [newPwd2, setNewPwd2] = useState("");
+
 
   useEffect(() => {
     if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
@@ -257,18 +263,38 @@ function UsuariosPage() {
     refresh();
   };
 
-  const doResetPassword = async () => {
+  const closeReset = () => {
+    setResetting(null);
+    setTempPassword(null);
+    setNewPwd("");
+    setNewPwd2("");
+  };
+
+  const doResetPassword = async (mode: "custom" | "temp") => {
     if (!resetting) return;
+    if (mode === "custom") {
+      const { ok, missing } = validatePassword(newPwd);
+      if (!ok) return toast.error(`Senha fraca: falta ${missing.join(", ").toLowerCase()}`);
+      if (newPwd !== newPwd2) return toast.error("As senhas não coincidem");
+    }
     setResetLoading(true);
     try {
-      const res = await resetPwdFn({ data: { targetUserId: resetting.user_id } });
-      setTempPassword(res.tempPassword);
+      const res = await resetPwdFn({
+        data: { targetUserId: resetting.user_id, ...(mode === "custom" ? { newPassword: newPwd } : {}) },
+      });
+      if (res.tempPassword) {
+        setTempPassword(res.tempPassword);
+      } else {
+        toast.success("Senha definida com sucesso");
+        closeReset();
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao resetar");
     } finally {
       setResetLoading(false);
     }
   };
+
 
   const renderIdentity = (p: ProfileRow) => {
     const userBadges = badgesByUser.get(p.user_id) ?? [];
@@ -564,25 +590,39 @@ function UsuariosPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!resetting && !tempPassword} onOpenChange={(o) => !o && !resetLoading && setResetting(null)}>
-      <AlertDialogContent preventClose={resetLoading}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Resetar senha de {resetting?.email}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Uma senha temporária será gerada automaticamente. O usuário precisará trocá-la no próximo login.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={resetLoading}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction asyncAction loading={resetLoading} onClick={doResetPassword}>
-            {resetLoading ? "Resetando..." : "Confirmar reset"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      <Dialog open={!!resetting && !tempPassword} onOpenChange={(o) => { if (!o && !resetLoading) closeReset(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Definir senha de {resetting?.email}</DialogTitle>
+          <DialogDescription>
+            Defina a nova senha aqui mesmo — nenhum email é enviado ao usuário.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-new-pwd">Nova senha</Label>
+            <PasswordInput id="admin-new-pwd" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} disabled={resetLoading} />
+            <PasswordChecklist value={newPwd} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-new-pwd2">Confirmar senha</Label>
+            <PasswordInput id="admin-new-pwd2" value={newPwd2} onChange={(e) => setNewPwd2(e.target.value)} disabled={resetLoading} />
+          </div>
+        </div>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" disabled={resetLoading} onClick={() => doResetPassword("temp")}>
+            Gerar temporária
+          </Button>
+          <Button variant="neon" disabled={resetLoading} onClick={() => doResetPassword("custom")}>
+            {resetLoading ? "Salvando..." : "Definir senha"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
     
     {/* Etapa 2: exibição segura da senha temporária */}
-    <Dialog open={!!tempPassword} onOpenChange={(o) => { if (!o) { setResetting(null); setTempPassword(null); } }}>
+    <Dialog open={!!tempPassword} onOpenChange={(o) => { if (!o) closeReset() }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Senha temporária gerada</DialogTitle>
@@ -595,7 +635,7 @@ function UsuariosPage() {
           </Button>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { setResetting(null); setTempPassword(null); }}>Fechar</Button>
+          <Button variant="outline" onClick={() => closeReset()}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
