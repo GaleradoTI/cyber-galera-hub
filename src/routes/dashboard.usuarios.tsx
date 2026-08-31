@@ -619,7 +619,7 @@ function UsuariosPage() {
 
     
     {/* Etapa 2: exibição segura da senha temporária */}
-    <Dialog open={!!tempPassword} onOpenChange={(o) => { if (!o) { setResetting(null); setTempPassword(null); } }}>
+    <Dialog open={!!tempPassword} onOpenChange={(o) => { if (!o) closeReset() }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Senha temporária gerada</DialogTitle>
@@ -632,7 +632,7 @@ function UsuariosPage() {
           </Button>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => { setResetting(null); setTempPassword(null); }}>Fechar</Button>
+          <Button variant="outline" onClick={() => closeReset()}>Fechar</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
