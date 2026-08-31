@@ -587,22 +587,36 @@ function UsuariosPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!resetting && !tempPassword} onOpenChange={(o) => !o && !resetLoading && setResetting(null)}>
-      <AlertDialogContent preventClose={resetLoading}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Resetar senha de {resetting?.email}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Uma senha temporária será gerada automaticamente. O usuário precisará trocá-la no próximo login.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={resetLoading}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction asyncAction loading={resetLoading} onClick={doResetPassword}>
-            {resetLoading ? "Resetando..." : "Confirmar reset"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      <Dialog open={!!resetting && !tempPassword} onOpenChange={(o) => { if (!o && !resetLoading) closeReset(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Definir senha de {resetting?.email}</DialogTitle>
+          <DialogDescription>
+            Defina a nova senha aqui mesmo — nenhum email é enviado ao usuário.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-new-pwd">Nova senha</Label>
+            <PasswordInput id="admin-new-pwd" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} disabled={resetLoading} />
+            <PasswordChecklist value={newPwd} />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-new-pwd2">Confirmar senha</Label>
+            <PasswordInput id="admin-new-pwd2" value={newPwd2} onChange={(e) => setNewPwd2(e.target.value)} disabled={resetLoading} />
+          </div>
+        </div>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" disabled={resetLoading} onClick={() => doResetPassword("temp")}>
+            Gerar temporária
+          </Button>
+          <Button variant="neon" disabled={resetLoading} onClick={() => doResetPassword("custom")}>
+            {resetLoading ? "Salvando..." : "Definir senha"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
     
     {/* Etapa 2: exibição segura da senha temporária */}
     <Dialog open={!!tempPassword} onOpenChange={(o) => { if (!o) { setResetting(null); setTempPassword(null); } }}>
