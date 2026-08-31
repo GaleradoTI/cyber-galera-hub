@@ -260,18 +260,38 @@ function UsuariosPage() {
     refresh();
   };
 
-  const doResetPassword = async () => {
+  const closeReset = () => {
+    setResetting(null);
+    setTempPassword(null);
+    setNewPwd("");
+    setNewPwd2("");
+  };
+
+  const doResetPassword = async (mode: "custom" | "temp") => {
     if (!resetting) return;
+    if (mode === "custom") {
+      const { ok, missing } = validatePassword(newPwd);
+      if (!ok) return toast.error(`Senha fraca: falta ${missing.join(", ").toLowerCase()}`);
+      if (newPwd !== newPwd2) return toast.error("As senhas não coincidem");
+    }
     setResetLoading(true);
     try {
-      const res = await resetPwdFn({ data: { targetUserId: resetting.user_id } });
-      setTempPassword(res.tempPassword);
+      const res = await resetPwdFn({
+        data: { targetUserId: resetting.user_id, ...(mode === "custom" ? { newPassword: newPwd } : {}) },
+      });
+      if (res.tempPassword) {
+        setTempPassword(res.tempPassword);
+      } else {
+        toast.success("Senha definida com sucesso");
+        closeReset();
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao resetar");
     } finally {
       setResetLoading(false);
     }
   };
+
 
   const renderIdentity = (p: ProfileRow) => {
     const userBadges = badgesByUser.get(p.user_id) ?? [];
