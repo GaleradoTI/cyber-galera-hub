@@ -422,3 +422,33 @@ Livro-caixa completo em `/dashboard/financeiro` (somente ADMIN/SUPER_ADMIN).
 - `ROLE_GRANTED EMBAIXADOR` / `ROLE_REVOKED EMBAIXADOR`
 
 Todos aparecem em `/dashboard/logs` com contexto exportável (as tabelas `finance_entries`, `finance_categories` e `finance_tags` foram adicionadas ao mapa de contexto).
+
+## Ajustes (ago/2026 — perfil com bio em destaque, composer estilo X e LGPD)
+
+### Perfil social (`/dashboard/perfil`)
+- Bloco **BIO PÚBLICA** logo abaixo do cabeçalho, com bio, **cargo/área**, **stack principal**,
+  **disponibilidade** (aberto a oportunidades) e as tags de tecnologia — é exatamente o recorte
+  que recrutadores conseguem ver.
+- **LGPD**: telefone, endereço completo e data de nascimento **nunca** são exibidos nesse bloco.
+  Região/UF só é compartilhada mediante consentimento registrado em `lgpd_consents`.
+  Nenhum dado sensível é enviado ao card público de recrutamento (`get_recruiter_candidates`
+  continua limitado a `display_name`, `avatar_url`, `bio`, `work_area`, `tech_tags`, `looking_for_job`).
+- Cada publicação da aba **Publicações** tem o CTA "Abrir publicação e comentários", que abre o
+  mesmo modal do feed com comentários, sub-comentários (respostas aninhadas), curtidas por
+  comentário, edição e exclusão.
+
+### Composer do feed (`/dashboard/feed`)
+- Layout estilo X/Twitter: avatar + campo "O que está acontecendo?" sem bordas, ações compactas
+  na barra inferior.
+- Botão de imagem virou **ícone** (`ImageUploader` com a nova prop `compact`), com estado de
+  upload (spinner) embutido; até 4 imagens por post, grid responsivo 1/2/4 colunas.
+- Contador de caracteres (0/2000), chips de links detectados automaticamente e botão "Publicar"
+  desabilitado enquanto não houver texto.
+
+### API / componentes
+- `ImageUploader` ganhou as props `compact?: boolean` e `compactLabel?: string`.
+  No modo compacto renderiza apenas um botão-ícone acessível (aria-label/title), reaproveitando
+  toda a validação de MIME, limite de tamanho, resize client-side, política global de upload e
+  os logs de auditoria (`log_image_upload_attempt`).
+- `FeedCommentsDialog` agora é reutilizado tanto no feed quanto no perfil, recebendo um `header`
+  com o conteúdo completo do post (título, texto e imagens).
