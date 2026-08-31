@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerificarCodigoRouteImport } from './routes/verificar-codigo'
 import { Route as VagasRouteImport } from './routes/vagas'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as SobreRouteImport } from './routes/sobre'
@@ -56,6 +57,11 @@ import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
 import { Route as DashboardCandidaturasRouteImport } from './routes/dashboard.candidaturas'
 import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.candidatos'
 
+const VerificarCodigoRoute = VerificarCodigoRouteImport.update({
+  id: '/verificar-codigo',
+  path: '/verificar-codigo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VagasRoute = VagasRouteImport.update({
   id: '/vagas',
   path: '/vagas',
@@ -308,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
@@ -355,6 +362,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
@@ -404,6 +412,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
   '/dashboard/cargos': typeof DashboardCargosRoute
@@ -454,6 +463,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
@@ -501,6 +511,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
@@ -549,6 +560,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
     | '/dashboard/cargos'
@@ -598,12 +610,20 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
   VagasRoute: typeof VagasRoute
+  VerificarCodigoRoute: typeof VerificarCodigoRoute
   ProjetosSlugRoute: typeof ProjetosSlugRoute
   ProjetosIndexRoute: typeof ProjetosIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verificar-codigo': {
+      id: '/verificar-codigo'
+      path: '/verificar-codigo'
+      fullPath: '/verificar-codigo'
+      preLoaderRoute: typeof VerificarCodigoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vagas': {
       id: '/vagas'
       path: '/vagas'
@@ -1010,6 +1030,7 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
   VagasRoute: VagasRoute,
+  VerificarCodigoRoute: VerificarCodigoRoute,
   ProjetosSlugRoute: ProjetosSlugRoute,
   ProjetosIndexRoute: ProjetosIndexRoute,
 }
