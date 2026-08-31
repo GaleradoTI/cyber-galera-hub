@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { RichText } from "@/lib/rich-text";
 import { useFollowStats } from "@/hooks/use-follow";
+import { FeedCommentsDialog } from "@/components/dashboard/feed-comments";
 import { cn } from "@/lib/utils";
 
 type Post = {
@@ -234,6 +235,41 @@ export function ProfileSocial({
           {lightbox && <img src={lightbox} alt="" className="w-full max-h-[80vh] object-contain rounded-lg" />}
         </DialogContent>
       </Dialog>
+
+      {openPost && (
+        <FeedCommentsDialog
+          postId={openPost.id}
+          open={!!openPost}
+          onOpenChange={(v) => !v && setOpenPost(null)}
+          currentUserId={userId}
+          isAdmin={false}
+          header={
+            <div className="space-y-2">
+              <div className="text-[10px] text-muted-foreground">
+                {new Date(openPost.created_at).toLocaleString("pt-BR")}
+              </div>
+              {openPost.title && <div className="font-bold">{openPost.title}</div>}
+              {openPost.content && <RichText text={openPost.content} className="text-sm" />}
+              {(openPost.images ?? []).length > 0 && (
+                <div className={`grid gap-2 ${(openPost.images ?? []).length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                  {(openPost.images ?? []).map((src) => (
+                    <img key={src} src={src} alt="" loading="lazy" className="rounded-lg w-full max-h-56 object-cover" />
+                  ))}
+                </div>
+              )}
+            </div>
+          }
+        />
+      )}
+    </div>
+  );
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="text-xs font-semibold truncate" title={value}>{value}</div>
     </div>
   );
 }
