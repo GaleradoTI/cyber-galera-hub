@@ -17,6 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PasswordChecklist, validatePassword } from "@/lib/password-policy";
+
 
 export const Route = createFileRoute("/dashboard/usuarios")({ component: UsuariosPage });
 
