@@ -55,6 +55,9 @@ function UsuariosPage() {
   const [resetting, setResetting] = useState<ProfileRow | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [newPwd, setNewPwd] = useState("");
+  const [newPwd2, setNewPwd2] = useState("");
+
 
   useEffect(() => {
     if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
