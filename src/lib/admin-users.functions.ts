@@ -90,12 +90,14 @@ export const resetUserPassword = createServerFn({ method: "POST" })
       throw new Error("ADMIN não pode resetar senha de outro ADMIN.");
     }
 
-    // 6) Senha sempre temporária e aleatória — nunca customizada pelo cliente nem senha padrão fixa
-    const tempPassword = generateTempPassword();
+    // 6) O admin pode definir a senha diretamente aqui; sem senha informada, gera uma temporária
+    const custom = data.newPassword?.trim();
+    const finalPassword = custom && custom.length > 0 ? custom : generateTempPassword();
+    const isCustom = !!custom;
 
     const { error } = await admin.auth.admin.updateUserById(data.targetUserId, {
-      password: tempPassword,
-      user_metadata: { must_change_password: true },
+      password: finalPassword,
+      user_metadata: { must_change_password: !isCustom },
     });
     if (error) throw new Error(error.message);
 
@@ -104,8 +106,9 @@ export const resetUserPassword = createServerFn({ method: "POST" })
       action: "password_reset",
       entity: "auth.users",
       entity_id: data.targetUserId,
-      description: `Senha resetada por ${callerRole} (${context.userId}) para usuário ${data.targetUserId}`,
+      description: `Senha ${isCustom ? "definida manualmente" : "resetada (temporária)"} por ${callerRole} (${context.userId}) para usuário ${data.targetUserId}`,
     });
 
-    return { ok: true, tempPassword };
+    return { ok: true, tempPassword: isCustom ? null : finalPassword, custom: isCustom };
+
   });
