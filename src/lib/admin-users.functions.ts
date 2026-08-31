@@ -45,14 +45,22 @@ function generateTempPassword() {
 
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { targetUserId: string }) =>
+  .inputValidator((input: { targetUserId: string; newPassword?: string }) =>
     z
       .object({
         targetUserId: z.string().uuid(),
+        newPassword: z
+          .string()
+          .min(8, "Mínimo de 8 caracteres")
+          .regex(/[A-Z]/, "Precisa de letra maiúscula")
+          .regex(/[a-z]/, "Precisa de letra minúscula")
+          .regex(/[0-9]/, "Precisa de número")
+          .optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+
     const admin = getAdminClient();
 
     // 1) Papel de quem está chamando, obtido a partir da sessão autenticada (nunca do cliente)
