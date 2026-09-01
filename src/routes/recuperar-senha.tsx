@@ -62,7 +62,7 @@ function RecuperarSenhaPage() {
           </form>
           <p className="text-sm text-center text-muted-foreground mt-6">
             Já tem o código?{" "}
-            <Link to="/verificar-codigo" className="text-primary hover:underline font-medium">Inserir código</Link>
+            <Link to="/verificar-codigo" search={{ email: "" }} className="text-primary hover:underline font-medium">Inserir código</Link>
           </p>
           <p className="text-sm text-center text-muted-foreground mt-2">
             <Link to="/login" className="text-secondary hover:underline">Voltar para o login</Link>
