@@ -41,14 +41,10 @@ function LoginPage() {
     navigate({ to: getRedirectTo() as "/dashboard" });
   }
 
-  async function onForgot() {
-    if (!email) return toast.error("Informe o email primeiro");
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) return toast.error(error.message);
-    toast.success("Enviamos um link para seu email.");
+  function onForgot() {
+    navigate({ to: "/recuperar-senha", search: email ? { email } : undefined });
   }
+
 
   return (
     <PublicLayout>
