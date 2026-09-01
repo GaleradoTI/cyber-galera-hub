@@ -42,7 +42,7 @@ function LoginPage() {
   }
 
   function onForgot() {
-    navigate({ to: "/recuperar-senha", search: email ? { email } : undefined });
+    navigate({ to: "/recuperar-senha" });
   }
 
 
