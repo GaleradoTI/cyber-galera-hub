@@ -1205,6 +1205,57 @@ export type Database = {
         }
         Relationships: []
       }
+      password_reset_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          completed_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          max_attempts: number
+          request_ip: string | null
+          request_user_agent: string | null
+          ticket_expires_at: string | null
+          ticket_hash: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          completed_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          max_attempts?: number
+          request_ip?: string | null
+          request_user_agent?: string | null
+          ticket_expires_at?: string | null
+          ticket_hash?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          completed_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          max_attempts?: number
+          request_ip?: string | null
+          request_user_agent?: string | null
+          ticket_expires_at?: string | null
+          ticket_hash?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       post_comments: {
         Row: {
           content: string
