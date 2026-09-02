@@ -112,3 +112,34 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     return { ok: true, tempPassword: isCustom ? null : finalPassword, custom: isCustom };
 
   });
+
+export const listAdminProfiles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: allowed, error: roleError } = await context.supabase.rpc("is_admin_or_super", {
+      _user_id: context.userId,
+    });
+    if (roleError || !allowed) throw new Error("Permissão negada.");
+
+    const admin = getAdminClient();
+    const { data: profiles, error } = await admin
+      .from("profiles")
+      .select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const authEmails = new Map<string, string>();
+    for (let page = 1; page <= 20; page += 1) {
+      const { data, error: usersError } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (usersError) throw new Error(usersError.message);
+      data.users.forEach((user) => {
+        if (user.email) authEmails.set(user.id, user.email);
+      });
+      if (data.users.length < 200) break;
+    }
+
+    return (profiles ?? []).map((profile) => ({
+      ...profile,
+      email: authEmails.get(profile.user_id) ?? profile.email,
+    }));
+  });

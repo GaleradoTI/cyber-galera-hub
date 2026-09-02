@@ -5,7 +5,7 @@ import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowU
 import { getGenderLabel, getRegionByState, getAgeRange, BRAZIL_STATES, GENDER_OPTIONS } from "@/lib/profile-demographics";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { resetUserPassword } from "@/lib/admin-users.functions";
+import { listAdminProfiles, resetUserPassword } from "@/lib/admin-users.functions";
 import { DashboardShell, useDashboardRoles, RoleBadge } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ function UsuariosPage() {
   const [newBadge, setNewBadge] = useState({ label: "", color: "primary" });
   const [viewing, setViewing] = useState<ProfileRow | null>(null);
   const resetPwdFn = useServerFn(resetUserPassword);
+  const listProfilesFn = useServerFn(listAdminProfiles);
   const [resetting, setResetting] = useState<ProfileRow | null>(null);
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
@@ -68,11 +69,7 @@ function UsuariosPage() {
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-profiles"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region").order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as ProfileRow[];
-    },
+    queryFn: async () => (await listProfilesFn()) as ProfileRow[],
   });
 
   const { data: rolesData = [] } = useQuery({
