@@ -1,14 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PasswordInput } from "@/components/ui/password-input";
-import { supabase } from "@/integrations/supabase/client";
 import { PasswordChecklist, validatePassword } from "@/lib/password-policy";
+import { completePasswordReset } from "@/lib/password-reset.functions";
 
 export const Route = createFileRoute("/nova-senha")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    email: typeof search['email'] === "string" ? search['email'] : "",
+  }),
   head: () => ({
     meta: [
       { title: "Definir nova senha — GALERA DO T.I." },
@@ -24,22 +28,15 @@ export const Route = createFileRoute("/nova-senha")({
 
 function NovaSenhaPage() {
   const navigate = useNavigate();
+  const { email } = Route.useSearch();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
+  const [ticket, setTicket] = useState("");
+  const completeReset = useServerFn(completePasswordReset);
 
   useEffect(() => {
-    let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      setHasSession(!!data.session);
-      setChecking(false);
-    });
-    return () => {
-      mounted = false;
-    };
+    setTicket(sessionStorage.getItem("password-reset-ticket") ?? "");
   }, []);
 
   async function onSubmit(e: React.FormEvent) {
@@ -48,24 +45,28 @@ function NovaSenhaPage() {
     if (!ok) return toast.error(`Senha fraca: falta ${missing.join(", ").toLowerCase()}`);
     if (password !== confirm) return toast.error("As senhas não coincidem");
 
+    if (!ticket || !email) return toast.error("Valide um novo código antes de continuar.");
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
-    if (error) return toast.error(error.message);
-
-    toast.success("Senha atualizada! Faça login com a nova senha.");
-    await supabase.auth.signOut();
-    navigate({ to: "/login" });
+    try {
+      await completeReset({ data: { email, ticket, password } });
+      sessionStorage.removeItem("password-reset-ticket");
+      toast.success("Senha atualizada! Faça login com a nova senha.");
+      navigate({ to: "/login" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível atualizar a senha.");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  if (!checking && !hasSession) {
+  if (!ticket || !email) {
     return (
       <PublicLayout>
         <section className="container mx-auto px-4 py-20 max-w-md text-center">
           <div className="glass rounded-2xl p-6 sm:p-8">
             <h1 className="text-2xl font-black">Verificação necessária</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Valide o código enviado ao seu email antes de definir uma nova senha.
+               Valide o código enviado ao seu email antes de definir uma nova senha.
             </p>
             <Button asChild variant="neon" className="mt-4 w-full">
               <Link to="/recuperar-senha">Solicitar novo código</Link>
@@ -85,14 +86,14 @@ function NovaSenhaPage() {
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="p1">Nova senha</Label>
-              <PasswordInput id="p1" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} disabled={checking} />
+              <PasswordInput id="p1" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
               <PasswordChecklist value={password} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="p2">Confirmar senha</Label>
-              <PasswordInput id="p2" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} disabled={checking} />
+              <PasswordInput id="p2" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
             </div>
-            <Button type="submit" variant="neon" className="w-full" disabled={loading || checking}>
+            <Button type="submit" variant="neon" className="w-full" disabled={loading}>
               {loading ? "Salvando..." : "Salvar nova senha"}
             </Button>
           </form>

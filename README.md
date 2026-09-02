@@ -22,6 +22,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   vivo de Google, Open Graph e Twitter Card no dashboard, aplicado no
   `<head>` do site público
 - Autenticação por e-mail/senha
+- Recuperação de senha em três etapas com código próprio de 6 dígitos, validade de 10 minutos e envio transacional pelo domínio `galeradoti.com` via Resend
 
 ### Dashboard — Membro
 - Visão geral com contagem de vagas salvas e eventos
@@ -48,7 +49,7 @@ Comunidade tech brasileira: vagas, eventos, canais e conteúdo. Construída em *
   sugestões enviadas por membros/recrutadores, limite de vagas + **lista
   de espera automática** com promoção quando uma vaga libera, métricas
   por evento e **exportação CSV** dos inscritos/check-ins
-- Usuários: bloquear/reativar, editar, **resetar senha** para padrão configurável
+- Usuários: bloquear/reativar, editar e **resetar senha diretamente**, sem email; a listagem usa sempre o email oficial da conta em `auth.users`
 - Projetos / Squads: capa + **banner separado** (hero da página pública,
   com fallback de gradiente + nome grande quando não há banner; upload com
   validação JPG/PNG/WebP, máx 8MB e redimensionamento automático para
@@ -173,6 +174,7 @@ src/
 - `community_profiles`: leitura pública apenas de perfis ativos; criação/exclusão só por ADMIN/SUPER_ADMIN. **EMBAIXADOR** com `user_id` vinculado pode atualizar somente o próprio card (RLS `Ambassadors update own community profile`).
 - `member_feed_posts`: leitura e publicação apenas para autenticados; autor remove o próprio post; ADMIN/SUPER_ADMIN moderam
 - Server functions sensíveis (reset de senha) usam `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor
+- Códigos de recuperação são armazenados somente como hash, têm limite de tentativas, uso único e ticket temporário; a chave do Resend e o segredo de hash ficam apenas no servidor
 - Validação Zod em entradas server-side
 - LGPD: `lgpd_consents` com versão de termos
 

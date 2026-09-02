@@ -1,12 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { supabase } from "@/integrations/supabase/client";
+import { requestPasswordReset, verifyPasswordResetCode } from "@/lib/password-reset.functions";
 
 export const Route = createFileRoute("/verificar-codigo")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -32,6 +33,8 @@ function VerificarCodigoPage() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const verifyCode = useServerFn(verifyPasswordResetCode);
+  const requestReset = useServerFn(requestPasswordReset);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,26 +43,30 @@ function VerificarCodigoPage() {
     if (code.length !== 6) return toast.error("O código tem 6 dígitos");
 
     setLoading(true);
-    const { data, error } = await supabase.auth.verifyOtp({
-      email: normalized,
-      token: code,
-      type: "email",
-    });
-    setLoading(false);
-
-    if (error || !data.session) return toast.error(error?.message ?? "Código inválido ou expirado");
-    toast.success("Código confirmado! Defina sua nova senha.");
-    navigate({ to: "/nova-senha" });
+    try {
+      const result = await verifyCode({ data: { email: normalized, code } });
+      sessionStorage.setItem("password-reset-ticket", result.ticket);
+      toast.success("Código confirmado! Defina sua nova senha.");
+      navigate({ to: "/nova-senha", search: { email: normalized } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Código inválido ou expirado");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function onResend() {
     const normalized = email.trim().toLowerCase();
     if (!normalized) return toast.error("Informe o email");
     setResending(true);
-    const { error } = await supabase.auth.signInWithOtp({ email: normalized, options: { shouldCreateUser: false } });
-    setResending(false);
-    if (error) return toast.error(error.message);
-    toast.success("Novo código enviado.");
+    try {
+      const result = await requestReset({ data: { email: normalized } });
+      toast.success(result.message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível reenviar o código.");
+    } finally {
+      setResending(false);
+    }
   }
 
   return (

@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { requestPasswordReset } from "@/lib/password-reset.functions";
 
 export const Route = createFileRoute("/recuperar-senha")({
   head: () => ({
@@ -25,6 +26,7 @@ function RecuperarSenhaPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const requestReset = useServerFn(requestPasswordReset);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,15 +34,15 @@ function RecuperarSenhaPage() {
     if (!normalized) return toast.error("Informe seu email");
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email: normalized,
-      options: { shouldCreateUser: false },
-    });
-    setLoading(false);
-
-    if (error) return toast.error(error.message);
-    toast.success("Enviamos um código de 6 dígitos para seu email.");
-    navigate({ to: "/verificar-codigo", search: { email: normalized } });
+    try {
+      const result = await requestReset({ data: { email: normalized } });
+      toast.success(result.message);
+      navigate({ to: "/verificar-codigo", search: { email: normalized } });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível enviar o código.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
