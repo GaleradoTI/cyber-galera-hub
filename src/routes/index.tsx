@@ -155,25 +155,57 @@ function Index() {
           title={home.ecosystem_title ?? "Áreas & Tecnologias"}
           subtitle={home.ecosystem_subtitle ?? "A comunidade reúne profissionais de todas as frentes da tecnologia."}
         />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 sm:mt-10">
           {TECH_AREAS.map((area, i) => {
             const Icon = area.icon;
             return (
-              <motion.div
+              <motion.button
                 key={area.label}
+                type="button"
+                onClick={() => setArea(area)}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="glass rounded-xl p-6 flex flex-col items-center gap-3 hover-glow-cyan group cursor-default"
+                aria-label={`Saiba mais sobre ${area.label}`}
+                className="glass rounded-xl p-4 sm:p-6 min-w-0 text-left sm:text-center flex flex-row sm:flex-col items-center gap-3 hover-glow-cyan group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <Icon className={`h-8 w-8 ${area.color} group-hover:scale-110 transition-transform`} />
-                <span className="text-sm font-semibold">{area.label}</span>
-              </motion.div>
+                <Icon className={`h-7 w-7 sm:h-8 sm:w-8 shrink-0 ${area.color} group-hover:scale-110 transition-transform`} />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold truncate">{area.label}</span>
+                  <span className="block text-[11px] text-muted-foreground line-clamp-2 sm:mt-1">{area.summary}</span>
+                </span>
+              </motion.button>
             );
           })}
         </div>
+
+        <Dialog open={!!area} onOpenChange={(o) => !o && setArea(null)}>
+          <DialogContent className="max-w-lg">
+            {area && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-left">
+                    <area.icon className={`h-5 w-5 shrink-0 ${area.color}`} />
+                    <span className="min-w-0 truncate">{area.label}</span>
+                  </DialogTitle>
+                  <DialogDescription className="text-left">{area.summary}</DialogDescription>
+                </DialogHeader>
+                <p className="text-sm text-foreground/85">{area.detail}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {area.topics.map((t) => (
+                    <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                  ))}
+                </div>
+                <Button asChild variant="neon" size="sm" className="w-full sm:w-auto">
+                  <Link to="/vagas">Ver vagas relacionadas <ArrowRight className="ml-2 h-3.5 w-3.5" /></Link>
+                </Button>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </section>
+
 
       {/* Vagas */}
       <section className="container mx-auto px-4 py-16">
