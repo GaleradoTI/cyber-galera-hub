@@ -52,32 +52,53 @@ async function requestMetadata() {
   };
 }
 
-async function sendRecoveryCode(email: string, code: string) {
-  const lovableKey = process.env['LOVABLE_API_KEY'];
-  const resendKey = process.env['RESEND_API_KEY'];
-  if (!lovableKey || !resendKey) throw new Error("Serviço de email não configurado.");
+const FALLBACK_FROM = "GALERA DO T.I. <onboarding@resend.dev>";
 
-  const response = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+async function postRecoveryEmail(from: string, email: string, code: string, keys: { lovableKey: string; resendKey: string }) {
+  return fetch("https://connector-gateway.lovable.dev/resend/emails", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": resendKey,
+      Authorization: `Bearer ${keys.lovableKey}`,
+      "X-Connection-Api-Key": keys.resendKey,
     },
     body: JSON.stringify({
-      from: "GALERA DO T.I. <contato@galeradoti.com>",
+      from,
       to: [email],
       subject: `${code} é seu código de recuperação`,
       text: `Seu código para redefinir a senha é ${code}. Ele expira em 10 minutos. Se você não fez esta solicitação, ignore este email.`,
       html: `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;padding:32px;color:#111827"><h1 style="font-size:24px;margin:0 0 16px">Redefinição de senha</h1><p>Use o código abaixo para continuar:</p><p style="font-size:34px;font-weight:800;letter-spacing:8px;margin:28px 0">${code}</p><p>O código expira em 10 minutos e só pode ser usado uma vez.</p><p style="color:#6b7280;font-size:14px">Se você não fez esta solicitação, ignore este email.</p></div>`,
     }),
   });
+}
+
+async function sendRecoveryCode(email: string, code: string) {
+  const lovableKey = process.env['LOVABLE_API_KEY'];
+  const resendKey = process.env['RESEND_API_KEY'];
+  if (!lovableKey || !resendKey) throw new Error("Serviço de email não configurado.");
+  const keys = { lovableKey, resendKey };
+
+  const primaryFrom = process.env['PASSWORD_RESET_FROM_EMAIL'] ?? "GALERA DO T.I. <contato@galeradoti.com>";
+  let response = await postRecoveryEmail(primaryFrom, email, code, keys);
+
   if (!response.ok) {
     const body = await response.text();
-    console.error(`[Password reset] Resend failed [${response.status}]: ${body}`);
-    throw new Error("O serviço de email está temporariamente indisponível.");
+    console.error(`[Password reset] Resend failed [${response.status}] from=${primaryFrom}: ${body}`);
+    const domainUnverified = response.status === 403 && /not verified/i.test(body);
+    if (!domainUnverified) throw new Error("O serviço de email está temporariamente indisponível.");
+
+    // Domínio próprio ainda sem DNS validado: tenta o remetente compartilhado do Resend.
+    response = await postRecoveryEmail(FALLBACK_FROM, email, code, keys);
+    if (!response.ok) {
+      const fallbackBody = await response.text();
+      console.error(`[Password reset] Resend fallback failed [${response.status}]: ${fallbackBody}`);
+      throw new Error(
+        "Não foi possível enviar o código: o domínio de email da comunidade ainda não foi verificado no Resend. Um administrador precisa concluir a verificação de DNS.",
+      );
+    }
   }
 }
+
 
 export const requestPasswordReset = createServerFn({ method: "POST" })
   .inputValidator((input: { email: string }) =>

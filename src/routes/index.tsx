@@ -28,15 +28,80 @@ export const Route = createFileRoute("/")({
 });
 
 const TECH_AREAS = [
-  { icon: Code2, label: "Front-end", color: "text-primary" },
-  { icon: Server, label: "Back-end", color: "text-secondary" },
-  { icon: InfinityIcon, label: "DevOps", color: "text-[oklch(0.88_0.30_145)]" },
-  { icon: Database, label: "Data Science", color: "text-[oklch(0.78_0.18_65)]" },
-  { icon: Shield, label: "Cyber Security", color: "text-primary" },
-  { icon: Smartphone, label: "Mobile", color: "text-secondary" },
-  { icon: Cloud, label: "Cloud", color: "text-[oklch(0.88_0.30_145)]" },
-  { icon: Brain, label: "AI & ML", color: "text-[oklch(0.78_0.18_65)]" },
+  {
+    icon: Code2,
+    label: "Front-end",
+    color: "text-primary",
+    summary: "Interfaces web e experiências que o usuário toca todos os dias.",
+    detail:
+      "Quem cria a camada visual dos produtos: HTML, CSS, JavaScript/TypeScript e frameworks como React, Vue e Angular. O foco está em acessibilidade, performance de renderização, design system e responsividade real em qualquer tela.",
+    topics: ["React", "TypeScript", "Design System", "Acessibilidade", "Performance"],
+  },
+  {
+    icon: Server,
+    label: "Back-end",
+    color: "text-secondary",
+    summary: "Regras de negócio, APIs e a engrenagem por trás do produto.",
+    detail:
+      "Responsável por APIs, modelagem de dados, autenticação, filas e integrações. Envolve linguagens como Node.js, Python, Java, Go e C#, além de boas práticas de arquitetura, testes e observabilidade.",
+    topics: ["APIs REST/GraphQL", "Node.js", "Python", "Arquitetura", "Testes"],
+  },
+  {
+    icon: InfinityIcon,
+    label: "DevOps",
+    color: "text-[oklch(0.88_0.30_145)]",
+    summary: "Automação, entrega contínua e infraestrutura como código.",
+    detail:
+      "Une desenvolvimento e operação para entregar com segurança e frequência: pipelines CI/CD, containers, orquestração, monitoramento e cultura de confiabilidade (SRE).",
+    topics: ["Docker", "Kubernetes", "CI/CD", "Terraform", "Observabilidade"],
+  },
+  {
+    icon: Database,
+    label: "Data Science",
+    color: "text-[oklch(0.78_0.18_65)]",
+    summary: "Transformar dados brutos em decisão de negócio.",
+    detail:
+      "Coleta, tratamento, análise e visualização de dados, além de modelos estatísticos e preditivos. Passa por SQL, Python, engenharia de dados e storytelling com dados.",
+    topics: ["SQL", "Python", "ETL", "Estatística", "BI"],
+  },
+  {
+    icon: Shield,
+    label: "Cyber Security",
+    color: "text-primary",
+    summary: "Proteger sistemas, dados e pessoas contra ameaças.",
+    detail:
+      "Abrange segurança ofensiva (pentest, red team), defensiva (blue team, SOC), resposta a incidentes, criptografia e conformidade com LGPD e normas de mercado.",
+    topics: ["Pentest", "Blue Team", "LGPD", "Criptografia", "Resposta a incidentes"],
+  },
+  {
+    icon: Smartphone,
+    label: "Mobile",
+    color: "text-secondary",
+    summary: "Aplicativos nativos e multiplataforma para Android e iOS.",
+    detail:
+      "Desenvolvimento com Kotlin, Swift, React Native ou Flutter, pensando em offline-first, consumo de bateria, publicação nas lojas e experiência de uso no celular.",
+    topics: ["Kotlin", "Swift", "React Native", "Flutter", "Publicação nas lojas"],
+  },
+  {
+    icon: Cloud,
+    label: "Cloud",
+    color: "text-[oklch(0.88_0.30_145)]",
+    summary: "Escalar aplicações com infraestrutura sob demanda.",
+    detail:
+      "Arquiteturas em AWS, Azure e GCP: computação serverless, redes, custos (FinOps), alta disponibilidade e estratégias de migração para nuvem.",
+    topics: ["AWS", "Azure", "GCP", "Serverless", "FinOps"],
+  },
+  {
+    icon: Brain,
+    label: "AI & ML",
+    color: "text-[oklch(0.78_0.18_65)]",
+    summary: "Modelos, LLMs e automações inteligentes aplicadas ao produto.",
+    detail:
+      "Machine learning clássico, deep learning e aplicações com LLMs: engenharia de prompt, RAG, avaliação de modelos e colocação de modelos em produção (MLOps).",
+    topics: ["LLMs", "RAG", "MLOps", "Deep Learning", "Automação"],
+  },
 ];
+
 
 function Index() {
   const { data: jobs = [] } = useQuery({
@@ -90,25 +155,57 @@ function Index() {
           title={home.ecosystem_title ?? "Áreas & Tecnologias"}
           subtitle={home.ecosystem_subtitle ?? "A comunidade reúne profissionais de todas as frentes da tecnologia."}
         />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 sm:mt-10">
           {TECH_AREAS.map((area, i) => {
             const Icon = area.icon;
             return (
-              <motion.div
+              <motion.button
                 key={area.label}
+                type="button"
+                onClick={() => setArea(area)}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                className="glass rounded-xl p-6 flex flex-col items-center gap-3 hover-glow-cyan group cursor-default"
+                aria-label={`Saiba mais sobre ${area.label}`}
+                className="glass rounded-xl p-4 sm:p-6 min-w-0 text-left sm:text-center flex flex-row sm:flex-col items-center gap-3 hover-glow-cyan group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <Icon className={`h-8 w-8 ${area.color} group-hover:scale-110 transition-transform`} />
-                <span className="text-sm font-semibold">{area.label}</span>
-              </motion.div>
+                <Icon className={`h-7 w-7 sm:h-8 sm:w-8 shrink-0 ${area.color} group-hover:scale-110 transition-transform`} />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold truncate">{area.label}</span>
+                  <span className="block text-[11px] text-muted-foreground line-clamp-2 sm:mt-1">{area.summary}</span>
+                </span>
+              </motion.button>
             );
           })}
         </div>
+
+        <Dialog open={!!area} onOpenChange={(o) => !o && setArea(null)}>
+          <DialogContent className="max-w-lg">
+            {area && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-left">
+                    <area.icon className={`h-5 w-5 shrink-0 ${area.color}`} />
+                    <span className="min-w-0 truncate">{area.label}</span>
+                  </DialogTitle>
+                  <DialogDescription className="text-left">{area.summary}</DialogDescription>
+                </DialogHeader>
+                <p className="text-sm text-foreground/85">{area.detail}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {area.topics.map((t) => (
+                    <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
+                  ))}
+                </div>
+                <Button asChild variant="neon" size="sm" className="w-full sm:w-auto">
+                  <Link to="/vagas">Ver vagas relacionadas <ArrowRight className="ml-2 h-3.5 w-3.5" /></Link>
+                </Button>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </section>
+
 
       {/* Vagas */}
       <section className="container mx-auto px-4 py-16">
