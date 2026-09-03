@@ -28,15 +28,80 @@ export const Route = createFileRoute("/")({
 });
 
 const TECH_AREAS = [
-  { icon: Code2, label: "Front-end", color: "text-primary" },
-  { icon: Server, label: "Back-end", color: "text-secondary" },
-  { icon: InfinityIcon, label: "DevOps", color: "text-[oklch(0.88_0.30_145)]" },
-  { icon: Database, label: "Data Science", color: "text-[oklch(0.78_0.18_65)]" },
-  { icon: Shield, label: "Cyber Security", color: "text-primary" },
-  { icon: Smartphone, label: "Mobile", color: "text-secondary" },
-  { icon: Cloud, label: "Cloud", color: "text-[oklch(0.88_0.30_145)]" },
-  { icon: Brain, label: "AI & ML", color: "text-[oklch(0.78_0.18_65)]" },
+  {
+    icon: Code2,
+    label: "Front-end",
+    color: "text-primary",
+    summary: "Interfaces web e experiências que o usuário toca todos os dias.",
+    detail:
+      "Quem cria a camada visual dos produtos: HTML, CSS, JavaScript/TypeScript e frameworks como React, Vue e Angular. O foco está em acessibilidade, performance de renderização, design system e responsividade real em qualquer tela.",
+    topics: ["React", "TypeScript", "Design System", "Acessibilidade", "Performance"],
+  },
+  {
+    icon: Server,
+    label: "Back-end",
+    color: "text-secondary",
+    summary: "Regras de negócio, APIs e a engrenagem por trás do produto.",
+    detail:
+      "Responsável por APIs, modelagem de dados, autenticação, filas e integrações. Envolve linguagens como Node.js, Python, Java, Go e C#, além de boas práticas de arquitetura, testes e observabilidade.",
+    topics: ["APIs REST/GraphQL", "Node.js", "Python", "Arquitetura", "Testes"],
+  },
+  {
+    icon: InfinityIcon,
+    label: "DevOps",
+    color: "text-[oklch(0.88_0.30_145)]",
+    summary: "Automação, entrega contínua e infraestrutura como código.",
+    detail:
+      "Une desenvolvimento e operação para entregar com segurança e frequência: pipelines CI/CD, containers, orquestração, monitoramento e cultura de confiabilidade (SRE).",
+    topics: ["Docker", "Kubernetes", "CI/CD", "Terraform", "Observabilidade"],
+  },
+  {
+    icon: Database,
+    label: "Data Science",
+    color: "text-[oklch(0.78_0.18_65)]",
+    summary: "Transformar dados brutos em decisão de negócio.",
+    detail:
+      "Coleta, tratamento, análise e visualização de dados, além de modelos estatísticos e preditivos. Passa por SQL, Python, engenharia de dados e storytelling com dados.",
+    topics: ["SQL", "Python", "ETL", "Estatística", "BI"],
+  },
+  {
+    icon: Shield,
+    label: "Cyber Security",
+    color: "text-primary",
+    summary: "Proteger sistemas, dados e pessoas contra ameaças.",
+    detail:
+      "Abrange segurança ofensiva (pentest, red team), defensiva (blue team, SOC), resposta a incidentes, criptografia e conformidade com LGPD e normas de mercado.",
+    topics: ["Pentest", "Blue Team", "LGPD", "Criptografia", "Resposta a incidentes"],
+  },
+  {
+    icon: Smartphone,
+    label: "Mobile",
+    color: "text-secondary",
+    summary: "Aplicativos nativos e multiplataforma para Android e iOS.",
+    detail:
+      "Desenvolvimento com Kotlin, Swift, React Native ou Flutter, pensando em offline-first, consumo de bateria, publicação nas lojas e experiência de uso no celular.",
+    topics: ["Kotlin", "Swift", "React Native", "Flutter", "Publicação nas lojas"],
+  },
+  {
+    icon: Cloud,
+    label: "Cloud",
+    color: "text-[oklch(0.88_0.30_145)]",
+    summary: "Escalar aplicações com infraestrutura sob demanda.",
+    detail:
+      "Arquiteturas em AWS, Azure e GCP: computação serverless, redes, custos (FinOps), alta disponibilidade e estratégias de migração para nuvem.",
+    topics: ["AWS", "Azure", "GCP", "Serverless", "FinOps"],
+  },
+  {
+    icon: Brain,
+    label: "AI & ML",
+    color: "text-[oklch(0.78_0.18_65)]",
+    summary: "Modelos, LLMs e automações inteligentes aplicadas ao produto.",
+    detail:
+      "Machine learning clássico, deep learning e aplicações com LLMs: engenharia de prompt, RAG, avaliação de modelos e colocação de modelos em produção (MLOps).",
+    topics: ["LLMs", "RAG", "MLOps", "Deep Learning", "Automação"],
+  },
 ];
+
 
 function Index() {
   const { data: jobs = [] } = useQuery({
