@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -12,6 +13,8 @@ import { EventCard } from "@/components/public/event-card";
 import { ChannelGrid } from "@/components/public/channel-grid";
 import { TestimonialsSection } from "@/components/public/testimonials-section";
 import { PartnersCarousel } from "@/components/public/partners-carousel";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type HomeContent = Record<string, string>;
 
@@ -103,7 +106,10 @@ const TECH_AREAS = [
 ];
 
 
+type TechArea = (typeof TECH_AREAS)[number];
+
 function Index() {
+  const [area, setArea] = useState<TechArea | null>(null);
   const { data: jobs = [] } = useQuery({
     queryKey: ["home-jobs"],
     queryFn: async () => {
@@ -155,7 +161,7 @@ function Index() {
           title={home.ecosystem_title ?? "Áreas & Tecnologias"}
           subtitle={home.ecosystem_subtitle ?? "A comunidade reúne profissionais de todas as frentes da tecnologia."}
         />
-        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 sm:mt-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 sm:mt-10">
           {TECH_AREAS.map((area, i) => {
             const Icon = area.icon;
             return (
