@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { SessionTimeoutGuard } from "@/components/auth/session-timeout-guard";
 
 function NotFoundComponent() {
   return (
@@ -122,6 +123,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInvalidator />
+      <SessionTimeoutGuard />
       <DynamicSiteHead />
       <Outlet />
       <Toaster richColors position="top-right" />
@@ -234,9 +236,12 @@ function AuthInvalidator() {
   const router = useRouter();
   const qc = useQueryClient();
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      // Ignora TOKEN_REFRESHED / INITIAL_SESSION: recarregar tudo a cada refresh
+      // derrubava consultas e dava a sensação de logout.
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
-      qc.invalidateQueries();
+      if (event !== "SIGNED_OUT") qc.invalidateQueries();
     });
     return () => subscription.unsubscribe();
   }, [router, qc]);
