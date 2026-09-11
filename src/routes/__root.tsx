@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { SessionTimeoutGuard } from "@/components/auth/session-timeout-guard";
 
 function NotFoundComponent() {
   return (
@@ -122,6 +123,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInvalidator />
+      <SessionTimeoutGuard />
       <DynamicSiteHead />
       <Outlet />
       <Toaster richColors position="top-right" />
