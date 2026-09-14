@@ -138,7 +138,7 @@ function RafflesMemberPage() {
                         aspect="square"
                         maxBytes={8 * 1024 * 1024}
                         policyKey="drop_images"
-                        auditEntity="raffle_receipt"
+                        auditEntity="drop_image"
                         auditEntityId={t.id}
                         onChange={async (url) => {
                           const { error } = await supabase.from("raffle_tickets").update({ receipt_url: url }).eq("id", t.id);

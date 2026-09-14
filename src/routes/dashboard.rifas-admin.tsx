@@ -244,7 +244,7 @@ function RafflesAdminPage() {
                   aspect="video"
                   maxBytes={8 * 1024 * 1024}
                   policyKey="drop_images"
-                  auditEntity="raffle_cover"
+                  auditEntity="drop_image"
                   auditEntityId={editing.id ?? null}
                   showDiagnostics
                 />
@@ -375,7 +375,7 @@ function PrizesDialog({ raffle, userId, onClose }: { raffle: Raffle | null; user
               aspect="square"
               maxBytes={8 * 1024 * 1024}
               policyKey="drop_images"
-              auditEntity="raffle_prize"
+              auditEntity="drop_image"
               auditEntityId={draft.id ?? null}
             />
             <div className="flex gap-2 justify-end">
