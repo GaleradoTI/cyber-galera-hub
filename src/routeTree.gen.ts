@@ -36,6 +36,8 @@ import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
 import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
 import { Route as DashboardUploadConfigRouteImport } from './routes/dashboard.upload-config'
 import { Route as DashboardSugerirEventoRouteImport } from './routes/dashboard.sugerir-evento'
+import { Route as DashboardRifasAdminRouteImport } from './routes/dashboard.rifas-admin'
+import { Route as DashboardRifasRouteImport } from './routes/dashboard.rifas'
 import { Route as DashboardProjetosRouteImport } from './routes/dashboard.projetos'
 import { Route as DashboardPerfilRouteImport } from './routes/dashboard.perfil'
 import { Route as DashboardParceirosRouteImport } from './routes/dashboard.parceiros'
@@ -193,6 +195,16 @@ const DashboardSugerirEventoRoute = DashboardSugerirEventoRouteImport.update({
   path: '/sugerir-evento',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardRifasAdminRoute = DashboardRifasAdminRouteImport.update({
+  id: '/rifas-admin',
+  path: '/rifas-admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRifasRoute = DashboardRifasRouteImport.update({
+  id: '/rifas',
+  path: '/rifas',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardProjetosRoute = DashboardProjetosRouteImport.update({
   id: '/projetos',
   path: '/projetos',
@@ -343,6 +355,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/parceiros': typeof DashboardParceirosRoute
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
+  '/dashboard/rifas': typeof DashboardRifasRoute
+  '/dashboard/rifas-admin': typeof DashboardRifasAdminRoute
   '/dashboard/sugerir-evento': typeof DashboardSugerirEventoRoute
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
@@ -392,6 +406,8 @@ export interface FileRoutesByTo {
   '/dashboard/parceiros': typeof DashboardParceirosRoute
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
+  '/dashboard/rifas': typeof DashboardRifasRoute
+  '/dashboard/rifas-admin': typeof DashboardRifasAdminRoute
   '/dashboard/sugerir-evento': typeof DashboardSugerirEventoRoute
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
@@ -443,6 +459,8 @@ export interface FileRoutesById {
   '/dashboard/parceiros': typeof DashboardParceirosRoute
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
+  '/dashboard/rifas': typeof DashboardRifasRoute
+  '/dashboard/rifas-admin': typeof DashboardRifasAdminRoute
   '/dashboard/sugerir-evento': typeof DashboardSugerirEventoRoute
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
@@ -495,6 +513,8 @@ export interface FileRouteTypes {
     | '/dashboard/parceiros'
     | '/dashboard/perfil'
     | '/dashboard/projetos'
+    | '/dashboard/rifas'
+    | '/dashboard/rifas-admin'
     | '/dashboard/sugerir-evento'
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
@@ -544,6 +564,8 @@ export interface FileRouteTypes {
     | '/dashboard/parceiros'
     | '/dashboard/perfil'
     | '/dashboard/projetos'
+    | '/dashboard/rifas'
+    | '/dashboard/rifas-admin'
     | '/dashboard/sugerir-evento'
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
@@ -594,6 +616,8 @@ export interface FileRouteTypes {
     | '/dashboard/parceiros'
     | '/dashboard/perfil'
     | '/dashboard/projetos'
+    | '/dashboard/rifas'
+    | '/dashboard/rifas-admin'
     | '/dashboard/sugerir-evento'
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
@@ -819,6 +843,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardSugerirEventoRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/rifas-admin': {
+      id: '/dashboard/rifas-admin'
+      path: '/rifas-admin'
+      fullPath: '/dashboard/rifas-admin'
+      preLoaderRoute: typeof DashboardRifasAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/rifas': {
+      id: '/dashboard/rifas'
+      path: '/rifas'
+      fullPath: '/dashboard/rifas'
+      preLoaderRoute: typeof DashboardRifasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/projetos': {
       id: '/dashboard/projetos'
       path: '/projetos'
@@ -991,6 +1029,8 @@ interface DashboardRouteChildren {
   DashboardParceirosRoute: typeof DashboardParceirosRoute
   DashboardPerfilRoute: typeof DashboardPerfilRoute
   DashboardProjetosRoute: typeof DashboardProjetosRoute
+  DashboardRifasRoute: typeof DashboardRifasRoute
+  DashboardRifasAdminRoute: typeof DashboardRifasAdminRoute
   DashboardSugerirEventoRoute: typeof DashboardSugerirEventoRoute
   DashboardUploadConfigRoute: typeof DashboardUploadConfigRoute
   DashboardUsuariosRoute: typeof DashboardUsuariosRoute
@@ -1020,6 +1060,8 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardParceirosRoute: DashboardParceirosRoute,
   DashboardPerfilRoute: DashboardPerfilRoute,
   DashboardProjetosRoute: DashboardProjetosRoute,
+  DashboardRifasRoute: DashboardRifasRoute,
+  DashboardRifasAdminRoute: DashboardRifasAdminRoute,
   DashboardSugerirEventoRoute: DashboardSugerirEventoRoute,
   DashboardUploadConfigRoute: DashboardUploadConfigRoute,
   DashboardUsuariosRoute: DashboardUsuariosRoute,

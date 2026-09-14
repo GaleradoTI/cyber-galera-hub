@@ -35,7 +35,9 @@ import {
   IdCard,
   DollarSign,
   Newspaper,
+  Ticket,
 } from "lucide-react";
+import { useSiteModules } from "@/lib/modules";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -110,6 +112,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const palette = useCommandPalette();
+  const { rafflesEnabled } = useSiteModules();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate({ to: "/login" });
@@ -137,6 +140,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/explorar-projetos", label: "Explorar Projetos", icon: Globe, show: true },
         { to: "/drops", label: "Drops", icon: ShoppingBag, show: true },
         { to: "/dashboard/depoimentos", label: "Depoimentos", icon: MessageSquareQuote, show: true },
+        { to: "/dashboard/rifas", label: "Rifas", icon: Ticket, show: rafflesEnabled },
       ],
     },
     {
@@ -181,6 +185,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/drops", label: "Drops", icon: ShoppingBag, show: isAdmin },
         { to: "/dashboard/financeiro", label: "Financeiro", icon: DollarSign, show: isAdmin },
         { to: "/dashboard/noticias", label: "Notícias", icon: Newspaper, show: isAdmin },
+        { to: "/dashboard/rifas-admin", label: "Rifas", icon: Ticket, show: isAdmin && rafflesEnabled },
         { to: "/dashboard/logs", label: "Logs de Auditoria", icon: FileText, show: isAdmin },
       ],
     },
