@@ -765,6 +765,7 @@ export type Database = {
           linked_user_id: string | null
           note: string | null
           payment_method: string | null
+          raffle_ticket_id: string | null
           status: string
           title: string
           tournament_id: string | null
@@ -788,6 +789,7 @@ export type Database = {
           linked_user_id?: string | null
           note?: string | null
           payment_method?: string | null
+          raffle_ticket_id?: string | null
           status?: string
           title: string
           tournament_id?: string | null
@@ -811,6 +813,7 @@ export type Database = {
           linked_user_id?: string | null
           note?: string | null
           payment_method?: string | null
+          raffle_ticket_id?: string | null
           status?: string
           title?: string
           tournament_id?: string | null
@@ -858,6 +861,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "public_profiles"
             referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_raffle_ticket_id_fkey"
+            columns: ["raffle_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "raffle_tickets"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "finance_entries_tournament_id_fkey"
@@ -1651,6 +1661,185 @@ export type Database = {
         }
         Relationships: []
       }
+      raffle_prizes: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          drawn_at: string | null
+          id: string
+          image_url: string | null
+          raffle_id: string
+          title: string
+          updated_at: string
+          winner_ticket_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          drawn_at?: string | null
+          id?: string
+          image_url?: string | null
+          raffle_id: string
+          title: string
+          updated_at?: string
+          winner_ticket_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          drawn_at?: string | null
+          id?: string
+          image_url?: string | null
+          raffle_id?: string
+          title?: string
+          updated_at?: string
+          winner_ticket_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_prizes_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "raffle_prizes_winner_fk"
+            columns: ["winner_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "raffle_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raffle_tickets: {
+        Row: {
+          amount_cents: number
+          buyer_email: string | null
+          buyer_name: string
+          buyer_phone: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          id: string
+          is_winner: boolean
+          label: string | null
+          note: string | null
+          number: number | null
+          raffle_id: string
+          receipt_url: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number
+          buyer_email?: string | null
+          buyer_name: string
+          buyer_phone?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          is_winner?: boolean
+          label?: string | null
+          note?: string | null
+          number?: number | null
+          raffle_id: string
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          buyer_email?: string | null
+          buyer_name?: string
+          buyer_phone?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          is_winner?: boolean
+          label?: string | null
+          note?: string | null
+          number?: number | null
+          raffle_id?: string
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "raffle_tickets_raffle_id_fkey"
+            columns: ["raffle_id"]
+            isOneToOne: false
+            referencedRelation: "raffles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      raffles: {
+        Row: {
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          draw_date: string | null
+          entry_mode: string
+          id: string
+          max_per_user: number | null
+          payment_methods: string[]
+          pix_key: string | null
+          reason: string | null
+          status: string
+          ticket_price_cents: number
+          title: string
+          total_numbers: number
+          updated_at: string
+        }
+        Insert: {
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          draw_date?: string | null
+          entry_mode?: string
+          id?: string
+          max_per_user?: number | null
+          payment_methods?: string[]
+          pix_key?: string | null
+          reason?: string | null
+          status?: string
+          ticket_price_cents?: number
+          title: string
+          total_numbers?: number
+          updated_at?: string
+        }
+        Update: {
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          draw_date?: string | null
+          entry_mode?: string
+          id?: string
+          max_per_user?: number | null
+          payment_methods?: string[]
+          pix_key?: string | null
+          reason?: string | null
+          status?: string
+          ticket_price_cents?: number
+          title?: string
+          total_numbers?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           created_at: string
@@ -2165,6 +2354,7 @@ export type Database = {
         Args: { _action: string; _id: string; _note?: string }
         Returns: undefined
       }
+      draw_raffle: { Args: { _raffle_id: string }; Returns: Json }
       get_lgpd_consents_admin: {
         Args: never
         Returns: {
