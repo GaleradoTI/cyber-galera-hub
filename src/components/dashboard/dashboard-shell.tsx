@@ -35,7 +35,9 @@ import {
   IdCard,
   DollarSign,
   Newspaper,
+  Ticket,
 } from "lucide-react";
+import { useSiteModules } from "@/lib/modules";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
