@@ -90,8 +90,9 @@ function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="avancado" className="mt-5 space-y-5">
+            {byKey.modules && <ModulesCard setting={byKey.modules} onSaved={onSaved} />}
             {settings
-              .filter((s) => !["seo", "favicon", "site_fonts", "hero", "home_content", "mascots", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners"].includes(s.setting_key))
+              .filter((s) => !["seo", "favicon", "site_fonts", "hero", "home_content", "mascots", "cta_section", "newsletter", "stats", "about", "footer", "contact", "social_links", "partners", "modules"].includes(s.setting_key))
               .map((s) => (
                 <GenericCard key={s.id} setting={s} onSaved={onSaved} />
               ))}
