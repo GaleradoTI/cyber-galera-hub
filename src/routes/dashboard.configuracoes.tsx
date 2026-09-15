@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import mascotFallback from "@/assets/mascot-axolotl.png";
+import { Switch } from "@/components/ui/switch";
 
 export const Route = createFileRoute("/dashboard/configuracoes")({ component: SettingsPage });
 
@@ -902,5 +903,49 @@ function HistoryCard({ onReverted }: { onReverted: () => void }) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+/* ---------------------- Módulos opcionais ---------------------- */
+function ModulesCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
+  const [draft, setDraft] = useState<Record<string, any>>(setting.setting_value ?? {});
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("public_site_settings").update({ setting_value: draft }).eq("id", setting.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success("Módulos atualizados.");
+    onSaved();
+  };
+
+  const MODULES: { key: string; label: string; description: string }[] = [
+    {
+      key: "raffles",
+      label: "Rifas",
+      description: "Libera a página de rifas para membros, recrutadores e embaixadores, e o painel de gestão para administradores.",
+    },
+  ];
+
+  return (
+    <CardShell
+      title="Módulos"
+      description="Ligue ou desligue áreas opcionais da plataforma."
+      badge="modules"
+      saving={saving}
+      onSave={save}
+    >
+      <div className="space-y-3">
+        {MODULES.map((m) => (
+          <div key={m.key} className="flex items-start justify-between gap-4 rounded-lg border border-border/40 bg-muted/10 p-3">
+            <div className="min-w-0">
+              <div className="text-sm font-bold">{m.label}</div>
+              <p className="text-xs text-muted-foreground">{m.description}</p>
+            </div>
+            <Switch checked={!!draft[m.key]} onCheckedChange={(v) => setDraft({ ...draft, [m.key]: v })} />
+          </div>
+        ))}
+      </div>
+    </CardShell>
   );
 }
