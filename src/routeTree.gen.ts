@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerificarCodigoRouteImport } from './routes/verificar-codigo'
+import { Route as ValidarcertificadoRouteImport } from './routes/validarcertificado'
 import { Route as VagasRouteImport } from './routes/vagas'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as SobreRouteImport } from './routes/sobre'
@@ -63,6 +64,11 @@ import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.cand
 const VerificarCodigoRoute = VerificarCodigoRouteImport.update({
   id: '/verificar-codigo',
   path: '/verificar-codigo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ValidarcertificadoRoute = ValidarcertificadoRouteImport.update({
+  id: '/validarcertificado',
+  path: '/validarcertificado',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VagasRoute = VagasRouteImport.update({
@@ -333,6 +339,7 @@ export interface FileRoutesByFullPath {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/validarcertificado': typeof ValidarcertificadoRoute
   '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
@@ -384,6 +391,7 @@ export interface FileRoutesByTo {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/validarcertificado': typeof ValidarcertificadoRoute
   '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/sobre': typeof SobreRoute
   '/termos': typeof TermosRoute
   '/vagas': typeof VagasRoute
+  '/validarcertificado': typeof ValidarcertificadoRoute
   '/verificar-codigo': typeof VerificarCodigoRoute
   '/dashboard/candidatos': typeof DashboardCandidatosRoute
   '/dashboard/candidaturas': typeof DashboardCandidaturasRoute
@@ -491,6 +500,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/validarcertificado'
     | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
@@ -542,6 +552,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/validarcertificado'
     | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
@@ -594,6 +605,7 @@ export interface FileRouteTypes {
     | '/sobre'
     | '/termos'
     | '/vagas'
+    | '/validarcertificado'
     | '/verificar-codigo'
     | '/dashboard/candidatos'
     | '/dashboard/candidaturas'
@@ -647,6 +659,7 @@ export interface RootRouteChildren {
   SobreRoute: typeof SobreRoute
   TermosRoute: typeof TermosRoute
   VagasRoute: typeof VagasRoute
+  ValidarcertificadoRoute: typeof ValidarcertificadoRoute
   VerificarCodigoRoute: typeof VerificarCodigoRoute
   ProjetosSlugRoute: typeof ProjetosSlugRoute
   ProjetosIndexRoute: typeof ProjetosIndexRoute
@@ -659,6 +672,13 @@ declare module '@tanstack/react-router' {
       path: '/verificar-codigo'
       fullPath: '/verificar-codigo'
       preLoaderRoute: typeof VerificarCodigoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/validarcertificado': {
+      id: '/validarcertificado'
+      path: '/validarcertificado'
+      fullPath: '/validarcertificado'
+      preLoaderRoute: typeof ValidarcertificadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vagas': {
@@ -1093,6 +1113,7 @@ const rootRouteChildren: RootRouteChildren = {
   SobreRoute: SobreRoute,
   TermosRoute: TermosRoute,
   VagasRoute: VagasRoute,
+  ValidarcertificadoRoute: ValidarcertificadoRoute,
   VerificarCodigoRoute: VerificarCodigoRoute,
   ProjetosSlugRoute: ProjetosSlugRoute,
   ProjetosIndexRoute: ProjetosIndexRoute,
