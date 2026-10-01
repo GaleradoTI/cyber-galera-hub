@@ -9,145 +9,60 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as VerificarCodigoRouteImport } from './routes/verificar-codigo'
-import { Route as VagasRouteImport } from './routes/vagas'
-import { Route as TermosRouteImport } from './routes/termos'
-import { Route as SobreRouteImport } from './routes/sobre'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
-import { Route as PrivacidadeRouteImport } from './routes/privacidade'
-import { Route as ParceirosRouteImport } from './routes/parceiros'
-import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as EventosRouteImport } from './routes/eventos'
-import { Route as EmbaixadoresRouteImport } from './routes/embaixadores'
-import { Route as DropsRouteImport } from './routes/drops'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as CanaisRouteImport } from './routes/canais'
-import { Route as CadastroRouteImport } from './routes/cadastro'
-import { Route as AdministradoresRouteImport } from './routes/administradores'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
+import { Route as AdministradoresRouteImport } from './routes/administradores'
+import { Route as CadastroRouteImport } from './routes/cadastro'
+import { Route as CanaisRouteImport } from './routes/canais'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DropsRouteImport } from './routes/drops'
+import { Route as EmbaixadoresRouteImport } from './routes/embaixadores'
+import { Route as EventosRouteImport } from './routes/eventos'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
+import { Route as ParceirosRouteImport } from './routes/parceiros'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SobreRouteImport } from './routes/sobre'
+import { Route as TermosRouteImport } from './routes/termos'
+import { Route as VagasRouteImport } from './routes/vagas'
+import { Route as VerificarCodigoRouteImport } from './routes/verificar-codigo'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
-import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
-import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
-import { Route as DashboardUploadConfigRouteImport } from './routes/dashboard.upload-config'
-import { Route as DashboardSugerirEventoRouteImport } from './routes/dashboard.sugerir-evento'
-import { Route as DashboardRifasAdminRouteImport } from './routes/dashboard.rifas-admin'
-import { Route as DashboardRifasRouteImport } from './routes/dashboard.rifas'
-import { Route as DashboardProjetosRouteImport } from './routes/dashboard.projetos'
-import { Route as DashboardPerfilRouteImport } from './routes/dashboard.perfil'
-import { Route as DashboardParceirosRouteImport } from './routes/dashboard.parceiros'
-import { Route as DashboardNoticiasRouteImport } from './routes/dashboard.noticias'
-import { Route as DashboardMinhasVagasRouteImport } from './routes/dashboard.minhas-vagas'
-import { Route as DashboardMeusProjetosRouteImport } from './routes/dashboard.meus-projetos'
-import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meus-eventos'
-import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensagens'
-import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
-import { Route as DashboardFinanceiroRouteImport } from './routes/dashboard.financeiro'
-import { Route as DashboardFeedRouteImport } from './routes/dashboard.feed'
-import { Route as DashboardExplorarProjetosRouteImport } from './routes/dashboard.explorar-projetos'
-import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
-import { Route as DashboardDropsRouteImport } from './routes/dashboard.drops'
-import { Route as DashboardDepoimentosRouteImport } from './routes/dashboard.depoimentos'
-import { Route as DashboardDenunciasRouteImport } from './routes/dashboard.denuncias'
-import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
-import { Route as DashboardComunidadePerfisRouteImport } from './routes/dashboard.comunidade-perfis'
-import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
-import { Route as DashboardCandidaturasRouteImport } from './routes/dashboard.candidaturas'
 import { Route as DashboardCandidatosRouteImport } from './routes/dashboard.candidatos'
+import { Route as DashboardCandidaturasRouteImport } from './routes/dashboard.candidaturas'
+import { Route as DashboardCargosRouteImport } from './routes/dashboard.cargos'
+import { Route as DashboardComunidadePerfisRouteImport } from './routes/dashboard.comunidade-perfis'
+import { Route as DashboardConfiguracoesRouteImport } from './routes/dashboard.configuracoes'
+import { Route as DashboardDenunciasRouteImport } from './routes/dashboard.denuncias'
+import { Route as DashboardDepoimentosRouteImport } from './routes/dashboard.depoimentos'
+import { Route as DashboardDropsRouteImport } from './routes/dashboard.drops'
+import { Route as DashboardEventosRouteImport } from './routes/dashboard.eventos'
+import { Route as DashboardExplorarProjetosRouteImport } from './routes/dashboard.explorar-projetos'
+import { Route as DashboardFeedRouteImport } from './routes/dashboard.feed'
+import { Route as DashboardFinanceiroRouteImport } from './routes/dashboard.financeiro'
+import { Route as DashboardLogsRouteImport } from './routes/dashboard.logs'
+import { Route as DashboardMensagensRouteImport } from './routes/dashboard.mensagens'
+import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meus-eventos'
+import { Route as DashboardMeusProjetosRouteImport } from './routes/dashboard.meus-projetos'
+import { Route as DashboardMinhasVagasRouteImport } from './routes/dashboard.minhas-vagas'
+import { Route as DashboardNoticiasRouteImport } from './routes/dashboard.noticias'
+import { Route as DashboardParceirosRouteImport } from './routes/dashboard.parceiros'
+import { Route as DashboardPerfilRouteImport } from './routes/dashboard.perfil'
+import { Route as DashboardProjetosRouteImport } from './routes/dashboard.projetos'
+import { Route as DashboardRifasRouteImport } from './routes/dashboard.rifas'
+import { Route as DashboardRifasAdminRouteImport } from './routes/dashboard.rifas-admin'
+import { Route as DashboardSugerirEventoRouteImport } from './routes/dashboard.sugerir-evento'
+import { Route as DashboardUploadConfigRouteImport } from './routes/dashboard.upload-config'
+import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
+import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
+import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
+import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
 
-const VerificarCodigoRoute = VerificarCodigoRouteImport.update({
-  id: '/verificar-codigo',
-  path: '/verificar-codigo',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const VagasRoute = VagasRouteImport.update({
-  id: '/vagas',
-  path: '/vagas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermosRoute = TermosRouteImport.update({
-  id: '/termos',
-  path: '/termos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SobreRoute = SobreRouteImport.update({
-  id: '/sobre',
-  path: '/sobre',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
-  id: '/recuperar-senha',
-  path: '/recuperar-senha',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacidadeRoute = PrivacidadeRouteImport.update({
-  id: '/privacidade',
-  path: '/privacidade',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ParceirosRoute = ParceirosRouteImport.update({
-  id: '/parceiros',
-  path: '/parceiros',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NovaSenhaRoute = NovaSenhaRouteImport.update({
-  id: '/nova-senha',
-  path: '/nova-senha',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventosRoute = EventosRouteImport.update({
-  id: '/eventos',
-  path: '/eventos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmbaixadoresRoute = EmbaixadoresRouteImport.update({
-  id: '/embaixadores',
-  path: '/embaixadores',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DropsRoute = DropsRouteImport.update({
-  id: '/drops',
-  path: '/drops',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CanaisRoute = CanaisRouteImport.update({
-  id: '/canais',
-  path: '/canais',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CadastroRoute = CadastroRouteImport.update({
-  id: '/cadastro',
-  path: '/cadastro',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdministradoresRoute = AdministradoresRouteImport.update({
@@ -155,14 +70,94 @@ const AdministradoresRoute = AdministradoresRouteImport.update({
   path: '/administradores',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjetosIndexRoute = ProjetosIndexRouteImport.update({
-  id: '/projetos/',
-  path: '/projetos/',
+const CanaisRoute = CanaisRouteImport.update({
+  id: '/canais',
+  path: '/canais',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DropsRoute = DropsRouteImport.update({
+  id: '/drops',
+  path: '/drops',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmbaixadoresRoute = EmbaixadoresRouteImport.update({
+  id: '/embaixadores',
+  path: '/embaixadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventosRoute = EventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovaSenhaRoute = NovaSenhaRouteImport.update({
+  id: '/nova-senha',
+  path: '/nova-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParceirosRoute = ParceirosRouteImport.update({
+  id: '/parceiros',
+  path: '/parceiros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
+  id: '/recuperar-senha',
+  path: '/recuperar-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SobreRoute = SobreRouteImport.update({
+  id: '/sobre',
+  path: '/sobre',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VagasRoute = VagasRouteImport.update({
+  id: '/vagas',
+  path: '/vagas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VerificarCodigoRoute = VerificarCodigoRouteImport.update({
+  id: '/verificar-codigo',
+  path: '/verificar-codigo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardIndexRoute = DashboardIndexRouteImport.update({
@@ -170,125 +165,19 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
-const ProjetosSlugRoute = ProjetosSlugRouteImport.update({
-  id: '/projetos/$slug',
-  path: '/projetos/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardVagasRoute = DashboardVagasRouteImport.update({
-  id: '/vagas',
-  path: '/vagas',
+const DashboardCandidatosRoute = DashboardCandidatosRouteImport.update({
+  id: '/candidatos',
+  path: '/candidatos',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardUsuariosRoute = DashboardUsuariosRouteImport.update({
-  id: '/usuarios',
-  path: '/usuarios',
+const DashboardCandidaturasRoute = DashboardCandidaturasRouteImport.update({
+  id: '/candidaturas',
+  path: '/candidaturas',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardUploadConfigRoute = DashboardUploadConfigRouteImport.update({
-  id: '/upload-config',
-  path: '/upload-config',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardSugerirEventoRoute = DashboardSugerirEventoRouteImport.update({
-  id: '/sugerir-evento',
-  path: '/sugerir-evento',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardRifasAdminRoute = DashboardRifasAdminRouteImport.update({
-  id: '/rifas-admin',
-  path: '/rifas-admin',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardRifasRoute = DashboardRifasRouteImport.update({
-  id: '/rifas',
-  path: '/rifas',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardProjetosRoute = DashboardProjetosRouteImport.update({
-  id: '/projetos',
-  path: '/projetos',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardPerfilRoute = DashboardPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardParceirosRoute = DashboardParceirosRouteImport.update({
-  id: '/parceiros',
-  path: '/parceiros',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardNoticiasRoute = DashboardNoticiasRouteImport.update({
-  id: '/noticias',
-  path: '/noticias',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardMinhasVagasRoute = DashboardMinhasVagasRouteImport.update({
-  id: '/minhas-vagas',
-  path: '/minhas-vagas',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardMeusProjetosRoute = DashboardMeusProjetosRouteImport.update({
-  id: '/meus-projetos',
-  path: '/meus-projetos',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardMeusEventosRoute = DashboardMeusEventosRouteImport.update({
-  id: '/meus-eventos',
-  path: '/meus-eventos',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardMensagensRoute = DashboardMensagensRouteImport.update({
-  id: '/mensagens',
-  path: '/mensagens',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardLogsRoute = DashboardLogsRouteImport.update({
-  id: '/logs',
-  path: '/logs',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardFinanceiroRoute = DashboardFinanceiroRouteImport.update({
-  id: '/financeiro',
-  path: '/financeiro',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardFeedRoute = DashboardFeedRouteImport.update({
-  id: '/feed',
-  path: '/feed',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardExplorarProjetosRoute =
-  DashboardExplorarProjetosRouteImport.update({
-    id: '/explorar-projetos',
-    path: '/explorar-projetos',
-    getParentRoute: () => DashboardRoute,
-  } as any)
-const DashboardEventosRoute = DashboardEventosRouteImport.update({
-  id: '/eventos',
-  path: '/eventos',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardDropsRoute = DashboardDropsRouteImport.update({
-  id: '/drops',
-  path: '/drops',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardDepoimentosRoute = DashboardDepoimentosRouteImport.update({
-  id: '/depoimentos',
-  path: '/depoimentos',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardDenunciasRoute = DashboardDenunciasRouteImport.update({
-  id: '/denuncias',
-  path: '/denuncias',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
-  id: '/configuracoes',
-  path: '/configuracoes',
+const DashboardCargosRoute = DashboardCargosRouteImport.update({
+  id: '/cargos',
+  path: '/cargos',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardComunidadePerfisRoute =
@@ -297,20 +186,131 @@ const DashboardComunidadePerfisRoute =
     path: '/comunidade-perfis',
     getParentRoute: () => DashboardRoute,
   } as any)
-const DashboardCargosRoute = DashboardCargosRouteImport.update({
-  id: '/cargos',
-  path: '/cargos',
+const DashboardConfiguracoesRoute = DashboardConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardCandidaturasRoute = DashboardCandidaturasRouteImport.update({
-  id: '/candidaturas',
-  path: '/candidaturas',
+const DashboardDenunciasRoute = DashboardDenunciasRouteImport.update({
+  id: '/denuncias',
+  path: '/denuncias',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardCandidatosRoute = DashboardCandidatosRouteImport.update({
-  id: '/candidatos',
-  path: '/candidatos',
+const DashboardDepoimentosRoute = DashboardDepoimentosRouteImport.update({
+  id: '/depoimentos',
+  path: '/depoimentos',
   getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardDropsRoute = DashboardDropsRouteImport.update({
+  id: '/drops',
+  path: '/drops',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardEventosRoute = DashboardEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardExplorarProjetosRoute =
+  DashboardExplorarProjetosRouteImport.update({
+    id: '/explorar-projetos',
+    path: '/explorar-projetos',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardFeedRoute = DashboardFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardFinanceiroRoute = DashboardFinanceiroRouteImport.update({
+  id: '/financeiro',
+  path: '/financeiro',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardLogsRoute = DashboardLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMensagensRoute = DashboardMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMeusEventosRoute = DashboardMeusEventosRouteImport.update({
+  id: '/meus-eventos',
+  path: '/meus-eventos',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMeusProjetosRoute = DashboardMeusProjetosRouteImport.update({
+  id: '/meus-projetos',
+  path: '/meus-projetos',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardMinhasVagasRoute = DashboardMinhasVagasRouteImport.update({
+  id: '/minhas-vagas',
+  path: '/minhas-vagas',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardNoticiasRoute = DashboardNoticiasRouteImport.update({
+  id: '/noticias',
+  path: '/noticias',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardParceirosRoute = DashboardParceirosRouteImport.update({
+  id: '/parceiros',
+  path: '/parceiros',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPerfilRoute = DashboardPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardProjetosRoute = DashboardProjetosRouteImport.update({
+  id: '/projetos',
+  path: '/projetos',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRifasRoute = DashboardRifasRouteImport.update({
+  id: '/rifas',
+  path: '/rifas',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardRifasAdminRoute = DashboardRifasAdminRouteImport.update({
+  id: '/rifas-admin',
+  path: '/rifas-admin',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardSugerirEventoRoute = DashboardSugerirEventoRouteImport.update({
+  id: '/sugerir-evento',
+  path: '/sugerir-evento',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardUploadConfigRoute = DashboardUploadConfigRouteImport.update({
+  id: '/upload-config',
+  path: '/upload-config',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardUsuariosRoute = DashboardUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardVagasRoute = DashboardVagasRouteImport.update({
+  id: '/vagas',
+  path: '/vagas',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const ProjetosIndexRoute = ProjetosIndexRouteImport.update({
+  id: '/projetos/',
+  path: '/projetos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjetosSlugRoute = ProjetosSlugRouteImport.update({
+  id: '/projetos/$slug',
+  path: '/projetos/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -654,130 +654,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/verificar-codigo': {
-      id: '/verificar-codigo'
-      path: '/verificar-codigo'
-      fullPath: '/verificar-codigo'
-      preLoaderRoute: typeof VerificarCodigoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/vagas': {
-      id: '/vagas'
-      path: '/vagas'
-      fullPath: '/vagas'
-      preLoaderRoute: typeof VagasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/termos': {
-      id: '/termos'
-      path: '/termos'
-      fullPath: '/termos'
-      preLoaderRoute: typeof TermosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sobre': {
-      id: '/sobre'
-      path: '/sobre'
-      fullPath: '/sobre'
-      preLoaderRoute: typeof SobreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/recuperar-senha': {
-      id: '/recuperar-senha'
-      path: '/recuperar-senha'
-      fullPath: '/recuperar-senha'
-      preLoaderRoute: typeof RecuperarSenhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacidade': {
-      id: '/privacidade'
-      path: '/privacidade'
-      fullPath: '/privacidade'
-      preLoaderRoute: typeof PrivacidadeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/parceiros': {
-      id: '/parceiros'
-      path: '/parceiros'
-      fullPath: '/parceiros'
-      preLoaderRoute: typeof ParceirosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nova-senha': {
-      id: '/nova-senha'
-      path: '/nova-senha'
-      fullPath: '/nova-senha'
-      preLoaderRoute: typeof NovaSenhaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/eventos': {
-      id: '/eventos'
-      path: '/eventos'
-      fullPath: '/eventos'
-      preLoaderRoute: typeof EventosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/embaixadores': {
-      id: '/embaixadores'
-      path: '/embaixadores'
-      fullPath: '/embaixadores'
-      preLoaderRoute: typeof EmbaixadoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/drops': {
-      id: '/drops'
-      path: '/drops'
-      fullPath: '/drops'
-      preLoaderRoute: typeof DropsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/canais': {
-      id: '/canais'
-      path: '/canais'
-      fullPath: '/canais'
-      preLoaderRoute: typeof CanaisRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cadastro': {
-      id: '/cadastro'
-      path: '/cadastro'
-      fullPath: '/cadastro'
-      preLoaderRoute: typeof CadastroRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/administradores': {
@@ -787,18 +668,130 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdministradoresRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projetos/': {
-      id: '/projetos/'
-      path: '/projetos'
-      fullPath: '/projetos/'
-      preLoaderRoute: typeof ProjetosIndexRouteImport
+    '/canais': {
+      id: '/canais'
+      path: '/canais'
+      fullPath: '/canais'
+      preLoaderRoute: typeof CanaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/drops': {
+      id: '/drops'
+      path: '/drops'
+      fullPath: '/drops'
+      preLoaderRoute: typeof DropsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embaixadores': {
+      id: '/embaixadores'
+      path: '/embaixadores'
+      fullPath: '/embaixadores'
+      preLoaderRoute: typeof EmbaixadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eventos': {
+      id: '/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof EventosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nova-senha': {
+      id: '/nova-senha'
+      path: '/nova-senha'
+      fullPath: '/nova-senha'
+      preLoaderRoute: typeof NovaSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parceiros': {
+      id: '/parceiros'
+      path: '/parceiros'
+      fullPath: '/parceiros'
+      preLoaderRoute: typeof ParceirosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-senha': {
+      id: '/recuperar-senha'
+      path: '/recuperar-senha'
+      fullPath: '/recuperar-senha'
+      preLoaderRoute: typeof RecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sobre': {
+      id: '/sobre'
+      path: '/sobre'
+      fullPath: '/sobre'
+      preLoaderRoute: typeof SobreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vagas': {
+      id: '/vagas'
+      path: '/vagas'
+      fullPath: '/vagas'
+      preLoaderRoute: typeof VagasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/verificar-codigo': {
+      id: '/verificar-codigo'
+      path: '/verificar-codigo'
+      fullPath: '/verificar-codigo'
+      preLoaderRoute: typeof VerificarCodigoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard/': {
@@ -808,186 +801,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/projetos/$slug': {
-      id: '/projetos/$slug'
-      path: '/projetos/$slug'
-      fullPath: '/projetos/$slug'
-      preLoaderRoute: typeof ProjetosSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard/vagas': {
-      id: '/dashboard/vagas'
-      path: '/vagas'
-      fullPath: '/dashboard/vagas'
-      preLoaderRoute: typeof DashboardVagasRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/usuarios': {
-      id: '/dashboard/usuarios'
-      path: '/usuarios'
-      fullPath: '/dashboard/usuarios'
-      preLoaderRoute: typeof DashboardUsuariosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/upload-config': {
-      id: '/dashboard/upload-config'
-      path: '/upload-config'
-      fullPath: '/dashboard/upload-config'
-      preLoaderRoute: typeof DashboardUploadConfigRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/sugerir-evento': {
-      id: '/dashboard/sugerir-evento'
-      path: '/sugerir-evento'
-      fullPath: '/dashboard/sugerir-evento'
-      preLoaderRoute: typeof DashboardSugerirEventoRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/rifas-admin': {
-      id: '/dashboard/rifas-admin'
-      path: '/rifas-admin'
-      fullPath: '/dashboard/rifas-admin'
-      preLoaderRoute: typeof DashboardRifasAdminRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/rifas': {
-      id: '/dashboard/rifas'
-      path: '/rifas'
-      fullPath: '/dashboard/rifas'
-      preLoaderRoute: typeof DashboardRifasRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/projetos': {
-      id: '/dashboard/projetos'
-      path: '/projetos'
-      fullPath: '/dashboard/projetos'
-      preLoaderRoute: typeof DashboardProjetosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/perfil': {
-      id: '/dashboard/perfil'
-      path: '/perfil'
-      fullPath: '/dashboard/perfil'
-      preLoaderRoute: typeof DashboardPerfilRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/parceiros': {
-      id: '/dashboard/parceiros'
-      path: '/parceiros'
-      fullPath: '/dashboard/parceiros'
-      preLoaderRoute: typeof DashboardParceirosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/noticias': {
-      id: '/dashboard/noticias'
-      path: '/noticias'
-      fullPath: '/dashboard/noticias'
-      preLoaderRoute: typeof DashboardNoticiasRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/minhas-vagas': {
-      id: '/dashboard/minhas-vagas'
-      path: '/minhas-vagas'
-      fullPath: '/dashboard/minhas-vagas'
-      preLoaderRoute: typeof DashboardMinhasVagasRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/meus-projetos': {
-      id: '/dashboard/meus-projetos'
-      path: '/meus-projetos'
-      fullPath: '/dashboard/meus-projetos'
-      preLoaderRoute: typeof DashboardMeusProjetosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/meus-eventos': {
-      id: '/dashboard/meus-eventos'
-      path: '/meus-eventos'
-      fullPath: '/dashboard/meus-eventos'
-      preLoaderRoute: typeof DashboardMeusEventosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/mensagens': {
-      id: '/dashboard/mensagens'
-      path: '/mensagens'
-      fullPath: '/dashboard/mensagens'
-      preLoaderRoute: typeof DashboardMensagensRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/logs': {
-      id: '/dashboard/logs'
-      path: '/logs'
-      fullPath: '/dashboard/logs'
-      preLoaderRoute: typeof DashboardLogsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/financeiro': {
-      id: '/dashboard/financeiro'
-      path: '/financeiro'
-      fullPath: '/dashboard/financeiro'
-      preLoaderRoute: typeof DashboardFinanceiroRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/feed': {
-      id: '/dashboard/feed'
-      path: '/feed'
-      fullPath: '/dashboard/feed'
-      preLoaderRoute: typeof DashboardFeedRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/explorar-projetos': {
-      id: '/dashboard/explorar-projetos'
-      path: '/explorar-projetos'
-      fullPath: '/dashboard/explorar-projetos'
-      preLoaderRoute: typeof DashboardExplorarProjetosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/eventos': {
-      id: '/dashboard/eventos'
-      path: '/eventos'
-      fullPath: '/dashboard/eventos'
-      preLoaderRoute: typeof DashboardEventosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/drops': {
-      id: '/dashboard/drops'
-      path: '/drops'
-      fullPath: '/dashboard/drops'
-      preLoaderRoute: typeof DashboardDropsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/depoimentos': {
-      id: '/dashboard/depoimentos'
-      path: '/depoimentos'
-      fullPath: '/dashboard/depoimentos'
-      preLoaderRoute: typeof DashboardDepoimentosRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/denuncias': {
-      id: '/dashboard/denuncias'
-      path: '/denuncias'
-      fullPath: '/dashboard/denuncias'
-      preLoaderRoute: typeof DashboardDenunciasRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/configuracoes': {
-      id: '/dashboard/configuracoes'
-      path: '/configuracoes'
-      fullPath: '/dashboard/configuracoes'
-      preLoaderRoute: typeof DashboardConfiguracoesRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/comunidade-perfis': {
-      id: '/dashboard/comunidade-perfis'
-      path: '/comunidade-perfis'
-      fullPath: '/dashboard/comunidade-perfis'
-      preLoaderRoute: typeof DashboardComunidadePerfisRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/cargos': {
-      id: '/dashboard/cargos'
-      path: '/cargos'
-      fullPath: '/dashboard/cargos'
-      preLoaderRoute: typeof DashboardCargosRouteImport
+    '/dashboard/candidatos': {
+      id: '/dashboard/candidatos'
+      path: '/candidatos'
+      fullPath: '/dashboard/candidatos'
+      preLoaderRoute: typeof DashboardCandidatosRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/candidaturas': {
@@ -997,12 +815,194 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardCandidaturasRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/candidatos': {
-      id: '/dashboard/candidatos'
-      path: '/candidatos'
-      fullPath: '/dashboard/candidatos'
-      preLoaderRoute: typeof DashboardCandidatosRouteImport
+    '/dashboard/cargos': {
+      id: '/dashboard/cargos'
+      path: '/cargos'
+      fullPath: '/dashboard/cargos'
+      preLoaderRoute: typeof DashboardCargosRouteImport
       parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/comunidade-perfis': {
+      id: '/dashboard/comunidade-perfis'
+      path: '/comunidade-perfis'
+      fullPath: '/dashboard/comunidade-perfis'
+      preLoaderRoute: typeof DashboardComunidadePerfisRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/configuracoes': {
+      id: '/dashboard/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/dashboard/configuracoes'
+      preLoaderRoute: typeof DashboardConfiguracoesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/denuncias': {
+      id: '/dashboard/denuncias'
+      path: '/denuncias'
+      fullPath: '/dashboard/denuncias'
+      preLoaderRoute: typeof DashboardDenunciasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/depoimentos': {
+      id: '/dashboard/depoimentos'
+      path: '/depoimentos'
+      fullPath: '/dashboard/depoimentos'
+      preLoaderRoute: typeof DashboardDepoimentosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/drops': {
+      id: '/dashboard/drops'
+      path: '/drops'
+      fullPath: '/dashboard/drops'
+      preLoaderRoute: typeof DashboardDropsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/eventos': {
+      id: '/dashboard/eventos'
+      path: '/eventos'
+      fullPath: '/dashboard/eventos'
+      preLoaderRoute: typeof DashboardEventosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/explorar-projetos': {
+      id: '/dashboard/explorar-projetos'
+      path: '/explorar-projetos'
+      fullPath: '/dashboard/explorar-projetos'
+      preLoaderRoute: typeof DashboardExplorarProjetosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/feed': {
+      id: '/dashboard/feed'
+      path: '/feed'
+      fullPath: '/dashboard/feed'
+      preLoaderRoute: typeof DashboardFeedRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/financeiro': {
+      id: '/dashboard/financeiro'
+      path: '/financeiro'
+      fullPath: '/dashboard/financeiro'
+      preLoaderRoute: typeof DashboardFinanceiroRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/logs': {
+      id: '/dashboard/logs'
+      path: '/logs'
+      fullPath: '/dashboard/logs'
+      preLoaderRoute: typeof DashboardLogsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/mensagens': {
+      id: '/dashboard/mensagens'
+      path: '/mensagens'
+      fullPath: '/dashboard/mensagens'
+      preLoaderRoute: typeof DashboardMensagensRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/meus-eventos': {
+      id: '/dashboard/meus-eventos'
+      path: '/meus-eventos'
+      fullPath: '/dashboard/meus-eventos'
+      preLoaderRoute: typeof DashboardMeusEventosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/meus-projetos': {
+      id: '/dashboard/meus-projetos'
+      path: '/meus-projetos'
+      fullPath: '/dashboard/meus-projetos'
+      preLoaderRoute: typeof DashboardMeusProjetosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/minhas-vagas': {
+      id: '/dashboard/minhas-vagas'
+      path: '/minhas-vagas'
+      fullPath: '/dashboard/minhas-vagas'
+      preLoaderRoute: typeof DashboardMinhasVagasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/noticias': {
+      id: '/dashboard/noticias'
+      path: '/noticias'
+      fullPath: '/dashboard/noticias'
+      preLoaderRoute: typeof DashboardNoticiasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/parceiros': {
+      id: '/dashboard/parceiros'
+      path: '/parceiros'
+      fullPath: '/dashboard/parceiros'
+      preLoaderRoute: typeof DashboardParceirosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/perfil': {
+      id: '/dashboard/perfil'
+      path: '/perfil'
+      fullPath: '/dashboard/perfil'
+      preLoaderRoute: typeof DashboardPerfilRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/projetos': {
+      id: '/dashboard/projetos'
+      path: '/projetos'
+      fullPath: '/dashboard/projetos'
+      preLoaderRoute: typeof DashboardProjetosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/rifas': {
+      id: '/dashboard/rifas'
+      path: '/rifas'
+      fullPath: '/dashboard/rifas'
+      preLoaderRoute: typeof DashboardRifasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/rifas-admin': {
+      id: '/dashboard/rifas-admin'
+      path: '/rifas-admin'
+      fullPath: '/dashboard/rifas-admin'
+      preLoaderRoute: typeof DashboardRifasAdminRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/sugerir-evento': {
+      id: '/dashboard/sugerir-evento'
+      path: '/sugerir-evento'
+      fullPath: '/dashboard/sugerir-evento'
+      preLoaderRoute: typeof DashboardSugerirEventoRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/upload-config': {
+      id: '/dashboard/upload-config'
+      path: '/upload-config'
+      fullPath: '/dashboard/upload-config'
+      preLoaderRoute: typeof DashboardUploadConfigRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/usuarios': {
+      id: '/dashboard/usuarios'
+      path: '/usuarios'
+      fullPath: '/dashboard/usuarios'
+      preLoaderRoute: typeof DashboardUsuariosRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/vagas': {
+      id: '/dashboard/vagas'
+      path: '/vagas'
+      fullPath: '/dashboard/vagas'
+      preLoaderRoute: typeof DashboardVagasRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/projetos/': {
+      id: '/projetos/'
+      path: '/projetos'
+      fullPath: '/projetos/'
+      preLoaderRoute: typeof ProjetosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/projetos/$slug': {
+      id: '/projetos/$slug'
+      path: '/projetos/$slug'
+      fullPath: '/projetos/$slug'
+      preLoaderRoute: typeof ProjetosSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
