@@ -458,6 +458,59 @@ export type Database = {
           },
         ]
       }
+      event_registrations: {
+        Row: {
+          checked_in_at: string | null
+          checked_in_by: string | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          event_id: string
+          id: string
+          note: string | null
+          status: string
+          ticket_code: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          event_id: string
+          id?: string
+          note?: string | null
+          status?: string
+          ticket_code: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          event_id?: string
+          id?: string
+          note?: string | null
+          status?: string
+          ticket_code?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_waitlist: {
         Row: {
           created_at: string
@@ -502,6 +555,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string
+          end_time: string | null
           event_date: string
           event_time: string | null
           id: string
@@ -510,6 +564,8 @@ export type Database = {
           modality: Database["public"]["Enums"]["event_modality"]
           name: string
           online_link: string | null
+          requires_approval: boolean
+          schedule: Json
           source: string
           speakers: Json
           status: Database["public"]["Enums"]["content_status"]
@@ -528,6 +584,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description: string
+          end_time?: string | null
           event_date: string
           event_time?: string | null
           id?: string
@@ -536,6 +593,8 @@ export type Database = {
           modality: Database["public"]["Enums"]["event_modality"]
           name: string
           online_link?: string | null
+          requires_approval?: boolean
+          schedule?: Json
           source?: string
           speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
@@ -554,6 +613,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string
+          end_time?: string | null
           event_date?: string
           event_time?: string | null
           id?: string
@@ -562,6 +622,8 @@ export type Database = {
           modality?: Database["public"]["Enums"]["event_modality"]
           name?: string
           online_link?: string | null
+          requires_approval?: boolean
+          schedule?: Json
           source?: string
           speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
@@ -2342,6 +2404,7 @@ export type Database = {
     }
     Functions: {
       _audit_actor_name: { Args: { _uid: string }; Returns: string }
+      _gen_ticket_code: { Args: never; Returns: string }
       can_update_storage_object: {
         Args: { _bucket: string; _name: string; _owner?: string }
         Returns: boolean
@@ -2350,9 +2413,21 @@ export type Database = {
         Args: { _bucket: string; _name: string }
         Returns: boolean
       }
+      cancel_event_registration: {
+        Args: { _event_id: string }
+        Returns: undefined
+      }
+      checkin_by_code: {
+        Args: { _code: string; _event_id: string }
+        Returns: Json
+      }
       decide_join_request: {
         Args: { _action: string; _id: string; _note?: string }
         Returns: undefined
+      }
+      decide_registration: {
+        Args: { _ids: string[]; _status: string }
+        Returns: number
       }
       draw_raffle: { Args: { _raffle_id: string }; Returns: Json }
       get_lgpd_consents_admin: {
@@ -2450,6 +2525,7 @@ export type Database = {
       promote_user_to_super_admin: { Args: { _email: string }; Returns: string }
       recalculate_public_home_stats: { Args: never; Returns: undefined }
       register_event_interest: { Args: { _event_id: string }; Returns: Json }
+      register_for_event: { Args: { _event_id: string }; Returns: Json }
       resolve_report: {
         Args: { _action: string; _note: string; _report_id: string }
         Returns: undefined
