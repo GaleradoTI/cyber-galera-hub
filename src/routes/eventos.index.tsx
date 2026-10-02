@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-export const Route = createFileRoute("/eventos")({
+export const Route = createFileRoute("/eventos/")({
   head: () => ({
     meta: [
       { title: "Eventos — GALERA DO T.I." },
