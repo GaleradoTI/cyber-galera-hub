@@ -158,7 +158,7 @@ function EventPage() {
 
             <div>
               <h2 className="text-xl font-bold mb-3">Sobre o evento</h2>
-              <div className="prose prose-invert max-w-none"><MarkdownView value={ev.description} /></div>
+              <div className="prose prose-invert max-w-none"><MarkdownView>{ev.description ?? ""}</MarkdownView></div>
             </div>
 
             {speakers.length > 0 && (
