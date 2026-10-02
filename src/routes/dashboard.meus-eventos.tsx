@@ -85,7 +85,8 @@ function MeusEventosPage() {
   };
 
   return (
-    <DashboardShell title="Meus Eventos" description="Eventos em que você demonstrou interesse.">
+    <DashboardShell title="Meus Eventos" description="Seus ingressos e eventos em que você demonstrou interesse.">
+      <MyTickets userId={user?.id} />
       {(!user || isLoading) && <div className="text-muted-foreground">Carregando…</div>}
       {!isLoading && data.length === 0 && (
         <div className="glass rounded-xl p-8 text-center">
