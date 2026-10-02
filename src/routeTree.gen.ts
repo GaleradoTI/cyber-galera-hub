@@ -16,7 +16,6 @@ import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DropsRouteImport } from './routes/drops'
 import { Route as EmbaixadoresRouteImport } from './routes/embaixadores'
-import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
@@ -57,6 +56,7 @@ import { Route as DashboardSugerirEventoRouteImport } from './routes/dashboard.s
 import { Route as DashboardUploadConfigRouteImport } from './routes/dashboard.upload-config'
 import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
 import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
+import { Route as EventosIndexRouteImport } from './routes/eventos.index'
 import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
 import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
 
@@ -93,11 +93,6 @@ const DropsRoute = DropsRouteImport.update({
 const EmbaixadoresRoute = EmbaixadoresRouteImport.update({
   id: '/embaixadores',
   path: '/embaixadores',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventosRoute = EventosRouteImport.update({
-  id: '/eventos',
-  path: '/eventos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -302,6 +297,11 @@ const DashboardVagasRoute = DashboardVagasRouteImport.update({
   path: '/vagas',
   getParentRoute: () => DashboardRoute,
 } as any)
+const EventosIndexRoute = EventosIndexRouteImport.update({
+  id: '/eventos/',
+  path: '/eventos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjetosIndexRoute = ProjetosIndexRouteImport.update({
   id: '/projetos/',
   path: '/projetos/',
@@ -321,7 +321,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
-  '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/nova-senha': typeof NovaSenhaRoute
@@ -363,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/vagas': typeof DashboardVagasRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/eventos/': typeof EventosIndexRoute
   '/projetos/': typeof ProjetosIndexRoute
 }
 export interface FileRoutesByTo {
@@ -372,7 +372,6 @@ export interface FileRoutesByTo {
   '/canais': typeof CanaisRoute
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
-  '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/nova-senha': typeof NovaSenhaRoute
@@ -414,6 +413,7 @@ export interface FileRoutesByTo {
   '/dashboard/vagas': typeof DashboardVagasRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/eventos': typeof EventosIndexRoute
   '/projetos': typeof ProjetosIndexRoute
 }
 export interface FileRoutesById {
@@ -425,7 +425,6 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
-  '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/nova-senha': typeof NovaSenhaRoute
@@ -467,6 +466,7 @@ export interface FileRoutesById {
   '/dashboard/vagas': typeof DashboardVagasRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/eventos/': typeof EventosIndexRoute
   '/projetos/': typeof ProjetosIndexRoute
 }
 export interface FileRouteTypes {
@@ -479,7 +479,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/drops'
     | '/embaixadores'
-    | '/eventos'
     | '/faq'
     | '/login'
     | '/nova-senha'
@@ -521,6 +520,7 @@ export interface FileRouteTypes {
     | '/dashboard/vagas'
     | '/projetos/$slug'
     | '/dashboard/'
+    | '/eventos/'
     | '/projetos/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -530,7 +530,6 @@ export interface FileRouteTypes {
     | '/canais'
     | '/drops'
     | '/embaixadores'
-    | '/eventos'
     | '/faq'
     | '/login'
     | '/nova-senha'
@@ -572,6 +571,7 @@ export interface FileRouteTypes {
     | '/dashboard/vagas'
     | '/projetos/$slug'
     | '/dashboard'
+    | '/eventos'
     | '/projetos'
   id:
     | '__root__'
@@ -582,7 +582,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/drops'
     | '/embaixadores'
-    | '/eventos'
     | '/faq'
     | '/login'
     | '/nova-senha'
@@ -624,6 +623,7 @@ export interface FileRouteTypes {
     | '/dashboard/vagas'
     | '/projetos/$slug'
     | '/dashboard/'
+    | '/eventos/'
     | '/projetos/'
   fileRoutesById: FileRoutesById
 }
@@ -635,7 +635,6 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   DropsRoute: typeof DropsRoute
   EmbaixadoresRoute: typeof EmbaixadoresRoute
-  EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   NovaSenhaRoute: typeof NovaSenhaRoute
@@ -649,6 +648,7 @@ export interface RootRouteChildren {
   VagasRoute: typeof VagasRoute
   VerificarCodigoRoute: typeof VerificarCodigoRoute
   ProjetosSlugRoute: typeof ProjetosSlugRoute
+  EventosIndexRoute: typeof EventosIndexRoute
   ProjetosIndexRoute: typeof ProjetosIndexRoute
 }
 
@@ -701,13 +701,6 @@ declare module '@tanstack/react-router' {
       path: '/embaixadores'
       fullPath: '/embaixadores'
       preLoaderRoute: typeof EmbaixadoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/eventos': {
-      id: '/eventos'
-      path: '/eventos'
-      fullPath: '/eventos'
-      preLoaderRoute: typeof EventosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -990,6 +983,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardVagasRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/eventos/': {
+      id: '/eventos/'
+      path: '/eventos'
+      fullPath: '/eventos/'
+      preLoaderRoute: typeof EventosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projetos/': {
       id: '/projetos/'
       path: '/projetos'
@@ -1081,7 +1081,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   DropsRoute: DropsRoute,
   EmbaixadoresRoute: EmbaixadoresRoute,
-  EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   NovaSenhaRoute: NovaSenhaRoute,
@@ -1095,6 +1094,7 @@ const rootRouteChildren: RootRouteChildren = {
   VagasRoute: VagasRoute,
   VerificarCodigoRoute: VerificarCodigoRoute,
   ProjetosSlugRoute: ProjetosSlugRoute,
+  EventosIndexRoute: EventosIndexRoute,
   ProjetosIndexRoute: ProjetosIndexRoute,
 }
 export const routeTree = rootRouteImport
