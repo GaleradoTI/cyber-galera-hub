@@ -6,6 +6,9 @@ import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashbo
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatDateOnly } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { QrCode } from "@/components/events/qr-code";
+import { REG_STATUS, hhmm, type RegistrationStatus } from "@/lib/events";
 
 export const Route = createFileRoute("/dashboard/meus-eventos")({ component: MeusEventosPage });
 
@@ -85,12 +88,13 @@ function MeusEventosPage() {
   };
 
   return (
-    <DashboardShell title="Meus Eventos" description="Eventos em que você demonstrou interesse.">
+    <DashboardShell title="Meus Eventos" description="Seus ingressos e eventos em que você demonstrou interesse.">
+      <MyTickets userId={user?.id} />
       {(!user || isLoading) && <div className="text-muted-foreground">Carregando…</div>}
       {!isLoading && data.length === 0 && (
         <div className="glass rounded-xl p-8 text-center">
           <Calendar className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">Você ainda não se inscreveu em nenhum evento.</p>
+          <p className="text-sm text-muted-foreground">Nenhum evento marcado como interesse.</p>
           <Link to="/eventos" className="inline-block mt-4">
             <Button>Ver próximos eventos</Button>
           </Link>
@@ -120,9 +124,6 @@ function MeusEventosPage() {
                     <Button size="sm" variant="outline"><ExternalLink className="h-3 w-3 mr-1" /> Acessar</Button>
                   </a>
                 )}
-                <Button size="sm" variant={checked ? "default" : "neon"} onClick={() => toggleCheckin(e.id, checked)}>
-                  <CheckCircle2 className="h-3 w-3 mr-1" /> {checked ? "Check-in feito" : "Fazer check-in"}
-                </Button>
                 <Button size="sm" variant="ghost" onClick={() => remove(row.id)} title="Cancelar inscrição">
                   <Trash2 className="h-3 w-3" />
                 </Button>
@@ -151,5 +152,42 @@ function MeusEventosPage() {
         </section>
       )}
     </DashboardShell>
+  );
+}
+
+function MyTickets({ userId }: { userId?: string }) {
+  const { data = [] } = useQuery({
+    queryKey: ["my-registrations", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data } = await (supabase.from("event_registrations" as any) as any)
+        .select("id, status, ticket_code, checked_in_at, events(id, name, event_date, event_time, address, location_or_link)")
+        .eq("user_id", userId).neq("status", "cancelled").order("created_at", { ascending: false });
+      return (data ?? []) as any[];
+    },
+  });
+  if (!data.length) return null;
+  return (
+    <section className="mb-8">
+      <h2 className="font-bold text-sm mb-3">Meus ingressos</h2>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {data.map((r) => {
+          const e = r.events; if (!e) return null;
+          const st = r.status as RegistrationStatus;
+          return (
+            <div key={r.id} className="glass rounded-xl border border-primary/30 p-4 flex gap-4 items-center">
+              {st === "approved" ? <QrCode value={r.ticket_code} size={96} /> : null}
+              <div className="min-w-0 flex-1 space-y-1">
+                <Link to="/eventos/$id" params={{ id: e.id }} className="font-bold hover:text-primary block truncate">{e.name}</Link>
+                <div className="text-xs text-muted-foreground">{formatDateOnly(e.event_date)}{e.event_time ? ` • ${hhmm(e.event_time)}` : ""}</div>
+                <Badge variant={REG_STATUS[st].variant}>{REG_STATUS[st].label}</Badge>
+                {st === "approved" && <div className="font-mono text-sm font-bold tracking-widest">{r.ticket_code}</div>}
+                {r.checked_in_at && <div className="text-xs text-primary flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Check-in feito</div>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }

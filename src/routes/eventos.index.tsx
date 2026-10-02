@@ -1,18 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/public/public-layout";
 import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { EventCard } from "@/components/public/event-card";
 import { supabase } from "@/integrations/supabase/client";
-import { EventDetailDialog } from "@/components/public/event-detail-dialog";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-export const Route = createFileRoute("/eventos")({
+export const Route = createFileRoute("/eventos/")({
   head: () => ({
     meta: [
       { title: "Eventos — GALERA DO T.I." },
@@ -24,7 +23,7 @@ export const Route = createFileRoute("/eventos")({
 
 function EventosPage() {
   const { isAuthenticated } = useAuth();
-  const [selected, setSelected] = useState<any | null>(null);
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [modality, setModality] = useState("all");
   const [category, setCategory] = useState("all");
@@ -117,7 +116,7 @@ function EventosPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
             {filtered.map((e: any) => {
               const isThirdAnon = !isAuthenticated && e.source === "terceiros";
-              return <EventCard key={e.id} event={e} onClick={isThirdAnon ? undefined : () => setSelected(e)} />;
+              return <EventCard key={e.id} event={e} onClick={isThirdAnon ? undefined : () => navigate({ to: "/eventos/$id", params: { id: e.id } })} />;
             })}
           </div>
         )}
@@ -128,7 +127,6 @@ function EventosPage() {
             <Link to="/login" search={{ redirect: "/eventos" } as any} className="text-primary underline">entre</Link>.
           </div>
         )}
-        <EventDetailDialog event={selected} open={!!selected} onOpenChange={(v) => !v && setSelected(null)} />
       </section>
     </PublicLayout>
   );

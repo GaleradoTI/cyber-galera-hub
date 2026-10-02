@@ -16,7 +16,6 @@ import { Route as CanaisRouteImport } from './routes/canais'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DropsRouteImport } from './routes/drops'
 import { Route as EmbaixadoresRouteImport } from './routes/embaixadores'
-import { Route as EventosRouteImport } from './routes/eventos'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NovaSenhaRouteImport } from './routes/nova-senha'
@@ -57,8 +56,12 @@ import { Route as DashboardSugerirEventoRouteImport } from './routes/dashboard.s
 import { Route as DashboardUploadConfigRouteImport } from './routes/dashboard.upload-config'
 import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
 import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
+import { Route as EventosIndexRouteImport } from './routes/eventos.index'
+import { Route as EventosIdRouteImport } from './routes/eventos.$id'
 import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
 import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
+import { Route as DashboardEventoCrachasIdRouteImport } from './routes/dashboard.evento-crachas.$id'
+import { Route as DashboardEventoInscricoesIdRouteImport } from './routes/dashboard.evento-inscricoes.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -93,11 +96,6 @@ const DropsRoute = DropsRouteImport.update({
 const EmbaixadoresRoute = EmbaixadoresRouteImport.update({
   id: '/embaixadores',
   path: '/embaixadores',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EventosRoute = EventosRouteImport.update({
-  id: '/eventos',
-  path: '/eventos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -302,6 +300,16 @@ const DashboardVagasRoute = DashboardVagasRouteImport.update({
   path: '/vagas',
   getParentRoute: () => DashboardRoute,
 } as any)
+const EventosIndexRoute = EventosIndexRouteImport.update({
+  id: '/eventos/',
+  path: '/eventos/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventosIdRoute = EventosIdRouteImport.update({
+  id: '/eventos/$id',
+  path: '/eventos/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjetosIndexRoute = ProjetosIndexRouteImport.update({
   id: '/projetos/',
   path: '/projetos/',
@@ -312,6 +320,18 @@ const ProjetosSlugRoute = ProjetosSlugRouteImport.update({
   path: '/projetos/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardEventoCrachasIdRoute =
+  DashboardEventoCrachasIdRouteImport.update({
+    id: '/evento-crachas/$id',
+    path: '/evento-crachas/$id',
+    getParentRoute: () => DashboardRoute,
+  } as any)
+const DashboardEventoInscricoesIdRoute =
+  DashboardEventoInscricoesIdRouteImport.update({
+    id: '/evento-inscricoes/$id',
+    path: '/evento-inscricoes/$id',
+    getParentRoute: () => DashboardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -321,7 +341,6 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
-  '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/nova-senha': typeof NovaSenhaRoute
@@ -361,9 +380,13 @@ export interface FileRoutesByFullPath {
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/eventos/$id': typeof EventosIdRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/eventos/': typeof EventosIndexRoute
   '/projetos/': typeof ProjetosIndexRoute
+  '/dashboard/evento-crachas/$id': typeof DashboardEventoCrachasIdRoute
+  '/dashboard/evento-inscricoes/$id': typeof DashboardEventoInscricoesIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -372,7 +395,6 @@ export interface FileRoutesByTo {
   '/canais': typeof CanaisRoute
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
-  '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/nova-senha': typeof NovaSenhaRoute
@@ -412,9 +434,13 @@ export interface FileRoutesByTo {
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/eventos/$id': typeof EventosIdRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/eventos': typeof EventosIndexRoute
   '/projetos': typeof ProjetosIndexRoute
+  '/dashboard/evento-crachas/$id': typeof DashboardEventoCrachasIdRoute
+  '/dashboard/evento-inscricoes/$id': typeof DashboardEventoInscricoesIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -425,7 +451,6 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
-  '/eventos': typeof EventosRoute
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/nova-senha': typeof NovaSenhaRoute
@@ -465,9 +490,13 @@ export interface FileRoutesById {
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/eventos/$id': typeof EventosIdRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/eventos/': typeof EventosIndexRoute
   '/projetos/': typeof ProjetosIndexRoute
+  '/dashboard/evento-crachas/$id': typeof DashboardEventoCrachasIdRoute
+  '/dashboard/evento-inscricoes/$id': typeof DashboardEventoInscricoesIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -479,7 +508,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/drops'
     | '/embaixadores'
-    | '/eventos'
     | '/faq'
     | '/login'
     | '/nova-senha'
@@ -519,9 +547,13 @@ export interface FileRouteTypes {
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/eventos/$id'
     | '/projetos/$slug'
     | '/dashboard/'
+    | '/eventos/'
     | '/projetos/'
+    | '/dashboard/evento-crachas/$id'
+    | '/dashboard/evento-inscricoes/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -530,7 +562,6 @@ export interface FileRouteTypes {
     | '/canais'
     | '/drops'
     | '/embaixadores'
-    | '/eventos'
     | '/faq'
     | '/login'
     | '/nova-senha'
@@ -570,9 +601,13 @@ export interface FileRouteTypes {
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/eventos/$id'
     | '/projetos/$slug'
     | '/dashboard'
+    | '/eventos'
     | '/projetos'
+    | '/dashboard/evento-crachas/$id'
+    | '/dashboard/evento-inscricoes/$id'
   id:
     | '__root__'
     | '/'
@@ -582,7 +617,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/drops'
     | '/embaixadores'
-    | '/eventos'
     | '/faq'
     | '/login'
     | '/nova-senha'
@@ -622,9 +656,13 @@ export interface FileRouteTypes {
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/eventos/$id'
     | '/projetos/$slug'
     | '/dashboard/'
+    | '/eventos/'
     | '/projetos/'
+    | '/dashboard/evento-crachas/$id'
+    | '/dashboard/evento-inscricoes/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -635,7 +673,6 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRouteWithChildren
   DropsRoute: typeof DropsRoute
   EmbaixadoresRoute: typeof EmbaixadoresRoute
-  EventosRoute: typeof EventosRoute
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   NovaSenhaRoute: typeof NovaSenhaRoute
@@ -648,7 +685,9 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   VagasRoute: typeof VagasRoute
   VerificarCodigoRoute: typeof VerificarCodigoRoute
+  EventosIdRoute: typeof EventosIdRoute
   ProjetosSlugRoute: typeof ProjetosSlugRoute
+  EventosIndexRoute: typeof EventosIndexRoute
   ProjetosIndexRoute: typeof ProjetosIndexRoute
 }
 
@@ -701,13 +740,6 @@ declare module '@tanstack/react-router' {
       path: '/embaixadores'
       fullPath: '/embaixadores'
       preLoaderRoute: typeof EmbaixadoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/eventos': {
-      id: '/eventos'
-      path: '/eventos'
-      fullPath: '/eventos'
-      preLoaderRoute: typeof EventosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -990,6 +1022,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardVagasRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/eventos/': {
+      id: '/eventos/'
+      path: '/eventos'
+      fullPath: '/eventos/'
+      preLoaderRoute: typeof EventosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/eventos/$id': {
+      id: '/eventos/$id'
+      path: '/eventos/$id'
+      fullPath: '/eventos/$id'
+      preLoaderRoute: typeof EventosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projetos/': {
       id: '/projetos/'
       path: '/projetos'
@@ -1003,6 +1049,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/projetos/$slug'
       preLoaderRoute: typeof ProjetosSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/evento-crachas/$id': {
+      id: '/dashboard/evento-crachas/$id'
+      path: '/evento-crachas/$id'
+      fullPath: '/dashboard/evento-crachas/$id'
+      preLoaderRoute: typeof DashboardEventoCrachasIdRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/evento-inscricoes/$id': {
+      id: '/dashboard/evento-inscricoes/$id'
+      path: '/evento-inscricoes/$id'
+      fullPath: '/dashboard/evento-inscricoes/$id'
+      preLoaderRoute: typeof DashboardEventoInscricoesIdRouteImport
+      parentRoute: typeof DashboardRoute
     }
   }
 }
@@ -1036,6 +1096,8 @@ interface DashboardRouteChildren {
   DashboardUsuariosRoute: typeof DashboardUsuariosRoute
   DashboardVagasRoute: typeof DashboardVagasRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
+  DashboardEventoCrachasIdRoute: typeof DashboardEventoCrachasIdRoute
+  DashboardEventoInscricoesIdRoute: typeof DashboardEventoInscricoesIdRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
@@ -1067,6 +1129,8 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardUsuariosRoute: DashboardUsuariosRoute,
   DashboardVagasRoute: DashboardVagasRoute,
   DashboardIndexRoute: DashboardIndexRoute,
+  DashboardEventoCrachasIdRoute: DashboardEventoCrachasIdRoute,
+  DashboardEventoInscricoesIdRoute: DashboardEventoInscricoesIdRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
@@ -1081,7 +1145,6 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRouteWithChildren,
   DropsRoute: DropsRoute,
   EmbaixadoresRoute: EmbaixadoresRoute,
-  EventosRoute: EventosRoute,
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   NovaSenhaRoute: NovaSenhaRoute,
@@ -1094,7 +1157,9 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   VagasRoute: VagasRoute,
   VerificarCodigoRoute: VerificarCodigoRoute,
+  EventosIdRoute: EventosIdRoute,
   ProjetosSlugRoute: ProjetosSlugRoute,
+  EventosIndexRoute: EventosIndexRoute,
   ProjetosIndexRoute: ProjetosIndexRoute,
 }
 export const routeTree = rootRouteImport

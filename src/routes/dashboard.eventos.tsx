@@ -1,7 +1,10 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { Switch } from "@/components/ui/switch";
+import { ScheduleEditor } from "@/components/events/schedule";
+import type { ScheduleItem } from "@/lib/events";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Eye, Users, BarChart3, Mail, Phone, X, Check, Ban, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Users, BarChart3, Mail, Phone, X, Check, Ban, Download, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -29,13 +32,14 @@ type Evt = {
   modality: string; location_or_link: string | null; category: string | null; status: string;
   theme: string | null; online_link: string | null; address: string | null; cover_url: string | null;
   max_attendees: number | null; speakers: Speaker[];
+  schedule: ScheduleItem[]; requires_approval: boolean; end_time: string | null;
   source: string; approval_status: string; submitted_by: string | null; approval_note: string | null;
 };
 
 const empty: Partial<Evt> = {
   name: "", description: "", event_date: new Date().toISOString().slice(0, 10), event_time: "",
   modality: "online", location_or_link: "", category: "", status: "rascunho",
-  theme: "", online_link: "", address: "", cover_url: "", max_attendees: null, speakers: [],
+  theme: "", online_link: "", address: "", cover_url: "", max_attendees: null, speakers: [], schedule: [], requires_approval: true, end_time: "",
   source: "comunidade", approval_status: "approved",
 };
 
@@ -56,7 +60,7 @@ function EventosAdminPage() {
     queryFn: async () => {
       const { data, error } = await supabase.from("events").select("*").order("event_date", { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((e: any) => ({ ...e, speakers: Array.isArray(e.speakers) ? e.speakers : [] })) as Evt[];
+      return (data ?? []).map((e: any) => ({ ...e, speakers: Array.isArray(e.speakers) ? e.speakers : [], schedule: Array.isArray(e.schedule) ? e.schedule : [] })) as Evt[];
     },
   });
 
@@ -94,6 +98,9 @@ function EventosAdminPage() {
       cover_url: editing.cover_url || null,
       max_attendees: editing.max_attendees ? Number(editing.max_attendees) : null,
       speakers: (editing.speakers ?? []).filter((s) => s.name?.trim()),
+      schedule: (editing.schedule ?? []).filter((x) => x.title?.trim()),
+      requires_approval: editing.requires_approval ?? true,
+      end_time: editing.end_time || null,
       source: editing.source ?? "comunidade",
       approval_status: editing.approval_status ?? "approved",
     };
@@ -184,6 +191,7 @@ function EventosAdminPage() {
                       <Button size="sm" variant="ghost" onClick={() => moderate(ev, "rejected")} title="Rejeitar"><Ban className="h-3 w-3 text-destructive" /></Button>
                     </>
                   )}
+                  <Link to="/dashboard/evento-inscricoes/$id" params={{ id: ev.id }}><Button size="sm" variant="ghost" title="Inscrições, check-in e crachás"><Ticket className="h-3 w-3" /></Button></Link>
                   <Button size="sm" variant="ghost" onClick={() => setMetricsFor(ev)} title="Métricas e participantes"><BarChart3 className="h-3 w-3" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => setViewing(ev)}><Eye className="h-3 w-3" /></Button>
                   <Button size="sm" variant="ghost" onClick={() => setEditing(ev)}><Pencil className="h-3 w-3" /></Button>
@@ -205,7 +213,7 @@ function EventosAdminPage() {
               <div className="sm:col-span-2"><Label>Nome *</Label><Input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Tema / assunto principal</Label><Input value={editing.theme ?? ""} onChange={(e) => setEditing({ ...editing, theme: e.target.value })} placeholder="Ex: Boas práticas em React" /></div>
               <DateField label="Data" required value={editing.event_date ?? ""} onChange={(value) => setEditing({ ...editing, event_date: value })} />
-              <div><Label>Hora</Label><Input type="time" value={editing.event_time ?? ""} onChange={(e) => setEditing({ ...editing, event_time: e.target.value })} /></div>
+              <div className="grid grid-cols-2 gap-2"><div><Label>Início</Label><Input type="time" value={editing.event_time ?? ""} onChange={(e) => setEditing({ ...editing, event_time: e.target.value })} /></div><div><Label>Término</Label><Input type="time" value={editing.end_time ?? ""} onChange={(e) => setEditing({ ...editing, end_time: e.target.value })} /></div></div>
               <div>
                 <Label>Modalidade</Label>
                 <Select value={editing.modality} onValueChange={(v) => setEditing({ ...editing, modality: v })}>
@@ -271,6 +279,13 @@ function EventosAdminPage() {
                     <SelectItem value="arquivado">Arquivado</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              <label className="sm:col-span-2 flex items-center justify-between gap-3 glass p-3 rounded-lg border border-border/40">
+                <span><span className="font-medium text-sm">Exigir aprovação da presença</span><span className="block text-xs text-muted-foreground">Se desligado, quem clicar em "Quero ir" já recebe o ingresso.</span></span>
+                <Switch checked={editing.requires_approval ?? true} onCheckedChange={(v) => setEditing({ ...editing, requires_approval: v })} />
+              </label>
+              <div className="sm:col-span-2 pt-3 border-t border-border/40">
+                <ScheduleEditor value={editing.schedule ?? []} onChange={(v) => setEditing({ ...editing, schedule: v })} />
               </div>
               <div className="sm:col-span-2 space-y-2 pt-3 border-t border-border/40">
                 <div className="flex items-center justify-between">
