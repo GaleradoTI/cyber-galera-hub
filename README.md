@@ -454,3 +454,9 @@ Todos aparecem em `/dashboard/logs` com contexto exportável (as tabelas `financ
   os logs de auditoria (`log_image_upload_attempt`).
 - `FeedCommentsDialog` agora é reutilizado tanto no feed quanto no perfil, recebendo um `header`
   com o conteúdo completo do post (título, texto e imagens).
+
+## Eventos — inscrição, QR Code e crachás
+- Página pública `/eventos/$id` com programação (grade), endereço com mapa e botão "Quero ir".
+- `event_registrations` (pending/approved/rejected/waitlist/cancelled) + código `GTI-XXXX-XX`.
+- RPCs: `register_for_event`, `cancel_event_registration`, `decide_registration` (admin), `checkin_by_code` (admin). Todas registram em `audit_logs`; aprovação/recusa gera notificação.
+- Admin: `/dashboard/evento-inscricoes/$id` (aprovar em lote, CSV, check-in por câmera ou código) e `/dashboard/evento-crachas/$id` (impressão/PDF).
