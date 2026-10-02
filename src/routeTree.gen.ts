@@ -57,6 +57,7 @@ import { Route as DashboardUploadConfigRouteImport } from './routes/dashboard.up
 import { Route as DashboardUsuariosRouteImport } from './routes/dashboard.usuarios'
 import { Route as DashboardVagasRouteImport } from './routes/dashboard.vagas'
 import { Route as EventosIndexRouteImport } from './routes/eventos.index'
+import { Route as EventosIdRouteImport } from './routes/eventos.$id'
 import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
 import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
 
@@ -302,6 +303,11 @@ const EventosIndexRoute = EventosIndexRouteImport.update({
   path: '/eventos/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventosIdRoute = EventosIdRouteImport.update({
+  id: '/eventos/$id',
+  path: '/eventos/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProjetosIndexRoute = ProjetosIndexRouteImport.update({
   id: '/projetos/',
   path: '/projetos/',
@@ -360,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/eventos/$id': typeof EventosIdRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/eventos/': typeof EventosIndexRoute
@@ -411,6 +418,7 @@ export interface FileRoutesByTo {
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/eventos/$id': typeof EventosIdRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard': typeof DashboardIndexRoute
   '/eventos': typeof EventosIndexRoute
@@ -464,6 +472,7 @@ export interface FileRoutesById {
   '/dashboard/upload-config': typeof DashboardUploadConfigRoute
   '/dashboard/usuarios': typeof DashboardUsuariosRoute
   '/dashboard/vagas': typeof DashboardVagasRoute
+  '/eventos/$id': typeof EventosIdRoute
   '/projetos/$slug': typeof ProjetosSlugRoute
   '/dashboard/': typeof DashboardIndexRoute
   '/eventos/': typeof EventosIndexRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/eventos/$id'
     | '/projetos/$slug'
     | '/dashboard/'
     | '/eventos/'
@@ -569,6 +579,7 @@ export interface FileRouteTypes {
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/eventos/$id'
     | '/projetos/$slug'
     | '/dashboard'
     | '/eventos'
@@ -621,6 +632,7 @@ export interface FileRouteTypes {
     | '/dashboard/upload-config'
     | '/dashboard/usuarios'
     | '/dashboard/vagas'
+    | '/eventos/$id'
     | '/projetos/$slug'
     | '/dashboard/'
     | '/eventos/'
@@ -647,6 +659,7 @@ export interface RootRouteChildren {
   TermosRoute: typeof TermosRoute
   VagasRoute: typeof VagasRoute
   VerificarCodigoRoute: typeof VerificarCodigoRoute
+  EventosIdRoute: typeof EventosIdRoute
   ProjetosSlugRoute: typeof ProjetosSlugRoute
   EventosIndexRoute: typeof EventosIndexRoute
   ProjetosIndexRoute: typeof ProjetosIndexRoute
@@ -990,6 +1003,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventosIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/eventos/$id': {
+      id: '/eventos/$id'
+      path: '/eventos/$id'
+      fullPath: '/eventos/$id'
+      preLoaderRoute: typeof EventosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/projetos/': {
       id: '/projetos/'
       path: '/projetos'
@@ -1093,6 +1113,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermosRoute: TermosRoute,
   VagasRoute: VagasRoute,
   VerificarCodigoRoute: VerificarCodigoRoute,
+  EventosIdRoute: EventosIdRoute,
   ProjetosSlugRoute: ProjetosSlugRoute,
   EventosIndexRoute: EventosIndexRoute,
   ProjetosIndexRoute: ProjetosIndexRoute,
