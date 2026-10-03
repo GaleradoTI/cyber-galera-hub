@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Gift, Ticket, Trophy, Check, X, Download, ExternalLink, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Gift, Ticket, Trophy, Check, X, Download, ExternalLink, Sparkles, UserPlus, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
@@ -423,6 +423,43 @@ function TicketsDialog({ raffle, adminId, onClose }: { raffle: Raffle | null; ad
     qc.invalidateQueries({ queryKey: ["finance-entries"] });
   };
 
+  const useNumbers = raffle?.entry_mode !== "name";
+  const taken = new Set(tickets.filter((t) => t.status !== "cancelled" && t.number != null).map((t) => t.number as number));
+  const free = useNumbers ? Array.from({ length: raffle?.total_numbers ?? 0 }, (_, i) => i + 1).filter((n) => !taken.has(n)) : [];
+  const [adding, setAdding] = useState(false);
+  const [picked, setPicked] = useState<number[]>([]);
+  const [tp, setTp] = useState({ name: "", email: "", phone: "", label: "", paid: false });
+  const [saving, setSaving] = useState(false);
+
+  const exportFree = () =>
+    downloadCSV(`rifa-${raffle?.title ?? "numeros"}-livres.csv`, free.map((n) => ({ numero: n })));
+  const copyFree = async () => {
+    await navigator.clipboard.writeText(free.join(", "));
+    toast.success(`${free.length} números livres copiados`);
+  };
+
+  const addThirdParty = async () => {
+    if (!raffle) return;
+    if (!tp.name.trim()) return toast.error("Informe o nome do comprador");
+    if (useNumbers && picked.length === 0) return toast.error("Escolha ao menos um número");
+    if (!useNumbers && !tp.label.trim()) return toast.error("Informe o nome escolhido na rifa");
+    setSaving(true);
+    const now = new Date().toISOString();
+    const base = {
+      raffle_id: raffle.id, user_id: null, buyer_name: tp.name.trim(), buyer_email: tp.email.trim() || null,
+      buyer_phone: tp.phone.trim() || null, amount_cents: raffle.ticket_price_cents, note: "Lançado pela administração",
+      status: tp.paid ? "paid" : "reserved", confirmed_by: tp.paid ? adminId : null, confirmed_at: tp.paid ? now : null,
+    };
+    const rows = useNumbers ? picked.map((n) => ({ ...base, number: n, label: tp.label.trim() || null })) : [{ ...base, number: null, label: tp.label.trim() }];
+    const { error } = await supabase.from("raffle_tickets").insert(rows as any);
+    setSaving(false);
+    if (error) return toast.error(error.message.includes("duplicate") ? "Algum número já foi reservado. Atualize e tente de novo." : error.message);
+    toast.success(`${rows.length} número(s) reservado(s) para ${tp.name}`);
+    setPicked([]); setTp({ name: "", email: "", phone: "", label: "", paid: false }); setAdding(false);
+    qc.invalidateQueries({ queryKey: ["raffle-tickets", raffle.id] });
+    qc.invalidateQueries({ queryKey: ["finance-entries"] });
+  };
+
   const exportCsv = () =>
     downloadCSV(`rifa-${raffle?.title ?? "numeros"}-${new Date().toISOString().slice(0, 10)}.csv`,
       tickets.map((t) => ({
@@ -456,7 +493,54 @@ function TicketsDialog({ raffle, adminId, onClose }: { raffle: Raffle | null; ad
           <Button size="sm" variant="outline" className="ml-auto" onClick={exportCsv}>
             <Download className="h-3 w-3 mr-1" /> CSV
           </Button>
+          <Button size="sm" onClick={() => setAdding((v) => !v)}><UserPlus className="h-3 w-3 mr-1" /> Para terceiro</Button>
         </div>
+
+        {useNumbers && (
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border/40 p-3 text-sm">
+            <span><strong>{free.length}</strong> de {raffle?.total_numbers} números livres</span>
+            <Button size="sm" variant="outline" className="ml-auto" onClick={copyFree} disabled={!free.length}><Copy className="h-3 w-3 mr-1" /> Copiar livres</Button>
+            <Button size="sm" variant="outline" onClick={exportFree} disabled={!free.length}><Download className="h-3 w-3 mr-1" /> Exportar livres</Button>
+          </div>
+        )}
+
+        {adding && (
+          <div className="rounded-xl border border-primary/30 p-4 space-y-3">
+            <div className="font-semibold text-sm">Reservar para outra pessoa</div>
+            <div className="grid sm:grid-cols-2 gap-2">
+              <Input placeholder="Nome do comprador *" value={tp.name} onChange={(e) => setTp({ ...tp, name: e.target.value })} />
+              <Input placeholder="Nome na rifa (opcional)" value={tp.label} onChange={(e) => setTp({ ...tp, label: e.target.value })} />
+              <Input placeholder="E-mail" type="email" value={tp.email} onChange={(e) => setTp({ ...tp, email: e.target.value })} />
+              <Input placeholder="Telefone" value={tp.phone} onChange={(e) => setTp({ ...tp, phone: e.target.value })} />
+            </div>
+            {useNumbers && (
+              <div>
+                <div className="text-xs text-muted-foreground mb-2">Toque nos números livres ({picked.length} escolhido(s))</div>
+                <div className="grid grid-cols-8 sm:grid-cols-12 gap-1 max-h-56 overflow-y-auto">
+                  {Array.from({ length: raffle?.total_numbers ?? 0 }, (_, i) => i + 1).map((n) => {
+                    const isTaken = taken.has(n); const on = picked.includes(n);
+                    return (
+                      <button key={n} type="button" disabled={isTaken}
+                        onClick={() => setPicked(on ? picked.filter((x) => x !== n) : [...picked, n])}
+                        className={cn("h-8 rounded text-xs font-bold border", isTaken ? "opacity-30 line-through border-border cursor-not-allowed" : on ? "bg-primary text-primary-foreground border-primary" : "border-border/60 hover:border-primary")}>
+                        {n}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={tp.paid} onChange={(e) => setTp({ ...tp, paid: e.target.checked })} /> Já pago (lança no Financeiro)
+            </label>
+            <div className="flex justify-end gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setAdding(false)}>Cancelar</Button>
+              <Button size="sm" onClick={addThirdParty} disabled={saving}>
+                Reservar {useNumbers && picked.length ? `${picked.length} número(s) · ${centsToMoneyInput((raffle?.ticket_price_cents ?? 0) * picked.length)}` : ""}
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           {rows.map((t) => {
