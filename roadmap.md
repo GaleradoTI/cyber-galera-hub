@@ -1,0 +1,3 @@
+- [ ] Melhorar cadastro, cartões e detalhes dos eventos da comunidade e de terceiros, com links e acesso ao Maps.
+- [ ] Corrigir a experiência de recuperação de senha do próprio usuário, preservando os outros modos.
+- [ ] Verificar as páginas e o fluxo possível de ponta a ponta.

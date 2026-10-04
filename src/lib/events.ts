@@ -23,3 +23,22 @@ export const hhmm = (t?: string | null) => (t ? t.slice(0, 5) : "");
 export function mapsUrl(address: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }
+
+export function safeEventUrl(value?: string | null) {
+  if (!value) return null;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
+export function eventLinks(event: { location_or_link?: string | null; online_link?: string | null; address?: string | null; source?: string | null }) {
+  const legacyUrl = safeEventUrl(event.location_or_link);
+  return {
+    eventUrl: event.source === "terceiros" ? legacyUrl : null,
+    onlineUrl: safeEventUrl(event.online_link) ?? (event.source !== "terceiros" ? legacyUrl : null),
+    place: event.address?.trim() || (!legacyUrl ? event.location_or_link?.trim() : null) || null,
+  };
+}
