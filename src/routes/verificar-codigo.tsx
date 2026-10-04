@@ -33,6 +33,7 @@ function VerificarCodigoPage() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const verifyCode = useServerFn(verifyPasswordResetCode);
   const requestReset = useServerFn(requestPasswordReset);
 
@@ -43,13 +44,16 @@ function VerificarCodigoPage() {
     if (code.length !== 6) return toast.error("O código tem 6 dígitos");
 
     setLoading(true);
+    setErrorMessage("");
     try {
       const result = await verifyCode({ data: { email: normalized, code } });
       sessionStorage.setItem("password-reset-ticket", result.ticket);
       toast.success("Código confirmado! Defina sua nova senha.");
       navigate({ to: "/nova-senha", search: { email: normalized } });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Código inválido ou expirado");
+      const message = error instanceof Error ? error.message : "Código inválido ou expirado";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -59,11 +63,14 @@ function VerificarCodigoPage() {
     const normalized = email.trim().toLowerCase();
     if (!normalized) return toast.error("Informe o email");
     setResending(true);
+    setErrorMessage("");
     try {
       const result = await requestReset({ data: { email: normalized } });
       toast.success(result.message);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível reenviar o código.");
+      const message = error instanceof Error ? error.message : "Não foi possível reenviar o código.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setResending(false);
     }
@@ -78,6 +85,7 @@ function VerificarCodigoPage() {
             Passo 2 de 3 — digite o código de 6 dígitos que enviamos por email.
           </p>
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -97,9 +105,9 @@ function VerificarCodigoPage() {
             </Button>
           </form>
           <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:justify-between text-sm">
-            <button type="button" onClick={onResend} disabled={resending} className="text-secondary hover:underline">
+            <Button type="button" variant="link" onClick={onResend} disabled={resending} className="text-secondary px-0 h-auto">
               {resending ? "Reenviando..." : "Reenviar código"}
-            </button>
+            </Button>
             <Link to="/recuperar-senha" className="text-muted-foreground hover:underline">Trocar email</Link>
           </div>
         </div>

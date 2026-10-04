@@ -1,0 +1,3 @@
+- [x] Melhorar cadastro, cartões e detalhes dos eventos da comunidade e de terceiros, com links e acesso ao Maps.
+- [x] Corrigir a experiência de recuperação de senha do próprio usuário, preservando os outros modos.
+- [x] Verificar as páginas e o fluxo possível de ponta a ponta (sem conta de teste disponível; entrega de emails aguarda DNS do domínio).

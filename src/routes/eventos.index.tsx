@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -16,6 +16,10 @@ export const Route = createFileRoute("/eventos/")({
     meta: [
       { title: "Eventos — GALERA DO T.I." },
       { name: "description", content: "Meetups, workshops e lives da comunidade tech." },
+      { property: "og:title", content: "Eventos — GALERA DO T.I." },
+      { property: "og:description", content: "Encontros, workshops e eventos da comunidade e de parceiros." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: EventosPage,
@@ -23,7 +27,6 @@ export const Route = createFileRoute("/eventos/")({
 
 function EventosPage() {
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [modality, setModality] = useState("all");
   const [category, setCategory] = useState("all");
@@ -114,10 +117,7 @@ function EventosPage() {
           <p className="text-muted-foreground mt-10">Nenhum evento encontrado.</p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
-            {filtered.map((e: any) => {
-              const isThirdAnon = !isAuthenticated && e.source === "terceiros";
-              return <EventCard key={e.id} event={e} onClick={isThirdAnon ? undefined : () => navigate({ to: "/eventos/$id", params: { id: e.id } })} />;
-            })}
+            {filtered.map((e: any) => <EventCard key={e.id} event={e} />)}
           </div>
         )}
         {!isAuthenticated && (
