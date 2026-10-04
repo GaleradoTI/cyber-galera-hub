@@ -22,11 +22,21 @@ async function findAuthUserByEmail(email: string) {
     .eq("email", email)
     .maybeSingle();
   if (profileError) throw new Error("Não foi possível consultar a conta.");
-  if (!profile) return null;
-  // The profile is an index only: the account's confirmed Auth email is authoritative.
-  const { data, error } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
-  if (error) throw new Error("Não foi possível consultar a conta.");
-  return data.user?.email?.toLowerCase() === email ? data.user : null;
+  if (profile) {
+    // The profile is an index only: the account's confirmed Auth email is authoritative.
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
+    if (error) throw new Error("Não foi possível consultar a conta.");
+    if (data.user?.email?.toLowerCase() === email) return data.user;
+  }
+  // A recent email change may not have reached the profile copy yet.
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw new Error("Não foi possível consultar a conta.");
+    const user = data.users.find((item) => item.email?.toLowerCase() === email);
+    if (user) return user;
+    if (data.users.length < 200) break;
+  }
+  return null;
 }
 
 async function hmac(value: string) {
