@@ -1,2 +1,2 @@
 - Event links reuse `events.location_or_link` for the external event page, while `online_link` is the meeting URL and `address` is the physical location; this preserves existing rows without schema changes.
-- Password recovery uses server-issued one-time codes and the existing Resend connection; failed email delivery must be reported rather than treated as success.
+- Password recovery uses server-issued one-time codes and the existing Resend connection; locate users by profile email then verify Auth email, and report failed delivery rather than treating it as success.

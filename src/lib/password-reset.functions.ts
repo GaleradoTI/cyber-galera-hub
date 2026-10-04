@@ -16,14 +16,17 @@ const genericRequestMessage =
 
 async function findAuthUserByEmail(email: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  for (let page = 1; page <= 20; page += 1) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) throw new Error("Não foi possível consultar a conta.");
-    const user = data.users.find((item) => item.email?.toLowerCase() === email);
-    if (user) return user;
-    if (data.users.length < 200) return null;
-  }
-  return null;
+  const { data: profile, error: profileError } = await supabaseAdmin
+    .from("profiles")
+    .select("user_id")
+    .eq("email", email)
+    .maybeSingle();
+  if (profileError) throw new Error("Não foi possível consultar a conta.");
+  if (!profile) return null;
+  // The profile is an index only: the account's confirmed Auth email is authoritative.
+  const { data, error } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
+  if (error) throw new Error("Não foi possível consultar a conta.");
+  return data.user?.email?.toLowerCase() === email ? data.user : null;
 }
 
 async function hmac(value: string) {
