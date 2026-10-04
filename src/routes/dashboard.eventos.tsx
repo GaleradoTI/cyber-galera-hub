@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Switch } from "@/components/ui/switch";
 import { ScheduleEditor } from "@/components/events/schedule";
-import type { ScheduleItem } from "@/lib/events";
+import { eventLinks, mapsUrl, safeEventUrl, type ScheduleItem } from "@/lib/events";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Eye, Users, BarChart3, Mail, Phone, X, Check, Ban, Download, Ticket } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Users, BarChart3, Mail, Phone, X, Check, Ban, Download, Ticket, ExternalLink, Navigation } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -105,8 +105,10 @@ function EventosAdminPage() {
       approval_status: editing.approval_status ?? "approved",
     };
     if (!payload.name || !payload.description || !payload.event_date) return toast.error("Preencha nome, descrição e data.");
-    if (editing.modality === "online" && !payload.online_link && !payload.location_or_link) return toast.error("Informe o link da call para eventos online.");
-    if (editing.modality === "presencial" && !payload.address && !payload.location_or_link) return toast.error("Informe o endereço para eventos presenciais.");
+    if (payload.online_link && !safeEventUrl(payload.online_link)) return toast.error("O link da transmissão precisa começar com https:// ou http://.");
+    if (editing.source === "terceiros" && payload.location_or_link && !safeEventUrl(payload.location_or_link)) return toast.error("O link do evento externo precisa começar com https:// ou http://.");
+    if (editing.modality === "online" && !payload.online_link && !(editing.source === "terceiros" && payload.location_or_link)) return toast.error("Informe o link da transmissão ou a página do evento externo.");
+    if (editing.modality === "presencial" && !payload.address && !(editing.source === "terceiros" && payload.location_or_link)) return toast.error("Informe o endereço para eventos presenciais.");
     const { error } = editing.id
       ? await supabase.from("events").update(payload).eq("id", editing.id)
       : await supabase.from("events").insert({ ...payload, created_by: user?.id });
@@ -193,9 +195,9 @@ function EventosAdminPage() {
                   )}
                   <Link to="/dashboard/evento-inscricoes/$id" params={{ id: ev.id }}><Button size="sm" variant="ghost" title="Inscrições, check-in e crachás"><Ticket className="h-3 w-3" /></Button></Link>
                   <Button size="sm" variant="ghost" onClick={() => setMetricsFor(ev)} title="Métricas e participantes"><BarChart3 className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setViewing(ev)}><Eye className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(ev)}><Pencil className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setRemoving(ev)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  <Button size="sm" variant="ghost" title="Visualizar" onClick={() => setViewing(ev)}><Eye className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(ev)}><Pencil className="h-3 w-3" /></Button>
+                  <Button size="sm" variant="ghost" title="Remover" onClick={() => setRemoving(ev)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -207,6 +209,7 @@ function EventosAdminPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Editar evento" : "Novo evento"}</DialogTitle>
+            <DialogDescription>Dados exibidos para participantes na página do evento.</DialogDescription>
           </DialogHeader>
           {editing && (
             <div className="grid sm:grid-cols-2 gap-3">
@@ -251,7 +254,10 @@ function EventosAdminPage() {
                 <div className="sm:col-span-2"><Label>Link da call (Meet, Zoom…)</Label><Input value={editing.online_link ?? ""} onChange={(e) => setEditing({ ...editing, online_link: e.target.value })} placeholder="https://meet.google.com/…" /></div>
               )}
               {(editing.modality === "presencial" || editing.modality === "hibrido") && (
-                <div className="sm:col-span-2"><Label>Endereço presencial</Label><Input value={editing.address ?? ""} onChange={(e) => setEditing({ ...editing, address: e.target.value })} placeholder="Rua, número, cidade…" /></div>
+                <div className="sm:col-span-2 space-y-1"><Label>Endereço presencial</Label><Input value={editing.address ?? ""} onChange={(e) => setEditing({ ...editing, address: e.target.value })} placeholder="Rua, número, bairro, cidade e UF" />{editing.address?.trim() && <a className="inline-flex items-center gap-1 text-xs text-primary hover:underline" href={mapsUrl(editing.address)} target="_blank" rel="noopener noreferrer"><Navigation className="h-3 w-3" /> Conferir no Google Maps</a>}</div>
+              )}
+              {editing.source === "terceiros" && (
+                <div className="sm:col-span-2 space-y-1"><Label>Página oficial / inscrições do evento</Label><Input type="url" value={editing.location_or_link ?? ""} onChange={(e) => setEditing({ ...editing, location_or_link: e.target.value })} placeholder="https://exemplo.com/evento" /><p className="text-xs text-muted-foreground">Use a página do organizador; o link da transmissão pode ser informado separadamente.</p></div>
               )}
               <div className="sm:col-span-2">
                 <ImageUploader
@@ -321,8 +327,9 @@ function EventosAdminPage() {
           </DialogHeader>
           <div className="space-y-3 text-sm">
             {viewing?.theme && <div><strong>Tema:</strong> {viewing.theme}</div>}
-            {viewing?.online_link && <div><strong>Link:</strong> <a className="text-secondary underline break-all" href={viewing.online_link} target="_blank" rel="noreferrer">{viewing.online_link}</a></div>}
-            {viewing?.address && <div><strong>Endereço:</strong> {viewing.address}</div>}
+            {viewing && eventLinks(viewing).eventUrl && <a className="flex items-center gap-2 text-primary underline break-all" href={eventLinks(viewing).eventUrl ?? undefined} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 shrink-0" /> Página oficial do evento</a>}
+            {viewing && eventLinks(viewing).onlineUrl && <a className="flex items-center gap-2 text-secondary underline break-all" href={eventLinks(viewing).onlineUrl ?? undefined} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 shrink-0" /> Link da transmissão</a>}
+            {viewing && eventLinks(viewing).place && <div><strong>Endereço:</strong> {eventLinks(viewing).place} <a className="inline-flex items-center gap-1 text-primary underline" href={mapsUrl(eventLinks(viewing).place ?? "")} target="_blank" rel="noopener noreferrer">Abrir no Maps <Navigation className="h-3 w-3" /></a></div>}
             <MarkdownView>{viewing?.description ?? ""}</MarkdownView>
             {(viewing?.speakers ?? []).length > 0 && (
               <div>

@@ -1,10 +1,10 @@
 import { Calendar, ExternalLink, MapPin } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { useAuth } from "@/hooks/use-auth";
 import { parseDateOnly } from "@/lib/utils";
+import { eventLinks } from "@/lib/events";
 
 export function EventCard({ event, onClick }: { event: any; onClick?: () => void }) {
-  const { isAuthenticated } = useAuth();
+  const { place, eventUrl, onlineUrl } = eventLinks(event);
   const date = event.event_date
     ? parseDateOnly(event.event_date)?.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
     : null;
@@ -37,28 +37,26 @@ export function EventCard({ event, onClick }: { event: any; onClick?: () => void
           </span>
         )}
       </div>
-      {event.location_or_link && (
+      {place && (
         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-3 truncate">
           <MapPin className="h-3 w-3 shrink-0" />
-          <span className="truncate">{event.location_or_link}</span>
+          <span className="truncate">{place}</span>
         </div>
       )}
       {event.description && (
         <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{event.description}</p>
       )}
-      {!isAuthenticated && event.source === "terceiros" && (
-        <div className="text-[10px] text-secondary mt-3 inline-flex items-center gap-1">
-          <ExternalLink className="h-3 w-3" /> Evento externo
+      {event.source === "terceiros" && (
+        <div className="text-xs text-secondary mt-3 inline-flex items-center gap-1">
+          <ExternalLink className="h-3 w-3" /> {eventUrl ? "Detalhes e link oficial" : "Detalhes do evento"}
         </div>
+      )}
+      {event.source !== "terceiros" && onlineUrl && (
+        <div className="text-xs text-primary mt-3 inline-flex items-center gap-1"><ExternalLink className="h-3 w-3" /> Detalhes e transmissão</div>
       )}
     </>
   );
-  const cls = "glass rounded-xl p-5 hover-glow-cyan block group text-left w-full";
-  // Eventos de terceiros para visitantes anônimos: link direto externo
-  if (!isAuthenticated && event.source === "terceiros") {
-    const ext = event.online_link || (event.location_or_link?.startsWith?.("http") ? event.location_or_link : null);
-    if (ext) return <a href={ext} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>;
-  }
+  const cls = "glass rounded-lg p-5 hover-glow-cyan block group text-left w-full";
   if (onClick) {
     return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
   }
