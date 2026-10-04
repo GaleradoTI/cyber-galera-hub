@@ -1,7 +1,7 @@
 import { Calendar, ExternalLink, MapPin } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { parseDateOnly } from "@/lib/utils";
-import { eventLinks } from "@/lib/events";
+import { eventLinks, hhmm } from "@/lib/events";
 
 export function EventCard({ event }: { event: any }) {
   const { place, eventUrl, onlineUrl } = eventLinks(event);
@@ -33,7 +33,7 @@ export function EventCard({ event }: { event: any }) {
         {date && (
           <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/30">
             {date}
-            {event.event_time ? ` · ${event.event_time}` : ""}
+            {event.event_time ? ` · ${hhmm(event.event_time)}` : ""}
           </span>
         )}
       </div>
@@ -44,7 +44,7 @@ export function EventCard({ event }: { event: any }) {
         </div>
       )}
       {event.description && (
-        <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{event.description}</p>
+        <p className="text-xs text-muted-foreground mt-3 line-clamp-2">{event.description.replace(/[#*_`>\[\]]/g, "").replace(/\s+/g, " ").trim()}</p>
       )}
       {event.source === "terceiros" && (
         <div className="text-xs text-secondary mt-3 inline-flex items-center gap-1">
