@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { parseDateOnly } from "@/lib/utils";
 import { eventLinks } from "@/lib/events";
 
-export function EventCard({ event, onClick }: { event: any; onClick?: () => void }) {
+export function EventCard({ event }: { event: any }) {
   const { place, eventUrl, onlineUrl } = eventLinks(event);
   const date = event.event_date
     ? parseDateOnly(event.event_date)?.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
@@ -57,8 +57,5 @@ export function EventCard({ event, onClick }: { event: any; onClick?: () => void
     </>
   );
   const cls = "glass rounded-lg p-5 hover-glow-cyan block group text-left w-full";
-  if (onClick) {
-    return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
-  }
-  return <Link to="/eventos" className={cls}>{inner}</Link>;
+  return <Link to="/eventos/$id" params={{ id: event.id }} className={cls}>{inner}</Link>;
 }

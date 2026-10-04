@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -27,7 +27,6 @@ export const Route = createFileRoute("/eventos/")({
 
 function EventosPage() {
   const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [modality, setModality] = useState("all");
   const [category, setCategory] = useState("all");
@@ -118,7 +117,7 @@ function EventosPage() {
           <p className="text-muted-foreground mt-10">Nenhum evento encontrado.</p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
-            {filtered.map((e: any) => <EventCard key={e.id} event={e} onClick={() => navigate({ to: "/eventos/$id", params: { id: e.id } })} />)}
+            {filtered.map((e: any) => <EventCard key={e.id} event={e} />)}
           </div>
         )}
         {!isAuthenticated && (
