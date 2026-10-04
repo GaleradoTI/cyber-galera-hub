@@ -52,8 +52,6 @@ async function requestMetadata() {
   };
 }
 
-const FALLBACK_FROM = "GALERA DO T.I. <onboarding@resend.dev>";
-
 async function postRecoveryEmail(from: string, email: string, code: string, keys: { lovableKey: string; resendKey: string }) {
   return fetch("https://connector-gateway.lovable.dev/resend/emails", {
     method: "POST",
@@ -79,23 +77,15 @@ async function sendRecoveryCode(email: string, code: string) {
   const keys = { lovableKey, resendKey };
 
   const primaryFrom = process.env['PASSWORD_RESET_FROM_EMAIL'] ?? "GALERA DO T.I. <contato@galeradoti.com>";
-  let response = await postRecoveryEmail(primaryFrom, email, code, keys);
+  const response = await postRecoveryEmail(primaryFrom, email, code, keys);
 
   if (!response.ok) {
     const body = await response.text();
-    console.error(`[Password reset] Resend failed [${response.status}] from=${primaryFrom}: ${body}`);
-    const domainUnverified = response.status === 403 && /not verified/i.test(body);
-    if (!domainUnverified) throw new Error("O serviço de email está temporariamente indisponível.");
-
-    // Domínio próprio ainda sem DNS validado: tenta o remetente compartilhado do Resend.
-    response = await postRecoveryEmail(FALLBACK_FROM, email, code, keys);
-    if (!response.ok) {
-      const fallbackBody = await response.text();
-      console.error(`[Password reset] Resend fallback failed [${response.status}]: ${fallbackBody}`);
-      throw new Error(
-        "Não foi possível enviar o código: o domínio de email da comunidade ainda não foi verificado no Resend. Um administrador precisa concluir a verificação de DNS.",
-      );
+    console.error(`[Password reset] Email delivery failed [${response.status}]: ${body}`);
+    if (response.status === 403 && /domain|verif|not allowed/i.test(body)) {
+      throw new Error("Não foi possível enviar o código. O domínio de email precisa ser verificado pelo administrador.");
     }
+    throw new Error("Não foi possível enviar o código agora. Tente novamente mais tarde.");
   }
 }
 

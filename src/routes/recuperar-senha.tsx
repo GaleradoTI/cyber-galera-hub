@@ -26,6 +26,7 @@ function RecuperarSenhaPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const requestReset = useServerFn(requestPasswordReset);
 
   async function onSubmit(e: React.FormEvent) {
@@ -34,12 +35,15 @@ function RecuperarSenhaPage() {
     if (!normalized) return toast.error("Informe seu email");
 
     setLoading(true);
+    setErrorMessage("");
     try {
       const result = await requestReset({ data: { email: normalized } });
       toast.success(result.message);
       navigate({ to: "/verificar-codigo", search: { email: normalized } });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível enviar o código.");
+      const message = error instanceof Error ? error.message : "Não foi possível enviar o código.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -54,6 +58,7 @@ function RecuperarSenhaPage() {
             Passo 1 de 3 — informe seu email e enviaremos um código de verificação.
           </p>
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />

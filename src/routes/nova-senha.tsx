@@ -33,6 +33,7 @@ function NovaSenhaPage() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [ticket, setTicket] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const completeReset = useServerFn(completePasswordReset);
 
   useEffect(() => {
@@ -47,13 +48,16 @@ function NovaSenhaPage() {
 
     if (!ticket || !email) return toast.error("Valide um novo código antes de continuar.");
     setLoading(true);
+    setErrorMessage("");
     try {
       await completeReset({ data: { email, ticket, password } });
       sessionStorage.removeItem("password-reset-ticket");
       toast.success("Senha atualizada! Faça login com a nova senha.");
       navigate({ to: "/login" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível atualizar a senha.");
+      const message = error instanceof Error ? error.message : "Não foi possível atualizar a senha.";
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -84,6 +88,7 @@ function NovaSenhaPage() {
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-gradient-neon">Nova senha</h1>
           <p className="text-sm text-muted-foreground mt-1">Passo 3 de 3 — defina sua nova senha.</p>
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
+            {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
             <div className="space-y-1.5">
               <Label htmlFor="p1">Nova senha</Label>
               <PasswordInput id="p1" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
