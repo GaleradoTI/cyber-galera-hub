@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar, ExternalLink, Heart, MapPin, Mic2 } from "lucide-react";
+import { Calendar, ExternalLink, Heart, MapPin, Mic2, Navigation } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +11,7 @@ import { ReportButton } from "@/components/dashboard/report-button";
 import { useQuery } from "@tanstack/react-query";
 import { MarkdownView } from "@/components/ui/markdown-editor";
 import { formatDateOnly } from "@/lib/utils";
+import { eventLinks, mapsUrl } from "@/lib/events";
 
 export function EventDetailDialog({ event, open, onOpenChange }: { event: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
@@ -35,9 +36,7 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
   }, [event, user]);
 
   if (!event) return null;
-  const isUrl = event.location_or_link && /^https?:\/\//i.test(event.location_or_link);
-  const onlineLink = event.online_link || (isUrl ? event.location_or_link : null);
-  const place = event.address || (!isUrl ? event.location_or_link : null);
+  const { eventUrl, onlineUrl, place } = eventLinks(event);
   const speakers: any[] = Array.isArray(event.speakers) ? event.speakers : [];
   const isCommunity = event.source === "comunidade";
   // Comunidade: visitantes anônimos veem detalhes, mas não acessam link nem se inscrevem.
@@ -96,15 +95,17 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
         {event.theme && <div className="text-sm"><span className="font-semibold">Tema:</span> <span className="text-primary">{event.theme}</span></div>}
 
         {place && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 shrink-0" />
             <span>{place}</span>
+            <Button asChild size="sm" variant="outline"><a href={mapsUrl(place)} target="_blank" rel="noopener noreferrer"><Navigation className="h-4 w-4 mr-1" /> Google Maps</a></Button>
           </div>
         )}
-        {onlineLink && (
+        {eventUrl && <Button asChild size="sm" variant="outline"><a href={eventUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-1" /> Página oficial</a></Button>}
+        {onlineUrl && (!hideExternalForAnon || !isCommunity) && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <ExternalLink className="h-4 w-4 shrink-0" />
-            <a href={onlineLink} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline break-all">{onlineLink}</a>
+            <a href={onlineUrl} target="_blank" rel="noopener noreferrer" className="text-secondary hover:underline break-all">Link da transmissão</a>
           </div>
         )}
 
@@ -128,10 +129,8 @@ export function EventDetailDialog({ event, open, onOpenChange }: { event: any | 
         )}
 
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
-          {onlineLink && !hideExternalForAnon && (
-            <a href={onlineLink} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-[180px]">
-              <Button variant="neon" className="w-full"><ExternalLink className="h-4 w-4 mr-2" /> Acessar evento</Button>
-            </a>
+          {onlineUrl && !hideExternalForAnon && (
+            <Button asChild variant="neon" className="flex-1 min-w-[180px]"><a href={onlineUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Acessar evento</a></Button>
           )}
           {isAuthenticated ? (
             <Button variant={interested ? "default" : waitlistPos ? "secondary" : "outline"} onClick={toggle} disabled={busy}>

@@ -13,7 +13,7 @@ import { ScheduleTimeline } from "@/components/events/schedule";
 import { QrCode } from "@/components/events/qr-code";
 import { EventQA } from "@/components/public/event-qa";
 import { formatDateOnly } from "@/lib/utils";
-import { REG_STATUS, hhmm, mapsUrl, parseSchedule, type RegistrationStatus } from "@/lib/events";
+import { REG_STATUS, eventLinks, hhmm, mapsUrl, parseSchedule, type RegistrationStatus } from "@/lib/events";
 
 export const Route = createFileRoute("/eventos/$id")({
   head: () => ({
@@ -96,9 +96,8 @@ function EventPage() {
     );
   }
 
-  const isUrl = ev.location_or_link && /^https?:\/\//i.test(ev.location_or_link);
-  const onlineLink = ev.online_link || (isUrl ? ev.location_or_link : null);
-  const place = ev.address || (!isUrl ? ev.location_or_link : null);
+  const { eventUrl, onlineUrl, place } = eventLinks(ev);
+  const isThirdParty = ev.source === "terceiros";
   const schedule = parseSchedule(ev.schedule);
   const speakers: any[] = Array.isArray(ev.speakers) ? ev.speakers : [];
   const active = reg && !["cancelled", "rejected"].includes(reg.status);
@@ -134,20 +133,25 @@ function EventPage() {
               <InfoTile icon={<CalendarDays className="h-5 w-5" />} label="Data" value={formatDateOnly(ev.event_date)} />
               <InfoTile icon={<Clock className="h-5 w-5" />} label="Horário" value={ev.event_time ? `${hhmm(ev.event_time)}${ev.end_time ? ` às ${hhmm(ev.end_time)}` : ""}` : "A definir"} />
               {place && (
-                <div className="glass rounded-xl p-4 border border-border/40 sm:col-span-2 flex items-start gap-3">
+                  <div className="glass rounded-lg p-4 border border-border/40 sm:col-span-2 flex flex-wrap items-start gap-3">
                   <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs uppercase tracking-wider text-muted-foreground">Endereço</div>
                     <div className="font-medium break-words">{place}</div>
                   </div>
-                  <a href={mapsUrl(place)} target="_blank" rel="noopener noreferrer">
-                    <Button size="sm" variant="outline"><Navigation className="h-3.5 w-3.5 mr-1" /> Mapa</Button>
-                  </a>
+                  <Button asChild size="sm" variant="outline"><a href={mapsUrl(place)} target="_blank" rel="noopener noreferrer"><Navigation className="h-3.5 w-3.5 mr-1" /> Abrir no Google Maps</a></Button>
                 </div>
               )}
               {ev.max_attendees && <InfoTile icon={<Users className="h-5 w-5" />} label="Vagas" value={`${ev.max_attendees} lugares`} />}
-              {onlineLink && <InfoTile icon={<Video className="h-5 w-5" />} label="Transmissão" value={isAuthenticated ? "Link disponível" : "Entre para ver o link"} />}
+              {onlineUrl && <InfoTile icon={<Video className="h-5 w-5" />} label="Transmissão" value={isThirdParty ? "Link do organizador" : isAuthenticated ? "Link disponível após aprovação" : "Entre para ver o link"} />}
             </div>
+
+            {(eventUrl || (isThirdParty && onlineUrl)) && (
+              <div className="flex flex-wrap gap-2">
+                {eventUrl && <Button asChild variant="outline"><a href={eventUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Página oficial do evento</a></Button>}
+                {isThirdParty && onlineUrl && <Button asChild variant="outline"><a href={onlineUrl} target="_blank" rel="noopener noreferrer"><Video className="h-4 w-4 mr-2" /> Acessar transmissão</a></Button>}
+              </div>
+            )}
 
             {schedule.length > 0 && (
               <div>
@@ -180,8 +184,14 @@ function EventPage() {
           </div>
 
           <aside className="lg:sticky lg:top-24 glass rounded-2xl p-5 border border-primary/30 space-y-4">
-            <div className="flex items-center gap-2 font-bold"><Ticket className="h-5 w-5 text-primary" /> Sua presença</div>
-            {!isAuthenticated ? (
+            <div className="flex items-center gap-2 font-bold"><Ticket className="h-5 w-5 text-primary" /> {isThirdParty ? "Evento de terceiros" : "Sua presença"}</div>
+            {isThirdParty ? (
+              <>
+                <p className="text-sm text-muted-foreground">Inscrições e informações de acesso são gerenciadas pelo organizador deste evento.</p>
+                {eventUrl && <Button asChild variant="neon" className="w-full"><a href={eventUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Ir para o evento</a></Button>}
+                {place && <Button asChild variant="outline" className="w-full"><a href={mapsUrl(place)} target="_blank" rel="noopener noreferrer"><Navigation className="h-4 w-4 mr-2" /> Traçar rota no Maps</a></Button>}
+              </>
+            ) : !isAuthenticated ? (
               <>
                 <p className="text-sm text-muted-foreground">Entre na sua conta para confirmar presença e receber seu ingresso com QR Code.</p>
                 <Link to="/login" search={{ redirect: `/eventos/${id}` } as any}><Button variant="neon" className="w-full">Entrar para confirmar</Button></Link>
@@ -198,9 +208,9 @@ function EventPage() {
               </>
             ) : (
               <>
-                <Badge variant={REG_STATUS[status!].variant} className="text-sm">
+                 <Badge variant={REG_STATUS[status ?? "pending"].variant} className="text-sm">
                   {status === "pending" && <Hourglass className="h-3.5 w-3.5 mr-1" />}
-                  {REG_STATUS[status!].label}
+                   {REG_STATUS[status ?? "pending"].label}
                 </Badge>
                 {status === "approved" ? (
                   <div className="text-center space-y-2">
@@ -214,8 +224,8 @@ function EventPage() {
                 ) : (
                   <p className="text-sm text-muted-foreground">Te avisaremos se uma vaga for liberada.</p>
                 )}
-                {onlineLink && status === "approved" && (
-                  <a href={onlineLink} target="_blank" rel="noopener noreferrer"><Button variant="outline" className="w-full"><ExternalLink className="h-4 w-4 mr-2" /> Acessar transmissão</Button></a>
+                 {onlineUrl && status === "approved" && (
+                   <Button asChild variant="outline" className="w-full"><a href={onlineUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Acessar transmissão</a></Button>
                 )}
                 {!reg.checked_in_at && (
                   <Button variant="ghost" size="sm" className="w-full" disabled={busy} onClick={cancel}><XCircle className="h-4 w-4 mr-2" /> Cancelar presença</Button>
