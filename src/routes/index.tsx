@@ -25,6 +25,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "A maior comunidade tech para networking, aprendizado e oportunidades. Se tem código, tem solução." },
       { property: "og:title", content: "GALERA DO T.I." },
       { property: "og:description", content: "Se tem código, tem solução. Se não tem, a gente cria." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: Index,
