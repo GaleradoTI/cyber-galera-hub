@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,6 +7,7 @@ type AuthState = { session: Session | null; user: User | null; loading: boolean 
 // Single shared store so every component sees the same session and we never
 // flip to "logged out" just because a second hook instance is still resolving.
 let state: AuthState = { session: null, user: null, loading: true };
+const serverSnapshot: AuthState = { session: null, user: null, loading: true };
 const listeners = new Set<(s: AuthState) => void>();
 let started = false;
 
@@ -42,17 +43,16 @@ function start() {
 }
 
 export function useAuth() {
-  const [local, setLocal] = useState<AuthState>(state);
-
-  useEffect(() => {
-    start();
-    listeners.add(setLocal);
-    setLocal(state);
-    return () => {
-      listeners.delete(setLocal);
-    };
-  }, []);
-
+  const local = useSyncExternalStore(
+    (notify) => {
+      const listener = () => notify();
+      listeners.add(listener);
+      return () => { listeners.delete(listener); };
+    },
+    () => state,
+    () => serverSnapshot,
+  );
+  useEffect(() => { start(); }, []);
   return { ...local, isAuthenticated: !!local.user };
 }
 
