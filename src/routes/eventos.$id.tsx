@@ -133,13 +133,13 @@ function EventPage() {
               <InfoTile icon={<CalendarDays className="h-5 w-5" />} label="Data" value={formatDateOnly(ev.event_date)} />
               <InfoTile icon={<Clock className="h-5 w-5" />} label="Horário" value={ev.event_time ? `${hhmm(ev.event_time)}${ev.end_time ? ` às ${hhmm(ev.end_time)}` : ""}` : "A definir"} />
               {place && (
-                  <div className="glass rounded-lg p-4 border border-border/40 sm:col-span-2 flex flex-wrap items-start gap-3">
+                  <div className="glass rounded-lg p-4 border border-border/40 sm:col-span-2 flex flex-col sm:flex-row sm:items-start gap-3">
                   <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="text-xs uppercase tracking-wider text-muted-foreground">Endereço</div>
                     <div className="font-medium break-words">{place}</div>
                   </div>
-                  <Button asChild size="sm" variant="outline"><a href={mapsUrl(place)} target="_blank" rel="noopener noreferrer"><Navigation className="h-3.5 w-3.5 mr-1" /> Abrir no Google Maps</a></Button>
+                  <Button asChild size="sm" variant="outline" className="self-start"><a href={mapsUrl(place)} target="_blank" rel="noopener noreferrer"><Navigation className="h-3.5 w-3.5 mr-1" /> Abrir no Google Maps</a></Button>
                 </div>
               )}
               {ev.max_attendees && <InfoTile icon={<Users className="h-5 w-5" />} label="Vagas" value={`${ev.max_attendees} lugares`} />}
