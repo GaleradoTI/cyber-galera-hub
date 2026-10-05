@@ -893,6 +893,13 @@ export type Database = {
             foreignKeyName: "finance_entries_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "finance_entries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
@@ -909,6 +916,13 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "drop_interests"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_entries_linked_user_id_fkey"
+            columns: ["linked_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_overview"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "finance_entries_linked_user_id_fkey"
@@ -1208,6 +1222,7 @@ export type Database = {
           created_at: string
           id: string
           link: string | null
+          pushed_at: string | null
           read_at: string | null
           title: string
           type: string
@@ -1218,6 +1233,7 @@ export type Database = {
           created_at?: string
           id?: string
           link?: string | null
+          pushed_at?: string | null
           read_at?: string | null
           title: string
           type: string
@@ -1228,6 +1244,7 @@ export type Database = {
           created_at?: string
           id?: string
           link?: string | null
+          pushed_at?: string | null
           read_at?: string | null
           title?: string
           type?: string
@@ -1720,6 +1737,39 @@ export type Database = {
           setting_value?: Json
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -2371,6 +2421,63 @@ export type Database = {
       }
     }
     Views: {
+      admin_users_overview: {
+        Row: {
+          address_city: string | null
+          address_region: string | null
+          address_state: string | null
+          avatar_url: string | null
+          badges: Json | null
+          birth_date: string | null
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          gender: string | null
+          id: string | null
+          is_blocked: boolean | null
+          is_verified_recruiter: boolean | null
+          roles: string[] | null
+          user_id: string | null
+          work_area: string | null
+        }
+        Insert: {
+          address_city?: string | null
+          address_region?: string | null
+          address_state?: string | null
+          avatar_url?: string | null
+          badges?: never
+          birth_date?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string | null
+          is_blocked?: boolean | null
+          is_verified_recruiter?: boolean | null
+          roles?: never
+          user_id?: string | null
+          work_area?: string | null
+        }
+        Update: {
+          address_city?: string | null
+          address_region?: string | null
+          address_state?: string | null
+          avatar_url?: string | null
+          badges?: never
+          birth_date?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          gender?: string | null
+          id?: string | null
+          is_blocked?: boolean | null
+          is_verified_recruiter?: boolean | null
+          roles?: never
+          user_id?: string | null
+          work_area?: string | null
+        }
+        Relationships: []
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
