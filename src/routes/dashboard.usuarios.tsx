@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X, Eye, Mail, Phone, MapPin, Briefcase, Calendar, Tag, Sparkles } from "lucide-react";
+import { Search, Shield, ShieldOff, Crown, ShieldCheck, User as UserIcon, ArrowUp, ArrowDown, Pencil, KeyRound, Building2, Award, BadgeCheck, Plus, X, Eye, Mail, Phone, MapPin, Briefcase, Calendar, Tag, Sparkles, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getGenderLabel, getRegionByState, getAgeRange, BRAZIL_STATES, GENDER_OPTIONS } from "@/lib/profile-demographics";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
@@ -27,6 +28,8 @@ type ProfileRow = {
   id: string; user_id: string; display_name: string; email: string;
   is_blocked: boolean; created_at: string; is_verified_recruiter: boolean;
   gender?: string | null; birth_date?: string | null; address_state?: string | null; address_region?: string | null;
+  avatar_url?: string | null; address_city?: string | null; work_area?: string | null;
+  roles?: string[]; badges?: { id: string; label: string; color: string }[];
 };
 type RoleRow = { user_id: string; role: string };
 type BadgeRow = { id: string; user_id: string; label: string; color: string };
@@ -72,23 +75,15 @@ function UsuariosPage() {
     queryFn: async () => (await listProfilesFn()) as ProfileRow[],
   });
 
-  const { data: rolesData = [] } = useQuery({
-    queryKey: ["admin-roles"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("user_roles").select("user_id,role");
-      if (error) throw error;
-      return (data ?? []) as RoleRow[];
-    },
-  });
-
-  const { data: badgesData = [] } = useQuery({
-    queryKey: ["admin-badges"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("member_badges").select("*");
-      if (error) throw error;
-      return (data ?? []) as BadgeRow[];
-    },
-  });
+  // Papéis e cargos já vêm juntos da visão otimizada (uma única consulta).
+  const rolesData = useMemo<RoleRow[]>(
+    () => profiles.flatMap((p) => (p.roles ?? []).map((role) => ({ user_id: p.user_id, role }))),
+    [profiles],
+  );
+  const badgesData = useMemo<BadgeRow[]>(
+    () => profiles.flatMap((p) => (p.badges ?? []).map((b) => ({ ...b, user_id: p.user_id }))),
+    [profiles],
+  );
 
   const badgesByUser = useMemo(() => {
     const m = new Map<string, BadgeRow[]>();
@@ -297,9 +292,13 @@ function UsuariosPage() {
     const userBadges = badgesByUser.get(p.user_id) ?? [];
     return (
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 flex items-center justify-center text-xs font-black">
-          {(p.display_name ?? p.email).slice(0, 1).toUpperCase()}
-        </div>
+        {p.avatar_url ? (
+          <img src={p.avatar_url} alt="" loading="lazy" width={40} height={40} className="w-10 h-10 shrink-0 rounded-full object-cover ring-2 ring-primary/30" />
+        ) : (
+          <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary/40 to-secondary/40 ring-2 ring-primary/20 flex items-center justify-center text-sm font-black">
+            {(p.display_name ?? p.email).slice(0, 1).toUpperCase()}
+          </div>
+        )}
         <div className="min-w-0">
           <div className="text-sm font-medium truncate flex items-center gap-1">
             <span className="truncate">{p.display_name}</span>
@@ -308,6 +307,11 @@ function UsuariosPage() {
             )}
           </div>
           <div className="text-xs text-muted-foreground truncate">{p.email}</div>
+          {(p.work_area || p.address_city) && (
+            <div className="text-[11px] text-muted-foreground/80 truncate">
+              {[p.work_area, p.address_city && `${p.address_city}${p.address_state ? `/${p.address_state}` : ""}`].filter(Boolean).join(" · ")}
+            </div>
+          )}
           {(userBadges.length > 0 || isSuperAdmin) && (
             <div className="flex flex-wrap items-center gap-1 mt-1">
               {userBadges.map((b) => (
@@ -339,57 +343,100 @@ function UsuariosPage() {
     const isTargetAdmin = role === "ADMIN" || role === "SUPER_ADMIN";
     const canActOnTarget = isSuperAdmin || !isTargetAdmin;
     const userRoles = rolesByUser.get(p.user_id) ?? [];
+    const lowRole = role !== "SUPER_ADMIN" && role !== "ADMIN";
     return (
       <>
-        <Button size="sm" variant="ghost" onClick={() => { setEditing(p); setEditName(p.display_name ?? ""); }}>
-          <Pencil className="h-3 w-3 mr-1" /> Editar
-        </Button>
         <Button size="sm" variant="neon-outline" onClick={() => setViewing(p)}>
-          <Eye className="h-3 w-3 mr-1" /> Detalhes
+          <Eye className="h-3.5 w-3.5 mr-1" /> Detalhes
         </Button>
-        {isSuperAdmin && role === "MEMBRO" && (
-          <Button size="sm" variant="outline" onClick={() => promoteToAdmin(p)}>
-            <ArrowUp className="h-3 w-3 mr-1" /> Tornar ADMIN
-          </Button>
-        )}
-        {isSuperAdmin && role === "ADMIN" && (
-          <Button size="sm" variant="outline" onClick={() => demoteFromAdmin(p)}>
-            <ArrowDown className="h-3 w-3 mr-1" /> Rebaixar
-          </Button>
-        )}
-        {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
-          <Button size="sm" variant="outline" onClick={() => toggleRecruiter(p, userRoles)}>
-            <Building2 className="h-3 w-3 mr-1" />
-            {userRoles.includes("RECRUTADOR") ? "Remover recrutador" : "Tornar recrutador"}
-          </Button>
-        )}
-        {isSuperAdmin && role !== "SUPER_ADMIN" && role !== "ADMIN" && (
-          <Button size="sm" variant="outline" onClick={() => toggleAmbassador(p, userRoles)}>
-            <Sparkles className="h-3 w-3 mr-1" />
-            {userRoles.includes("EMBAIXADOR") ? "Remover embaixador" : "Tornar embaixador"}
-          </Button>
-        )}
-        {isSuperAdmin && userRoles.includes("RECRUTADOR") && (
-          <Button size="sm" variant="outline" onClick={() => toggleVerified(p)}>
-            <BadgeCheck className="h-3 w-3 mr-1" />
-            {p.is_verified_recruiter ? "Remover verificação" : "Verificar"}
-          </Button>
-        )}
-        <Button size="sm" variant={p.is_blocked ? "default" : "destructive"} disabled={!canActOnTarget || role === "SUPER_ADMIN"} onClick={() => setConfirm(p)}>
-          {p.is_blocked ? "Reativar" : "Bloquear"}
-        </Button>
-        {canActOnTarget && role !== "SUPER_ADMIN" && (
-          <Button size="sm" variant="outline" onClick={() => setResetting(p)}>
-            <KeyRound className="h-3 w-3 mr-1" /> Resetar senha
-          </Button>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Mais ações">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="truncate">{p.display_name}</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => { setEditing(p); setEditName(p.display_name ?? ""); }}>
+              <Pencil className="h-4 w-4 mr-2" /> Editar nome
+            </DropdownMenuItem>
+            {canActOnTarget && role !== "SUPER_ADMIN" && (
+              <DropdownMenuItem onClick={() => setResetting(p)}>
+                <KeyRound className="h-4 w-4 mr-2" /> Resetar senha
+              </DropdownMenuItem>
+            )}
+            {isSuperAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-muted-foreground">Papéis</DropdownMenuLabel>
+                {role === "MEMBRO" && (
+                  <DropdownMenuItem onClick={() => promoteToAdmin(p)}><ArrowUp className="h-4 w-4 mr-2" /> Tornar ADMIN</DropdownMenuItem>
+                )}
+                {role === "ADMIN" && (
+                  <DropdownMenuItem onClick={() => demoteFromAdmin(p)}><ArrowDown className="h-4 w-4 mr-2" /> Rebaixar de ADMIN</DropdownMenuItem>
+                )}
+                {lowRole && (
+                  <DropdownMenuItem onClick={() => toggleRecruiter(p, userRoles)}>
+                    <Building2 className="h-4 w-4 mr-2" />{userRoles.includes("RECRUTADOR") ? "Remover recrutador" : "Tornar recrutador"}
+                  </DropdownMenuItem>
+                )}
+                {lowRole && (
+                  <DropdownMenuItem onClick={() => toggleAmbassador(p, userRoles)}>
+                    <Sparkles className="h-4 w-4 mr-2" />{userRoles.includes("EMBAIXADOR") ? "Remover embaixador" : "Tornar embaixador"}
+                  </DropdownMenuItem>
+                )}
+                {userRoles.includes("RECRUTADOR") && (
+                  <DropdownMenuItem onClick={() => toggleVerified(p)}>
+                    <BadgeCheck className="h-4 w-4 mr-2" />{p.is_verified_recruiter ? "Remover verificação" : "Verificar recrutador"}
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              disabled={!canActOnTarget || role === "SUPER_ADMIN"}
+              onClick={() => setConfirm(p)}
+              className={p.is_blocked ? "" : "text-destructive focus:text-destructive"}
+            >
+              {p.is_blocked ? <Shield className="h-4 w-4 mr-2" /> : <ShieldOff className="h-4 w-4 mr-2" />}
+              {p.is_blocked ? "Reativar acesso" : "Bloquear acesso"}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </>
     );
   };
 
+  const stats = {
+    total: profiles.length,
+    active: profiles.filter((p) => !p.is_blocked).length,
+    blocked: profiles.filter((p) => p.is_blocked).length,
+    admins: profiles.filter((p) => (p.roles ?? []).some((r) => r === "ADMIN" || r === "SUPER_ADMIN")).length,
+    newMonth: profiles.filter((p) => Date.now() - new Date(p.created_at).getTime() < 30 * 86400_000).length,
+  };
+
   return (
     <DashboardShell title="Usuários" description={isSuperAdmin ? "Gerencie todos os usuários, papéis e status." : "Gerencie membros (ativar/bloquear)."}>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center gap-2 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+        {[
+          { label: "Total", value: stats.total, icon: UserIcon, tone: "text-foreground" },
+          { label: "Ativos", value: stats.active, icon: Shield, tone: "text-primary" },
+          { label: "Bloqueados", value: stats.blocked, icon: ShieldOff, tone: "text-destructive" },
+          { label: "Admins", value: stats.admins, icon: Crown, tone: "text-secondary" },
+          { label: "Novos (30 dias)", value: stats.newMonth, icon: Sparkles, tone: "text-accent" },
+        ].map((c) => (
+          <div key={c.label} className="glass rounded-xl border border-primary/15 p-4">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              {c.label} <c.icon className={`h-4 w-4 ${c.tone}`} />
+            </div>
+            <div className={`mt-2 text-2xl font-black ${c.tone}`}>
+              {isLoading ? <Skeleton className="h-7 w-14" /> : c.value.toLocaleString("pt-BR")}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="glass rounded-xl border border-primary/15 p-3 grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center gap-2 mb-4">
         <div className="relative col-span-2 sm:col-span-3 lg:flex-1 lg:min-w-[220px] lg:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar por nome ou email" className="pl-9" />
@@ -447,7 +494,11 @@ function UsuariosPage() {
         <div className="col-span-2 sm:col-span-3 lg:col-auto text-xs text-muted-foreground lg:ml-auto">{filtered.length} usuário(s)</div>
       </div>
 
-      {isLoading && <div className="text-center text-muted-foreground py-8">Carregando…</div>}
+      {isLoading && (
+        <div className="space-y-2">
+          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
+        </div>
+      )}
       {!isLoading && filtered.length === 0 && (
         <div className="glass rounded-xl p-8 text-center text-muted-foreground">Nenhum usuário encontrado.</div>
       )}
@@ -457,7 +508,7 @@ function UsuariosPage() {
         {!isLoading && paginated.map((p) => {
           const role = primaryOf(p.user_id);
           return (
-            <div key={p.id} className="glass rounded-xl border border-primary/20 p-4">
+            <div key={p.id} className={`glass rounded-xl border p-4 ${p.is_blocked ? "border-destructive/40 opacity-80" : "border-primary/20"}`}>
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="min-w-0">{renderIdentity(p)}</div>
                 <RoleBadge role={role} />
@@ -469,7 +520,7 @@ function UsuariosPage() {
                   <span className="inline-flex items-center gap-1 text-xs text-primary"><Shield className="h-3 w-3" /> Ativo</span>
                 )}
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">{renderActions(p, role)}</div>
+              <div className="mt-3 flex items-center justify-end gap-2">{renderActions(p, role)}</div>
             </div>
           );
         })}
@@ -483,6 +534,7 @@ function UsuariosPage() {
               <TableHead>Usuário</TableHead>
               <TableHead>Papel</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Entrou em</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -490,7 +542,7 @@ function UsuariosPage() {
             {!isLoading && paginated.map((p) => {
               const role = primaryOf(p.user_id);
               return (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className={p.is_blocked ? "opacity-70" : ""}>
                   <TableCell>{renderIdentity(p)}</TableCell>
                   <TableCell><RoleBadge role={role} /></TableCell>
                   <TableCell>
@@ -500,8 +552,11 @@ function UsuariosPage() {
                       <span className="inline-flex items-center gap-1 text-xs text-primary"><Shield className="h-3 w-3" /> Ativo</span>
                     )}
                   </TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                    {new Date(p.created_at).toLocaleDateString("pt-BR")}
+                  </TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap justify-end gap-2">{renderActions(p, role)}</div>
+                    <div className="flex items-center justify-end gap-1">{renderActions(p, role)}</div>
                   </TableCell>
                 </TableRow>
               );

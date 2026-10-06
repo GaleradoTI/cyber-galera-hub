@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth, signOut } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { isStandaloneApp } from "@/lib/pwa";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,11 @@ const CONFIRM_WINDOW_S = 120; // 2 min para confirmar
 const ACTIVITY_EVENTS = ["mousedown", "keydown", "touchstart", "scroll", "focus"] as const;
 
 export function SessionTimeoutGuard() {
-  const { isAuthenticated } = useAuth();
+  const [standalone, setStandalone] = useState(false);
+  useEffect(() => { setStandalone(isStandaloneApp()); }, []);
+  const auth = useAuth();
+  // No app instalado no celular não há tempo de sessão.
+  const isAuthenticated = auth.isAuthenticated && !standalone;
   const navigate = useNavigate();
   const [asking, setAsking] = useState(false);
   const [left, setLeft] = useState(CONFIRM_WINDOW_S);

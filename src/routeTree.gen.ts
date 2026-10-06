@@ -62,6 +62,7 @@ import { Route as ProjetosIndexRouteImport } from './routes/projetos.index'
 import { Route as ProjetosSlugRouteImport } from './routes/projetos.$slug'
 import { Route as DashboardEventoCrachasIdRouteImport } from './routes/dashboard.evento-crachas.$id'
 import { Route as DashboardEventoInscricoesIdRouteImport } from './routes/dashboard.evento-inscricoes.$id'
+import { Route as ApiPublicPushSendRouteImport } from './routes/api/public/push/send'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -332,6 +333,11 @@ const DashboardEventoInscricoesIdRoute =
     path: '/evento-inscricoes/$id',
     getParentRoute: () => DashboardRoute,
   } as any)
+const ApiPublicPushSendRoute = ApiPublicPushSendRouteImport.update({
+  id: '/api/public/push/send',
+  path: '/api/public/push/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -387,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/projetos/': typeof ProjetosIndexRoute
   '/dashboard/evento-crachas/$id': typeof DashboardEventoCrachasIdRoute
   '/dashboard/evento-inscricoes/$id': typeof DashboardEventoInscricoesIdRoute
+  '/api/public/push/send': typeof ApiPublicPushSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -441,6 +448,7 @@ export interface FileRoutesByTo {
   '/projetos': typeof ProjetosIndexRoute
   '/dashboard/evento-crachas/$id': typeof DashboardEventoCrachasIdRoute
   '/dashboard/evento-inscricoes/$id': typeof DashboardEventoInscricoesIdRoute
+  '/api/public/push/send': typeof ApiPublicPushSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -497,6 +505,7 @@ export interface FileRoutesById {
   '/projetos/': typeof ProjetosIndexRoute
   '/dashboard/evento-crachas/$id': typeof DashboardEventoCrachasIdRoute
   '/dashboard/evento-inscricoes/$id': typeof DashboardEventoInscricoesIdRoute
+  '/api/public/push/send': typeof ApiPublicPushSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -554,6 +563,7 @@ export interface FileRouteTypes {
     | '/projetos/'
     | '/dashboard/evento-crachas/$id'
     | '/dashboard/evento-inscricoes/$id'
+    | '/api/public/push/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -608,6 +618,7 @@ export interface FileRouteTypes {
     | '/projetos'
     | '/dashboard/evento-crachas/$id'
     | '/dashboard/evento-inscricoes/$id'
+    | '/api/public/push/send'
   id:
     | '__root__'
     | '/'
@@ -663,6 +674,7 @@ export interface FileRouteTypes {
     | '/projetos/'
     | '/dashboard/evento-crachas/$id'
     | '/dashboard/evento-inscricoes/$id'
+    | '/api/public/push/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -689,6 +701,7 @@ export interface RootRouteChildren {
   ProjetosSlugRoute: typeof ProjetosSlugRoute
   EventosIndexRoute: typeof EventosIndexRoute
   ProjetosIndexRoute: typeof ProjetosIndexRoute
+  ApiPublicPushSendRoute: typeof ApiPublicPushSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1064,6 +1077,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardEventoInscricoesIdRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/public/push/send': {
+      id: '/api/public/push/send'
+      path: '/api/public/push/send'
+      fullPath: '/api/public/push/send'
+      preLoaderRoute: typeof ApiPublicPushSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1161,6 +1181,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProjetosSlugRoute: ProjetosSlugRoute,
   EventosIndexRoute: EventosIndexRoute,
   ProjetosIndexRoute: ProjetosIndexRoute,
+  ApiPublicPushSendRoute: ApiPublicPushSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

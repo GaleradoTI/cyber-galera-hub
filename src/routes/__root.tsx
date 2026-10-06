@@ -80,6 +80,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "GALERA DO T.I. — Comunidade Tech" },
       { name: "description", content: "Comunidade GALERA DO T.I. para encontros, oportunidades e conexões em tecnologia." },
       { name: "author", content: "GALERA DO T.I." },
+      { name: "theme-color", content: "#020a24" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "GTI" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { property: "og:title", content: "GALERA DO T.I. — Comunidade Tech" },
       { property: "og:description", content: "Encontros, oportunidades e conexões em tecnologia na comunidade GALERA DO T.I." },
       { property: "og:type", content: "website" },
@@ -92,6 +97,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/icons/icon-180.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -102,7 +110,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <HeadContent />
       </head>

@@ -125,8 +125,8 @@ export const listAdminProfiles = createServerFn({ method: "GET" })
     // O e-mail de profiles é mantido em dia pelo trigger sync_profile_email,
     // então não precisamos paginar a lista de contas do Auth (era o gargalo).
     const { data: profiles, error } = await admin
-      .from("profiles")
-      .select("id,user_id,display_name,email,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region")
+      .from("admin_users_overview" as "profiles")
+      .select("id,user_id,display_name,email,avatar_url,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region,address_city,work_area,roles,badges" as "*")
       .order("created_at", { ascending: false })
       .limit(5000);
     if (error) throw new Error(error.message);

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,13 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const auth = useAuth();
+
+  // Quem abre o app já logado vai direto para o painel.
+  useEffect(() => {
+    if (!auth.loading && auth.isAuthenticated) navigate({ to: getRedirectTo() as "/dashboard" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.loading, auth.isAuthenticated]);
 
   const getRedirectTo = () => {
     if (typeof window === "undefined") return "/dashboard";
