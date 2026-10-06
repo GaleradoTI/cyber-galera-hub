@@ -1,3 +1,4 @@
+import { AppPermissionsBanner } from "@/components/pwa/app-permissions-banner";
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -317,6 +318,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
               <NotificationsBell />
             </div>
           </header>
+          <AppPermissionsBanner />
           {children}
         </div>
       </main>
