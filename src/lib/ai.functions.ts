@@ -91,3 +91,64 @@ export const suggestTechTags = createServerFn({ method: "POST" })
     }
     return { tags };
   });
+function parseJsonLoose(raw: string): Record<string, unknown> {
+  const cleaned = raw.replace(/```json|```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start < 0 || end < 0) throw new Error("A IA não conseguiu entender o texto. Tente colar mais detalhes.");
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+const ExtractInput = z.object({ text: z.string().trim().min(20, "Cole um texto com pelo menos 20 caracteres.").max(15000) });
+
+const str = (v: unknown, max = 500) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
+const oneOf = <T extends string>(v: unknown, opts: readonly T[]) => (typeof v === "string" && (opts as readonly string[]).includes(v) ? (v as T) : undefined);
+const timeStr = (v: unknown) => (typeof v === "string" && /^\d{2}:\d{2}$/.test(v) ? v : undefined);
+const dateStr = (v: unknown) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : undefined);
+const urlStr = (v: unknown) => (typeof v === "string" && /^https?:\/\//i.test(v.trim()) ? v.trim().slice(0, 500) : undefined);
+
+export const extractEventFromText = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ExtractInput.parse(d))
+  .handler(async ({ data }) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const sys = `Você extrai dados de eventos de tecnologia a partir de textos livres em pt-BR. Hoje é ${today}. Responda APENAS um JSON com as chaves:
+name, theme, description (markdown organizado: resumo, para quem é, o que vai rolar), category (Workshop|Palestra|Meetup|Hackathon|Live|Outro), event_date (YYYY-MM-DD), event_time (HH:MM), end_time (HH:MM), modality (online|presencial|hibrido), address (endereço físico completo), online_link (link de transmissão), location_or_link (página oficial/inscrição), max_attendees (número), speakers ([{name, topic}]), schedule ([{time: "HH:MM", title, speaker?}]).
+Use null quando não houver a informação. Nunca invente datas, links ou endereços.`;
+    const raw = await callGateway(sys, data.text);
+    const j = parseJsonLoose(raw);
+    const speakers = Array.isArray(j.speakers)
+      ? (j.speakers as any[]).map((s) => ({ name: str(s?.name, 120), topic: str(s?.topic, 200) })).filter((s) => s.name).slice(0, 12)
+      : undefined;
+    const schedule = Array.isArray(j.schedule)
+      ? (j.schedule as any[]).map((s) => ({ time: timeStr(s?.time) ?? "", title: str(s?.title, 200) ?? "", speaker: str(s?.speaker, 120) ?? "" })).filter((s) => s.title).slice(0, 30)
+      : undefined;
+    const max = typeof j.max_attendees === "number" && j.max_attendees > 0 ? Math.round(j.max_attendees) : undefined;
+    return {
+      name: str(j.name, 200), theme: str(j.theme, 200), description: str(j.description, 8000),
+      category: str(j.category, 60), event_date: dateStr(j.event_date), event_time: timeStr(j.event_time),
+      end_time: timeStr(j.end_time), modality: oneOf(j.modality, ["online", "presencial", "hibrido"] as const),
+      address: str(j.address, 300), online_link: urlStr(j.online_link), location_or_link: urlStr(j.location_or_link),
+      max_attendees: max, speakers, schedule,
+    };
+  });
+
+export const extractJobFromText = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => ExtractInput.parse(d))
+  .handler(async ({ data }) => {
+    const sys = `Você extrai dados de vagas de tecnologia a partir de textos livres em pt-BR. Responda APENAS um JSON com as chaves:
+title, company, location, seniority (estagio|junior|pleno|senior|especialista), modality (remoto|hibrido|presencial), apply_url (link ou mailto), technologies (array de até 15 strings curtas), short_description (1-2 frases), description (markdown com seções: Sobre a vaga, Responsabilidades, Requisitos, Diferenciais, Benefícios — só com o que estiver no texto).
+Use null quando não houver a informação. Nunca invente empresa, links ou salários.`;
+    const raw = await callGateway(sys, data.text);
+    const j = parseJsonLoose(raw);
+    const apply = typeof j.apply_url === "string" && /^(https?:\/\/|mailto:)/i.test(j.apply_url.trim()) ? j.apply_url.trim().slice(0, 500) : undefined;
+    return {
+      title: str(j.title, 150), company: str(j.company, 150), location: str(j.location, 150),
+      seniority: oneOf(j.seniority, ["estagio", "junior", "pleno", "senior", "especialista"] as const),
+      modality: oneOf(j.modality, ["remoto", "hibrido", "presencial"] as const),
+      apply_url: apply,
+      technologies: Array.isArray(j.technologies) ? (j.technologies as unknown[]).map((t) => str(t, 40)).filter((t): t is string => !!t).slice(0, 15) : undefined,
+      short_description: str(j.short_description, 400), description: str(j.description, 8000),
+    };
+  });
