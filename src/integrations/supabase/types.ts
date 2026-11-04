@@ -567,6 +567,7 @@ export type Database = {
           requires_approval: boolean
           schedule: Json
           source: string
+          source_event_id: string | null
           speakers: Json
           status: Database["public"]["Enums"]["content_status"]
           submitted_by: string | null
@@ -596,6 +597,7 @@ export type Database = {
           requires_approval?: boolean
           schedule?: Json
           source?: string
+          source_event_id?: string | null
           speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
           submitted_by?: string | null
@@ -625,6 +627,7 @@ export type Database = {
           requires_approval?: boolean
           schedule?: Json
           source?: string
+          source_event_id?: string | null
           speakers?: Json
           status?: Database["public"]["Enums"]["content_status"]
           submitted_by?: string | null
@@ -1045,6 +1048,248 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      job_email_ingestions: {
+        Row: {
+          apply_url: string | null
+          company: string | null
+          contexto_original: string | null
+          dados_minimos_validos: boolean
+          external_id: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          location: string | null
+          message_id: string | null
+          modality: string | null
+          pendencias: string[]
+          processing_status: string
+          seniority: string | null
+          source: string
+          technologies: string[]
+          title: string | null
+        }
+        Insert: {
+          apply_url?: string | null
+          company?: string | null
+          contexto_original?: string | null
+          dados_minimos_validos?: boolean
+          external_id: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          location?: string | null
+          message_id?: string | null
+          modality?: string | null
+          pendencias?: string[]
+          processing_status?: string
+          seniority?: string | null
+          source: string
+          technologies?: string[]
+          title?: string | null
+        }
+        Update: {
+          apply_url?: string | null
+          company?: string | null
+          contexto_original?: string | null
+          dados_minimos_validos?: boolean
+          external_id?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          location?: string | null
+          message_id?: string | null
+          modality?: string | null
+          pendencias?: string[]
+          processing_status?: string
+          seniority?: string | null
+          source?: string
+          technologies?: string[]
+          title?: string | null
+        }
+        Relationships: []
+      }
+      job_ingestion_messages: {
+        Row: {
+          attempts: number
+          created_at: string
+          error_message: string | null
+          extracted_data: Json | null
+          group_id: string
+          id: string
+          instance_name: string
+          is_job: boolean | null
+          job_id: string | null
+          message_id: string
+          message_text: string | null
+          message_timestamp: string | null
+          processing_status: string
+          sender_id: string | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          group_id: string
+          id?: string
+          instance_name: string
+          is_job?: boolean | null
+          job_id?: string | null
+          message_id: string
+          message_text?: string | null
+          message_timestamp?: string | null
+          processing_status?: string
+          sender_id?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          extracted_data?: Json | null
+          group_id?: string
+          id?: string
+          instance_name?: string
+          is_job?: boolean | null
+          job_id?: string | null
+          message_id?: string
+          message_text?: string | null
+          message_timestamp?: string | null
+          processing_status?: string
+          sender_id?: string | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_ingestion_messages_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_web_ingestions: {
+        Row: {
+          attempts: number
+          created_at: string
+          external_job_id: string
+          first_seen_at: string
+          id: string
+          job_id: string | null
+          last_error: string | null
+          last_seen_at: string
+          normalized_data: Json | null
+          processed_at: string | null
+          processing_status: string
+          published_at: string | null
+          raw_payload: Json
+          source_id: string
+          source_url: string | null
+          updated_at: string
+          validation_errors: Json
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          external_job_id: string
+          first_seen_at?: string
+          id?: string
+          job_id?: string | null
+          last_error?: string | null
+          last_seen_at?: string
+          normalized_data?: Json | null
+          processed_at?: string | null
+          processing_status?: string
+          published_at?: string | null
+          raw_payload?: Json
+          source_id: string
+          source_url?: string | null
+          updated_at?: string
+          validation_errors?: Json
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          external_job_id?: string
+          first_seen_at?: string
+          id?: string
+          job_id?: string | null
+          last_error?: string | null
+          last_seen_at?: string
+          normalized_data?: Json | null
+          processed_at?: string | null
+          processing_status?: string
+          published_at?: string | null
+          raw_payload?: Json
+          source_id?: string
+          source_url?: string | null
+          updated_at?: string
+          validation_errors?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_web_ingestions_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_web_ingestions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "job_web_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_web_sources: {
+        Row: {
+          company_name: string
+          country_scope: string
+          created_at: string
+          enabled: boolean
+          id: string
+          last_checked_at: string | null
+          last_error: string | null
+          last_success_at: string | null
+          provider: string
+          source_key: string
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          country_scope?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          provider: string
+          source_key: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          country_scope?: string
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_checked_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          provider?: string
+          source_key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       jobs: {
         Row: {
