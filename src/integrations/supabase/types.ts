@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ambassador_permissions: {
+        Row: {
+          areas: string[]
+          created_at: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          areas?: string[]
+          created_at?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          areas?: string[]
+          created_at?: string
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -504,6 +528,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_reminders_sent: {
+        Row: {
+          event_id: string
+          kind: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          kind: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          kind?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_reminders_sent_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
@@ -1460,6 +1513,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          event_reminders: boolean
+          muted_categories: string[]
+          push_muted_categories: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_reminders?: boolean
+          muted_categories?: string[]
+          push_muted_categories?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_reminders?: boolean
+          muted_categories?: string[]
+          push_muted_categories?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -2814,6 +2894,10 @@ export type Database = {
         Args: { _bucket: string; _prefix: string }
         Returns: Json
       }
+      has_ambassador_permission: {
+        Args: { _area: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2874,6 +2958,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      notification_category: { Args: { _type: string }; Returns: string }
       promote_user_to_super_admin: { Args: { _email: string }; Returns: string }
       recalculate_public_home_stats: { Args: never; Returns: undefined }
       register_event_interest: { Args: { _event_id: string }; Returns: Json }
@@ -2882,6 +2967,7 @@ export type Database = {
         Args: { _action: string; _note: string; _report_id: string }
         Returns: undefined
       }
+      send_event_reminders: { Args: never; Returns: number }
       toggle_goal_task: {
         Args: { _done: boolean; _goal_id: string; _task_id: string }
         Returns: undefined
