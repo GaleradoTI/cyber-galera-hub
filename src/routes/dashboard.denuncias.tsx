@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Flag, Check, Ban, EyeOff, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -24,11 +24,13 @@ function DenunciasAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, rolesReady } = useDashboardRoles();
+  const { can, ready: areasReady } = useAmbassadorCan();
+  const canManage = isAdmin || can("denuncias");
   const [tab, setTab] = useState<"open" | "all">("open");
   const [acting, setActing] = useState<{ report: Report; action: "resolved" | "dismissed" | "unpublished" } | null>(null);
   const [note, setNote] = useState("");
 
-  useEffect(() => { if (rolesReady && !isAdmin) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, navigate]);
+  useEffect(() => { if (rolesReady && areasReady && !canManage) navigate({ to: "/dashboard" }); }, [rolesReady, canManage, navigate]);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["admin-reports"],

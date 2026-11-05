@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Eye, Users, BarChart3, Mail, Phone, X, Check, Ban, Download, Ticket, ExternalLink, Navigation } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,9 @@ import { downloadCSV } from "@/lib/csv";
 import { formatDateOnly } from "@/lib/utils";
 import { ImageUploader } from "@/components/ui/image-uploader";
 import { DateField } from "@/components/ui/date-field";
+import { AiAutofill } from "@/components/ai/ai-autofill";
+import { extractEventFromText } from "@/lib/ai.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/dashboard/eventos")({ component: EventosAdminPage });
 
@@ -47,13 +50,16 @@ function EventosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isAmbassador, user, rolesReady } = useDashboardRoles();
+  const { can, ready: areasReady } = useAmbassadorCan();
+  const isAmbassadorArea = isAmbassador && can("eventos");
   const [editing, setEditing] = useState<Partial<Evt> | null>(null);
+  const extractEvent = useServerFn(extractEventFromText);
   const [viewing, setViewing] = useState<Evt | null>(null);
   const [removing, setRemoving] = useState<Evt | null>(null);
   const [metricsFor, setMetricsFor] = useState<Evt | null>(null);
   const [tab, setTab] = useState<"all" | "pending">("all");
 
-  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassador) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassador, navigate]);
+  useEffect(() => { if (rolesReady && areasReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events"],
@@ -213,6 +219,9 @@ function EventosAdminPage() {
           </DialogHeader>
           {editing && (
             <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <AiAutofill kind="evento" run={(text) => extractEvent({ data: { text } })} onFill={(v) => setEditing((cur) => ({ ...(cur ?? {}), ...(v as Partial<Evt>) }))} />
+              </div>
               <div className="sm:col-span-2"><Label>Nome *</Label><Input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Tema / assunto principal</Label><Input value={editing.theme ?? ""} onChange={(e) => setEditing({ ...editing, theme: e.target.value })} placeholder="Ex: Boas práticas em React" /></div>
               <DateField label="Data" required value={editing.event_date ?? ""} onChange={(value) => setEditing({ ...editing, event_date: value })} />

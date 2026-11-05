@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Eye, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { AiAutofill } from "@/components/ai/ai-autofill";
+import { extractJobFromText } from "@/lib/ai.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/dashboard/vagas")({ component: VagasAdminPage });
 
@@ -30,7 +33,10 @@ function VagasAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isRecruiter, isAmbassador, user, rolesReady } = useDashboardRoles();
+  const { can, ready: areasReady } = useAmbassadorCan();
+  const isAmbassadorArea = isAmbassador && can("vagas");
   const [editing, setEditing] = useState<Partial<Job> | null>(null);
+  const extractJob = useServerFn(extractJobFromText);
   const [viewing, setViewing] = useState<Job | null>(null);
   const [removing, setRemoving] = useState<Job | null>(null);
   const [search, setSearch] = useState("");
@@ -40,8 +46,8 @@ function VagasAdminPage() {
   const pageSize = 10;
 
   useEffect(() => {
-    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassador) navigate({ to: "/dashboard" });
-  }, [rolesReady, isAdmin, isRecruiter, isAmbassador, navigate]);
+    if (rolesReady && areasReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
+  }, [rolesReady, isAdmin, isRecruiter, isAmbassadorArea, navigate]);
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["admin-jobs", isAdmin ? "all" : user?.id],
@@ -182,6 +188,9 @@ function VagasAdminPage() {
           </DialogHeader>
           {editing && (
             <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <AiAutofill kind="vaga" run={(text) => extractJob({ data: { text } })} onFill={(v) => setEditing((cur) => ({ ...(cur ?? {}), ...(v as Partial<Job>) }))} />
+              </div>
               <div className="sm:col-span-2"><Label>Título *</Label><Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></div>
               <div><Label>Empresa *</Label><Input value={editing.company ?? ""} onChange={(e) => setEditing({ ...editing, company: e.target.value })} /></div>
               <div><Label>Local</Label><Input value={editing.location ?? ""} onChange={(e) => setEditing({ ...editing, location: e.target.value })} /></div>

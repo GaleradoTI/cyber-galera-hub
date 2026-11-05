@@ -1,3 +1,4 @@
+import { AmbassadorAccessDialog } from "@/components/admin/ambassador-access-dialog";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,6 +58,7 @@ function UsuariosPage() {
   const [addBadgeFor, setAddBadgeFor] = useState<ProfileRow | null>(null);
   const [newBadge, setNewBadge] = useState({ label: "", color: "primary" });
   const [viewing, setViewing] = useState<ProfileRow | null>(null);
+  const [accessFor, setAccessFor] = useState<ProfileRow | null>(null);
   const resetPwdFn = useServerFn(resetUserPassword);
   const listProfilesFn = useServerFn(listAdminProfiles);
   const [resetting, setResetting] = useState<ProfileRow | null>(null);
@@ -363,6 +365,11 @@ function UsuariosPage() {
             {canActOnTarget && role !== "SUPER_ADMIN" && (
               <DropdownMenuItem onClick={() => setResetting(p)}>
                 <KeyRound className="h-4 w-4 mr-2" /> Resetar senha
+              </DropdownMenuItem>
+            )}
+            {userRoles.includes("EMBAIXADOR") && (
+              <DropdownMenuItem onClick={() => setAccessFor(p)}>
+                <ShieldCheck className="h-4 w-4 mr-2" /> Acessos do embaixador
               </DropdownMenuItem>
             )}
             {isSuperAdmin && (
@@ -692,6 +699,7 @@ function UsuariosPage() {
       </DialogContent>
     </Dialog>
       <UserDetailDialog user={viewing} onClose={() => setViewing(null)} />
+      <AmbassadorAccessDialog target={accessFor} onClose={() => setAccessFor(null)} />
     </DashboardShell>
   );
 }

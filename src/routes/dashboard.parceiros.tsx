@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, ExternalLink, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,10 +34,12 @@ function ParceirosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isAmbassador, user, rolesReady } = useDashboardRoles();
+  const { can, ready: areasReady } = useAmbassadorCan();
+  const isAmbassadorArea = isAmbassador && can("parceiros");
   const [editing, setEditing] = useState<Partial<Partner> | null>(null);
   const [removing, setRemoving] = useState<Partner | null>(null);
 
-  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassador) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassador, navigate]);
+  useEffect(() => { if (rolesReady && areasReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
   const readOnly = !isAdmin;
 
   const { data: partners = [], isLoading } = useQuery({

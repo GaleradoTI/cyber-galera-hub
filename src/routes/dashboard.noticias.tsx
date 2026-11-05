@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, Eye, EyeOff, Pencil, Plus, Pin, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,8 @@ function NoticiasPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { user, isAdmin, rolesReady } = useDashboardRoles();
+  const { can, ready: areasReady } = useAmbassadorCan();
+  const canManage = isAdmin || can("noticias");
   const [editing, setEditing] = useState<Partial<News> | null>(null);
   const [linkLines, setLinkLines] = useState("");
   const [viewing, setViewing] = useState<News | null>(null);
@@ -47,8 +49,8 @@ function NoticiasPage() {
   };
 
   useEffect(() => {
-    if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
-  }, [rolesReady, isAdmin, navigate]);
+    if (rolesReady && areasReady && !canManage) navigate({ to: "/dashboard" });
+  }, [rolesReady, canManage, navigate]);
 
   const { data: news = [], isLoading } = useQuery({
     queryKey: ["news-admin"],

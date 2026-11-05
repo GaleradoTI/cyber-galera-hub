@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Star, Plus, Pencil, Trash2, Check, X, MessageSquareQuote, Clock, CheckCircle2, XCircle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +66,9 @@ function Stars({ value, onChange }: { value: number; onChange?: (n: number) => v
 }
 
 function DepoimentosPage() {
-  const { user, isAdmin } = useDashboardRoles();
+  const { user, isAdmin: isRealAdmin } = useDashboardRoles();
+  const { can } = useAmbassadorCan();
+  const isAdmin = isRealAdmin || can("depoimentos");
   const qc = useQueryClient();
   const [editing, setEditing] = useState<Partial<Testimonial> | null>(null);
   const [moderating, setModerating] = useState<Testimonial | null>(null);
