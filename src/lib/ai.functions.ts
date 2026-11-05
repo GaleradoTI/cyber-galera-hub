@@ -121,7 +121,7 @@ Use null quando não houver a informação. Nunca invente datas, links ou endere
       ? (j.speakers as any[]).map((s) => ({ name: str(s?.name, 120), topic: str(s?.topic, 200) })).filter((s) => s.name).slice(0, 12)
       : undefined;
     const schedule = Array.isArray(j.schedule)
-      ? (j.schedule as any[]).map((s) => ({ time: timeStr(s?.time) ?? "", title: str(s?.title, 200) ?? "", speaker: str(s?.speaker, 120) ?? "" })).filter((s) => s.title).slice(0, 30)
+      ? (j.schedule as any[]).map((s) => ({ start: timeStr(s?.time) ?? "", title: str(s?.title, 200) ?? "", speaker: str(s?.speaker, 120) ?? "" })).filter((s) => s.title).slice(0, 30)
       : undefined;
     const max = typeof j.max_attendees === "number" && j.max_attendees > 0 ? Math.round(j.max_attendees) : undefined;
     return {

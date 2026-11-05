@@ -15,6 +15,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { AiAutofill } from "@/components/ai/ai-autofill";
+import { extractJobFromText } from "@/lib/ai.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/dashboard/vagas")({ component: VagasAdminPage });
 
@@ -31,6 +34,7 @@ function VagasAdminPage() {
   const qc = useQueryClient();
   const { isAdmin, isRecruiter, isAmbassador, user, rolesReady } = useDashboardRoles();
   const [editing, setEditing] = useState<Partial<Job> | null>(null);
+  const extractJob = useServerFn(extractJobFromText);
   const [viewing, setViewing] = useState<Job | null>(null);
   const [removing, setRemoving] = useState<Job | null>(null);
   const [search, setSearch] = useState("");
@@ -182,6 +186,9 @@ function VagasAdminPage() {
           </DialogHeader>
           {editing && (
             <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <AiAutofill kind="vaga" run={(text) => extractJob({ data: { text } })} onFill={(v) => setEditing((cur) => ({ ...(cur ?? {}), ...(v as Partial<Job>) }))} />
+              </div>
               <div className="sm:col-span-2"><Label>Título *</Label><Input value={editing.title ?? ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></div>
               <div><Label>Empresa *</Label><Input value={editing.company ?? ""} onChange={(e) => setEditing({ ...editing, company: e.target.value })} /></div>
               <div><Label>Local</Label><Input value={editing.location ?? ""} onChange={(e) => setEditing({ ...editing, location: e.target.value })} /></div>
