@@ -47,6 +47,7 @@ import { Route as DashboardMeusEventosRouteImport } from './routes/dashboard.meu
 import { Route as DashboardMeusProjetosRouteImport } from './routes/dashboard.meus-projetos'
 import { Route as DashboardMinhasVagasRouteImport } from './routes/dashboard.minhas-vagas'
 import { Route as DashboardNoticiasRouteImport } from './routes/dashboard.noticias'
+import { Route as DashboardNotificacoesRouteImport } from './routes/dashboard.notificacoes'
 import { Route as DashboardParceirosRouteImport } from './routes/dashboard.parceiros'
 import { Route as DashboardPerfilRouteImport } from './routes/dashboard.perfil'
 import { Route as DashboardProjetosRouteImport } from './routes/dashboard.projetos'
@@ -256,6 +257,11 @@ const DashboardNoticiasRoute = DashboardNoticiasRouteImport.update({
   path: '/noticias',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardNotificacoesRoute = DashboardNotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const DashboardParceirosRoute = DashboardParceirosRouteImport.update({
   id: '/parceiros',
   path: '/parceiros',
@@ -377,6 +383,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/meus-projetos': typeof DashboardMeusProjetosRoute
   '/dashboard/minhas-vagas': typeof DashboardMinhasVagasRoute
   '/dashboard/noticias': typeof DashboardNoticiasRoute
+  '/dashboard/notificacoes': typeof DashboardNotificacoesRoute
   '/dashboard/parceiros': typeof DashboardParceirosRoute
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
@@ -432,6 +439,7 @@ export interface FileRoutesByTo {
   '/dashboard/meus-projetos': typeof DashboardMeusProjetosRoute
   '/dashboard/minhas-vagas': typeof DashboardMinhasVagasRoute
   '/dashboard/noticias': typeof DashboardNoticiasRoute
+  '/dashboard/notificacoes': typeof DashboardNotificacoesRoute
   '/dashboard/parceiros': typeof DashboardParceirosRoute
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
@@ -489,6 +497,7 @@ export interface FileRoutesById {
   '/dashboard/meus-projetos': typeof DashboardMeusProjetosRoute
   '/dashboard/minhas-vagas': typeof DashboardMinhasVagasRoute
   '/dashboard/noticias': typeof DashboardNoticiasRoute
+  '/dashboard/notificacoes': typeof DashboardNotificacoesRoute
   '/dashboard/parceiros': typeof DashboardParceirosRoute
   '/dashboard/perfil': typeof DashboardPerfilRoute
   '/dashboard/projetos': typeof DashboardProjetosRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/dashboard/meus-projetos'
     | '/dashboard/minhas-vagas'
     | '/dashboard/noticias'
+    | '/dashboard/notificacoes'
     | '/dashboard/parceiros'
     | '/dashboard/perfil'
     | '/dashboard/projetos'
@@ -602,6 +612,7 @@ export interface FileRouteTypes {
     | '/dashboard/meus-projetos'
     | '/dashboard/minhas-vagas'
     | '/dashboard/noticias'
+    | '/dashboard/notificacoes'
     | '/dashboard/parceiros'
     | '/dashboard/perfil'
     | '/dashboard/projetos'
@@ -658,6 +669,7 @@ export interface FileRouteTypes {
     | '/dashboard/meus-projetos'
     | '/dashboard/minhas-vagas'
     | '/dashboard/noticias'
+    | '/dashboard/notificacoes'
     | '/dashboard/parceiros'
     | '/dashboard/perfil'
     | '/dashboard/projetos'
@@ -972,6 +984,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardNoticiasRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/notificacoes': {
+      id: '/dashboard/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/dashboard/notificacoes'
+      preLoaderRoute: typeof DashboardNotificacoesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/dashboard/parceiros': {
       id: '/dashboard/parceiros'
       path: '/parceiros'
@@ -1106,6 +1125,7 @@ interface DashboardRouteChildren {
   DashboardMeusProjetosRoute: typeof DashboardMeusProjetosRoute
   DashboardMinhasVagasRoute: typeof DashboardMinhasVagasRoute
   DashboardNoticiasRoute: typeof DashboardNoticiasRoute
+  DashboardNotificacoesRoute: typeof DashboardNotificacoesRoute
   DashboardParceirosRoute: typeof DashboardParceirosRoute
   DashboardPerfilRoute: typeof DashboardPerfilRoute
   DashboardProjetosRoute: typeof DashboardProjetosRoute
@@ -1139,6 +1159,7 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardMeusProjetosRoute: DashboardMeusProjetosRoute,
   DashboardMinhasVagasRoute: DashboardMinhasVagasRoute,
   DashboardNoticiasRoute: DashboardNoticiasRoute,
+  DashboardNotificacoesRoute: DashboardNotificacoesRoute,
   DashboardParceirosRoute: DashboardParceirosRoute,
   DashboardPerfilRoute: DashboardPerfilRoute,
   DashboardProjetosRoute: DashboardProjetosRoute,
