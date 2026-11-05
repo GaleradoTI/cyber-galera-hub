@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Eye, Users, BarChart3, Mail, Phone, X, Check, Ban, Download, Ticket, ExternalLink, Navigation } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +50,8 @@ function EventosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isAmbassador, user, rolesReady } = useDashboardRoles();
+  const { can } = useAmbassadorCan();
+  const isAmbassadorArea = isAmbassador && can("eventos");
   const [editing, setEditing] = useState<Partial<Evt> | null>(null);
   const extractEvent = useServerFn(extractEventFromText);
   const [viewing, setViewing] = useState<Evt | null>(null);
@@ -57,7 +59,7 @@ function EventosAdminPage() {
   const [metricsFor, setMetricsFor] = useState<Evt | null>(null);
   const [tab, setTab] = useState<"all" | "pending">("all");
 
-  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassador) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassador, navigate]);
+  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events"],

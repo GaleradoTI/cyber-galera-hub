@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Search, MessageSquare, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,13 +26,15 @@ type Candidate = {
 function CandidatosPage() {
   const navigate = useNavigate();
   const { isAdmin, isRecruiter, isAmbassador, rolesReady } = useDashboardRoles();
+  const { can } = useAmbassadorCan();
+  const isAmbassadorArea = isAmbassador && can("candidatos");
   const [search, setSearch] = useState("");
   const [area, setArea] = useState("all");
   const [tech, setTech] = useState("all");
 
   useEffect(() => {
-    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassador) navigate({ to: "/dashboard" });
-  }, [rolesReady, isAdmin, isRecruiter, isAmbassador, navigate]);
+    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
+  }, [rolesReady, isAdmin, isRecruiter, isAmbassadorArea, navigate]);
 
   const { data: candidates = [], isLoading } = useQuery({
     queryKey: ["candidates"],

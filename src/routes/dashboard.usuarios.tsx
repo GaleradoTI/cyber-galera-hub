@@ -367,6 +367,11 @@ function UsuariosPage() {
                 <KeyRound className="h-4 w-4 mr-2" /> Resetar senha
               </DropdownMenuItem>
             )}
+            {userRoles.includes("EMBAIXADOR") && (
+              <DropdownMenuItem onClick={() => setAccessFor(p)}>
+                <ShieldCheck className="h-4 w-4 mr-2" /> Acessos do embaixador
+              </DropdownMenuItem>
+            )}
             {isSuperAdmin && (
               <>
                 <DropdownMenuSeparator />
@@ -385,11 +390,6 @@ function UsuariosPage() {
                 {lowRole && (
                   <DropdownMenuItem onClick={() => toggleAmbassador(p, userRoles)}>
                     <Sparkles className="h-4 w-4 mr-2" />{userRoles.includes("EMBAIXADOR") ? "Remover embaixador" : "Tornar embaixador"}
-                  </DropdownMenuItem>
-                )}
-                {userRoles.includes("EMBAIXADOR") && (
-                  <DropdownMenuItem onClick={() => setAccessFor(p)}>
-                    <ShieldCheck className="h-4 w-4 mr-2" /> Acessos do embaixador
                   </DropdownMenuItem>
                 )}
                 {userRoles.includes("RECRUTADOR") && (

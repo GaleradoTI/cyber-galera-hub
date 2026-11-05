@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Eye, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,8 @@ function VagasAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isRecruiter, isAmbassador, user, rolesReady } = useDashboardRoles();
+  const { can } = useAmbassadorCan();
+  const isAmbassadorArea = isAmbassador && can("vagas");
   const [editing, setEditing] = useState<Partial<Job> | null>(null);
   const extractJob = useServerFn(extractJobFromText);
   const [viewing, setViewing] = useState<Job | null>(null);
@@ -44,8 +46,8 @@ function VagasAdminPage() {
   const pageSize = 10;
 
   useEffect(() => {
-    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassador) navigate({ to: "/dashboard" });
-  }, [rolesReady, isAdmin, isRecruiter, isAmbassador, navigate]);
+    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
+  }, [rolesReady, isAdmin, isRecruiter, isAmbassadorArea, navigate]);
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["admin-jobs", isAdmin ? "all" : user?.id],
