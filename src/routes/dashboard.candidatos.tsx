@@ -26,14 +26,14 @@ type Candidate = {
 function CandidatosPage() {
   const navigate = useNavigate();
   const { isAdmin, isRecruiter, isAmbassador, rolesReady } = useDashboardRoles();
-  const { can } = useAmbassadorCan();
+  const { can, ready: areasReady } = useAmbassadorCan();
   const isAmbassadorArea = isAmbassador && can("candidatos");
   const [search, setSearch] = useState("");
   const [area, setArea] = useState("all");
   const [tech, setTech] = useState("all");
 
   useEffect(() => {
-    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
+    if (rolesReady && areasReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
   }, [rolesReady, isAdmin, isRecruiter, isAmbassadorArea, navigate]);
 
   const { data: candidates = [], isLoading } = useQuery({

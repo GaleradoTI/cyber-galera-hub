@@ -24,13 +24,13 @@ function DenunciasAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, rolesReady } = useDashboardRoles();
-  const { can } = useAmbassadorCan();
+  const { can, ready: areasReady } = useAmbassadorCan();
   const canManage = isAdmin || can("denuncias");
   const [tab, setTab] = useState<"open" | "all">("open");
   const [acting, setActing] = useState<{ report: Report; action: "resolved" | "dismissed" | "unpublished" } | null>(null);
   const [note, setNote] = useState("");
 
-  useEffect(() => { if (rolesReady && !canManage) navigate({ to: "/dashboard" }); }, [rolesReady, canManage, navigate]);
+  useEffect(() => { if (rolesReady && areasReady && !canManage) navigate({ to: "/dashboard" }); }, [rolesReady, canManage, navigate]);
 
   const { data: reports = [], isLoading } = useQuery({
     queryKey: ["admin-reports"],

@@ -35,7 +35,7 @@ function NoticiasPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { user, isAdmin, rolesReady } = useDashboardRoles();
-  const { can } = useAmbassadorCan();
+  const { can, ready: areasReady } = useAmbassadorCan();
   const canManage = isAdmin || can("noticias");
   const [editing, setEditing] = useState<Partial<News> | null>(null);
   const [linkLines, setLinkLines] = useState("");
@@ -49,7 +49,7 @@ function NoticiasPage() {
   };
 
   useEffect(() => {
-    if (rolesReady && !canManage) navigate({ to: "/dashboard" });
+    if (rolesReady && areasReady && !canManage) navigate({ to: "/dashboard" });
   }, [rolesReady, canManage, navigate]);
 
   const { data: news = [], isLoading } = useQuery({

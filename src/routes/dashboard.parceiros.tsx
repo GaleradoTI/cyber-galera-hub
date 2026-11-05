@@ -34,12 +34,12 @@ function ParceirosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isAmbassador, user, rolesReady } = useDashboardRoles();
-  const { can } = useAmbassadorCan();
+  const { can, ready: areasReady } = useAmbassadorCan();
   const isAmbassadorArea = isAmbassador && can("parceiros");
   const [editing, setEditing] = useState<Partial<Partner> | null>(null);
   const [removing, setRemoving] = useState<Partner | null>(null);
 
-  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
+  useEffect(() => { if (rolesReady && areasReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
   const readOnly = !isAdmin;
 
   const { data: partners = [], isLoading } = useQuery({

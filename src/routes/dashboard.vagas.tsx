@@ -33,7 +33,7 @@ function VagasAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isRecruiter, isAmbassador, user, rolesReady } = useDashboardRoles();
-  const { can } = useAmbassadorCan();
+  const { can, ready: areasReady } = useAmbassadorCan();
   const isAmbassadorArea = isAmbassador && can("vagas");
   const [editing, setEditing] = useState<Partial<Job> | null>(null);
   const extractJob = useServerFn(extractJobFromText);
@@ -46,7 +46,7 @@ function VagasAdminPage() {
   const pageSize = 10;
 
   useEffect(() => {
-    if (rolesReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
+    if (rolesReady && areasReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
   }, [rolesReady, isAdmin, isRecruiter, isAmbassadorArea, navigate]);
 
   const { data: jobs = [], isLoading } = useQuery({

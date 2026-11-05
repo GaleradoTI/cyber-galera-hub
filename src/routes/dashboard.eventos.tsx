@@ -50,7 +50,7 @@ function EventosAdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { isAdmin, isAmbassador, user, rolesReady } = useDashboardRoles();
-  const { can } = useAmbassadorCan();
+  const { can, ready: areasReady } = useAmbassadorCan();
   const isAmbassadorArea = isAmbassador && can("eventos");
   const [editing, setEditing] = useState<Partial<Evt> | null>(null);
   const extractEvent = useServerFn(extractEventFromText);
@@ -59,7 +59,7 @@ function EventosAdminPage() {
   const [metricsFor, setMetricsFor] = useState<Evt | null>(null);
   const [tab, setTab] = useState<"all" | "pending">("all");
 
-  useEffect(() => { if (rolesReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
+  useEffect(() => { if (rolesReady && areasReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events"],
