@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { CalendarPlus, Share2 } from "lucide-react";
-import { toast } from "sonner";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock, ExternalLink, Hourglass, MapPin, Navigation, Ticket, Users, Video, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
