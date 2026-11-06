@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { CalendarPlus, Share2 } from "lucide-react";
 import { ArrowLeft, CalendarDays, CheckCircle2, Clock, ExternalLink, Hourglass, MapPin, Navigation, Ticket, Users, Video, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -232,6 +233,12 @@ function EventPage() {
                 )}
               </>
             )}
+                      {!isPast && (
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/40">
+                <Button asChild variant="outline" size="sm"><a href={googleCalendarUrl(ev, place, eventUrl ?? onlineUrl)} target="_blank" rel="noopener noreferrer"><CalendarPlus className="h-4 w-4 mr-1" /> Agenda</a></Button>
+                <Button variant="outline" size="sm" onClick={() => shareEvent(ev.name)}><Share2 className="h-4 w-4 mr-1" /> Compartilhar</Button>
+              </div>
+            )}
           </aside>
         </div>
       </section>
@@ -249,4 +256,31 @@ function InfoTile({ icon, label, value }: { icon: React.ReactNode; label: string
       </div>
     </div>
   );
+}
+
+
+function googleCalendarUrl(ev: { name: string; description?: string | null; event_date: string; event_time?: string | null; end_time?: string | null }, place?: string | null, link?: string | null) {
+  const d = ev.event_date.replace(/-/g, "");
+  const t = (x?: string | null) => (x ? x.slice(0, 5).replace(":", "") + "00" : "");
+  const start = ev.event_time ? `${d}T${t(ev.event_time)}` : d;
+  let end: string;
+  if (ev.event_time) {
+    const fallback = ev.event_time ? `${String((Number(ev.event_time.slice(0, 2)) + 2) % 24).padStart(2, "0")}${ev.event_time.slice(3, 5)}00` : "";
+    end = `${d}T${ev.end_time ? t(ev.end_time) : fallback}`;
+  } else {
+    const n = new Date(ev.event_date + "T12:00:00"); n.setDate(n.getDate() + 1);
+    end = n.toISOString().slice(0, 10).replace(/-/g, "");
+  }
+  const details = [(ev.description ?? "").replace(/[#*_`>]/g, "").slice(0, 800), link ?? "", typeof window !== "undefined" ? window.location.href : ""].filter(Boolean).join("\n\n");
+  const q = new URLSearchParams({ action: "TEMPLATE", text: ev.name, dates: `${start}/${end}`, ctz: "America/Sao_Paulo", details, location: place ?? link ?? "" });
+  return `https://calendar.google.com/calendar/render?${q.toString()}`;
+}
+
+async function shareEvent(title: string) {
+  const url = window.location.href;
+  try {
+    if (navigator.share) { await navigator.share({ title, url }); return; }
+    await navigator.clipboard.writeText(url);
+    toast.success("Link do evento copiado");
+  } catch { /* cancelado */ }
 }
