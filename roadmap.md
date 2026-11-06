@@ -4,3 +4,9 @@
 - [x] Nova tela de usuários
 - [x] App instalável abrindo no login, sem tempo de sessão
 - [x] Notificações no celular e pedido de permissões
+
+- [x] Melhorar notificações (sininho novo, página de avisos, preferências site/celular, novas vagas/eventos, lembretes de evento)
+- [x] Agenda e compartilhar na página do evento
+- [x] Preencher eventos e vagas com IA a partir de texto colado
+- [x] Menu lateral melhorado para todos os perfis
+- [x] Acessos por embaixador definidos por admin/super admin
