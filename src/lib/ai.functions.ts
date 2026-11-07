@@ -113,7 +113,7 @@ export const extractEventFromText = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const today = new Date().toISOString().slice(0, 10);
     const sys = `Você extrai dados de eventos de tecnologia a partir de textos livres em pt-BR. Hoje é ${today}. Responda APENAS um JSON com as chaves:
-name, theme, description (markdown organizado: resumo, para quem é, o que vai rolar), category (Workshop|Palestra|Meetup|Hackathon|Live|Outro), event_date (YYYY-MM-DD), event_time (HH:MM), end_time (HH:MM), modality (online|presencial|hibrido), address (endereço físico completo), online_link (link de transmissão), location_or_link (página oficial/inscrição), max_attendees (número), speakers ([{name, topic}]), schedule ([{time: "HH:MM", title, speaker?}]).
+name, theme, description (markdown organizado: resumo, para quem é, o que vai rolar), category (Workshop|Palestra|Meetup|Hackathon|Live|Outro), event_date (YYYY-MM-DD), event_time (HH:MM), end_time (HH:MM), modality (online|presencial|hibrido), address (endereço físico completo), online_link (link de transmissão), location_or_link (página oficial/inscrição), max_attendees (número), speakers ([{name, topic}]), schedule ([{time: "HH:MM", end: "HH:MM", title, speaker?, room?}]). Para cada item da grade, preencha "end" com o horário de término; se não estiver explícito, use o início do próximo item; no último item use o término do evento (end_time). end_time = término do último item da grade quando não informado.
 Use null quando não houver a informação. Nunca invente datas, links ou endereços.`;
     const raw = await callGateway(sys, data.text);
     const j = parseJsonLoose(raw);
@@ -121,13 +121,20 @@ Use null quando não houver a informação. Nunca invente datas, links ou endere
       ? (j.speakers as any[]).map((s) => ({ name: str(s?.name, 120), topic: str(s?.topic, 200) })).filter((s) => s.name).slice(0, 12)
       : undefined;
     const schedule = Array.isArray(j.schedule)
-      ? (j.schedule as any[]).map((s) => ({ start: timeStr(s?.time) ?? "", title: str(s?.title, 200) ?? "", speaker: str(s?.speaker, 120) ?? "" })).filter((s) => s.title).slice(0, 30)
+      ? (j.schedule as any[]).map((s) => ({ start: timeStr(s?.time) ?? "", end: timeStr(s?.end) ?? "", title: str(s?.title, 200) ?? "", speaker: str(s?.speaker, 120) ?? "", room: str(s?.room, 120) ?? "" })).filter((s) => s.title).slice(0, 30)
       : undefined;
+    let endTime = timeStr(j.end_time);
+    if (schedule?.length) {
+      for (let i = 0; i < schedule.length; i++) {
+        if (!schedule[i].end) schedule[i].end = schedule[i + 1]?.start || (i === schedule.length - 1 ? endTime ?? "" : "");
+      }
+      if (!endTime) endTime = schedule[schedule.length - 1].end || undefined;
+    }
     const max = typeof j.max_attendees === "number" && j.max_attendees > 0 ? Math.round(j.max_attendees) : undefined;
     return {
       name: str(j.name, 200), theme: str(j.theme, 200), description: str(j.description, 8000),
       category: str(j.category, 60), event_date: dateStr(j.event_date), event_time: timeStr(j.event_time),
-      end_time: timeStr(j.end_time), modality: oneOf(j.modality, ["online", "presencial", "hibrido"] as const),
+      end_time: endTime, modality: oneOf(j.modality, ["online", "presencial", "hibrido"] as const),
       address: str(j.address, 300), online_link: urlStr(j.online_link), location_or_link: urlStr(j.location_or_link),
       max_attendees: max, speakers, schedule,
     };
