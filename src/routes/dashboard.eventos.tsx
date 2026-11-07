@@ -1,3 +1,4 @@
+import { PublishPreview } from "@/components/dashboard/publish-preview";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Switch } from "@/components/ui/switch";
 import { ScheduleEditor } from "@/components/events/schedule";
@@ -319,8 +320,9 @@ function EventosAdminPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
+            {editing && <PublishPreview kind="evento" item={editing as any} />}
             <Button onClick={save}>Salvar</Button>
           </DialogFooter>
         </DialogContent>

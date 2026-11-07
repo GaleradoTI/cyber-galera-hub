@@ -213,11 +213,24 @@ function EventPage() {
                   {status === "pending" && <Hourglass className="h-3.5 w-3.5 mr-1" />}
                    {REG_STATUS[status ?? "pending"].label}
                 </Badge>
+                <ol className="grid grid-cols-3 gap-1 text-[10px] font-semibold uppercase tracking-wider" aria-label="Etapas da sua presença">
+                  {[
+                    { label: "Pedido", done: true },
+                    { label: "Aprovado", done: status === "approved" },
+                    { label: "Check-in", done: !!reg.checked_in_at },
+                  ].map((s, i) => (
+                    <li key={s.label} className="flex flex-col items-center gap-1">
+                      <span className={`h-6 w-6 rounded-full flex items-center justify-center text-xs ${s.done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{s.done ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}</span>
+                      <span className={s.done ? "text-primary" : "text-muted-foreground"}>{s.label}</span>
+                    </li>
+                  ))}
+                </ol>
                 {status === "approved" ? (
-                  <div className="text-center space-y-2">
+                  <div className="text-center space-y-2 rounded-xl border border-dashed border-primary/40 p-4 bg-background/40">
+                    <div className="text-xs text-muted-foreground">{ev.name}</div>
                     <QrCode value={reg.ticket_code} size={180} />
-                    <div className="font-mono text-lg font-bold tracking-widest">{reg.ticket_code}</div>
-                    <p className="text-xs text-muted-foreground">Apresente este QR Code ou o código na entrada.</p>
+                    <button type="button" title="Copiar código" className="font-mono text-lg font-bold tracking-widest hover:text-primary" onClick={() => { navigator.clipboard?.writeText(reg.ticket_code); toast.success("Código copiado"); }}>{reg.ticket_code}</button>
+                    <p className="text-xs text-muted-foreground">Apresente este QR Code ou o código na entrada. Dica: aumente o brilho da tela. Toque no código para copiar.</p>
                     {reg.checked_in_at && <Badge><CheckCircle2 className="h-3 w-3 mr-1" /> Check-in realizado</Badge>}
                   </div>
                 ) : status === "pending" ? (

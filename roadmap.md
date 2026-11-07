@@ -10,3 +10,8 @@
 - [x] Preencher eventos e vagas com IA a partir de texto colado
 - [x] Menu lateral melhorado para todos os perfis
 - [x] Acessos por embaixador definidos por admin/super admin
+
+- [x] Corrigir envio do comprovante da rifa
+- [x] IA preenche término de cada horário da grade
+- [x] Pré-visualização de vaga/evento (card, site, painel)
+- [x] Etapas e ingresso melhorados no evento interno

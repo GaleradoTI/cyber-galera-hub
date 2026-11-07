@@ -1,3 +1,4 @@
+import { PublishPreview } from "@/components/dashboard/publish-preview";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -235,8 +236,9 @@ function VagasAdminPage() {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
+            {editing && <PublishPreview kind="vaga" item={editing as any} />}
             <Button onClick={save}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
