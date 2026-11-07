@@ -14,7 +14,7 @@ import { ScheduleTimeline } from "@/components/events/schedule";
 export function PublishPreview({ kind, item }: { kind: "evento" | "vaga"; item: Record<string, any> }) {
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState(false);
-  const data = {
+  const data: Record<string, any> = {
     id: item.id ?? "preview",
     status: item.status ?? "rascunho",
     source: item.source ?? "comunidade",
