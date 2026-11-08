@@ -15,3 +15,7 @@
 - [x] IA preenche término de cada horário da grade
 - [x] Pré-visualização de vaga/evento (card, site, painel)
 - [x] Etapas e ingresso melhorados no evento interno
+- [ ] Separar permissões de embaixadores por ação com proteção no banco.
+- [ ] Ingressos no perfil e leitura de QR Code com confirmação segura.
+- [ ] IA, busca, filtros e pré-visualização nas notícias.
+- [ ] Verificar testes e fluxos disponíveis; sugerir próximas melhorias.
