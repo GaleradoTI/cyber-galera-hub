@@ -55,7 +55,7 @@ function VagasAdminPage() {
     enabled: !!user?.id,
     queryFn: async () => {
       let q = supabase.from("jobs").select("*").order("created_at", { ascending: false });
-      if (!isAdmin) q = q.eq("created_by", user!.id);
+      if (!isAdmin && !isAmbassadorArea && user) q = q.eq("created_by", user.id);
       const { data, error } = await q;
       if (error) throw error;
       return (data ?? []) as Job[];
@@ -135,7 +135,7 @@ function VagasAdminPage() {
             <SelectItem value="hibrido">Híbrido</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => setEditing({ ...empty })} className="ml-auto"><Plus className="h-4 w-4 mr-1" /> Nova vaga</Button>
+        {(isRecruiter || can("vagas", "criar")) && <Button onClick={() => setEditing({ ...empty })} className="ml-auto"><Plus className="h-4 w-4 mr-1" /> Nova vaga</Button>}
       </div>
       <div className="glass rounded-xl border border-primary/20 overflow-hidden">
         <Table>
@@ -163,8 +163,9 @@ function VagasAdminPage() {
                 <TableCell><Badge variant={j.status === "publicado" ? "default" : "secondary"}>{j.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button size="sm" variant="ghost" onClick={() => setViewing(j)}><Eye className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(j)}><Pencil className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" onClick={() => setRemoving(j)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  {(isRecruiter || can("vagas", "editar")) && <Button size="sm" variant="ghost" onClick={() => setEditing(j)}><Pencil className="h-3 w-3" /></Button>}
+                  {can("vagas", "publicar") && <Button size="sm" variant="ghost" title={j.status === "publicado" ? "Despublicar" : "Publicar"} onClick={async () => { const { error } = await supabase.from("jobs").update({ status: j.status === "publicado" ? "rascunho" : "publicado" }).eq("id", j.id); if (error) return toast.error(error.message); refresh(); }}><Eye className="h-3 w-3" /></Button>}
+                  {(isRecruiter || can("vagas", "remover")) && <Button size="sm" variant="ghost" onClick={() => setRemoving(j)}><Trash2 className="h-3 w-3 text-destructive" /></Button>}
                 </TableCell>
               </TableRow>
             ))}
@@ -225,7 +226,7 @@ function VagasAdminPage() {
               <div className="sm:col-span-2"><Label>Descrição completa * (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={8} /></div>
               <div>
                 <Label>Status</Label>
-                <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
+                <Select disabled={!isRecruiter && !can("vagas", "publicar")} value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="rascunho">Rascunho</SelectItem>
