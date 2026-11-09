@@ -145,7 +145,7 @@ function EventosAdminPage() {
 
   const moderate = async (ev: Evt, status: "approved" | "rejected") => {
     const patch: any = { approval_status: status };
-    if (status === "approved") patch.status = "publicado";
+    if (status === "approved" && can("eventos", "publicar")) patch.status = "publicado";
     const { error } = await supabase.from("events").update(patch).eq("id", ev.id);
     if (error) return toast.error(error.message);
     toast.success(status === "approved" ? "Evento aprovado e publicado" : "Evento rejeitado");
@@ -161,7 +161,7 @@ function EventosAdminPage() {
             <TabsTrigger value="pending">Pendentes {pendingCount > 0 && <Badge className="ml-2">{pendingCount}</Badge>}</TabsTrigger>
           </TabsList>
         </Tabs>
-        <Button onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo evento</Button>
+        {can("eventos", "criar") && <Button onClick={() => setEditing({ ...empty, approval_status: can("eventos", "aprovar") ? "approved" : "pending" })}><Plus className="h-4 w-4 mr-1" /> Novo evento</Button>}
       </div>
       <div className="glass rounded-xl border border-primary/20 overflow-x-auto">
         <Table>
@@ -194,7 +194,7 @@ function EventosAdminPage() {
                 <TableCell className="text-xs">{counts[ev.id]?.checkins ?? 0} / {counts[ev.id]?.interests ?? 0} int.</TableCell>
                 <TableCell><Badge variant={ev.status === "publicado" ? "default" : "secondary"}>{ev.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-1 whitespace-nowrap">
-                  {ev.approval_status === "pending" && (
+                  {can("eventos", "aprovar") && ev.approval_status === "pending" && (
                     <>
                       <Button size="sm" variant="ghost" onClick={() => moderate(ev, "approved")} title="Aprovar"><Check className="h-3 w-3 text-primary" /></Button>
                       <Button size="sm" variant="ghost" onClick={() => moderate(ev, "rejected")} title="Rejeitar"><Ban className="h-3 w-3 text-destructive" /></Button>
