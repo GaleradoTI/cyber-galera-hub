@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { AMBASSADOR_AREAS } from "@/lib/ambassador-areas";
+import { AMBASSADOR_AREAS, AREA_ACTIONS, ACTION_LABELS, hasAreaAccess } from "@/lib/ambassador-areas";
 import { toast } from "sonner";
 
 export function AmbassadorAccessDialog({ target, onClose }: { target: { user_id: string; display_name: string } | null; onClose: () => void }) {
@@ -16,7 +16,9 @@ export function AmbassadorAccessDialog({ target, onClose }: { target: { user_id:
     queryKey: ["ambassador-areas", target?.user_id],
     enabled: !!target,
     queryFn: async () => {
-      const { data } = await supabase.from("ambassador_permissions").select("areas").eq("user_id", target!.user_id).maybeSingle();
+      if (!target) return [];
+      const { data, error } = await supabase.from("ambassador_permissions").select("areas").eq("user_id", target.user_id).maybeSingle();
+      if (error) throw error;
       return (data?.areas ?? []) as string[];
     },
   });
@@ -38,29 +40,26 @@ export function AmbassadorAccessDialog({ target, onClose }: { target: { user_id:
 
   return (
     <Dialog open={!!target} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> Acessos de {target?.display_name}</DialogTitle>
-          <DialogDescription>Escolha o que este embaixador pode gerenciar. O próprio cartão de embaixador sempre fica liberado.</DialogDescription>
+          <DialogDescription>Escolha cada ação separadamente. Visualizar uma área não libera edição, publicação ou remoção. O cartão pessoal continua liberado.</DialogDescription>
         </DialogHeader>
         <div className="flex gap-2 text-xs">
-          <Button size="sm" variant="outline" onClick={() => setAreas(AMBASSADOR_AREAS.map((a) => a.key))}>Liberar tudo</Button>
+          <Button size="sm" variant="outline" onClick={() => setAreas(AMBASSADOR_AREAS.flatMap((a) => [a.key, ...AREA_ACTIONS[a.key].map((action) => `${a.key}:${action}`)]))}>Liberar todas as ações</Button>
           <Button size="sm" variant="ghost" onClick={() => setAreas([])}>Limpar</Button>
         </div>
         <div className="divide-y divide-border/40 rounded-md border border-border/40">
           {isLoading ? <p className="p-4 text-sm text-muted-foreground">Carregando…</p> : AMBASSADOR_AREAS.map((a) => (
-            <label key={a.key} className="flex items-center gap-3 p-3 cursor-pointer hover:bg-muted/30">
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium">{a.label}</div>
-                <div className="text-xs text-muted-foreground">{a.hint}</div>
-              </div>
-              <Switch checked={areas.includes(a.key)} onCheckedChange={(v) => toggle(a.key, v)} aria-label={a.label} />
-            </label>
+            <section key={a.key} className="p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">{a.label}</h3><div className="flex items-center gap-2 text-xs text-muted-foreground">Visualizar<Switch checked={hasAreaAccess(areas, a.key)} onCheckedChange={(v) => setAreas((prev) => v ? [...new Set([...prev, a.key])] : prev.filter((k) => k !== a.key && !k.startsWith(`${a.key}:`)))} aria-label={`Visualizar ${a.label}`} /></div></div>
+              <div className="grid gap-3 sm:grid-cols-2">{AREA_ACTIONS[a.key].map((action) => <label key={action} className="flex items-center justify-between gap-3 text-sm"><span>{ACTION_LABELS[action]}</span><Switch checked={areas.includes(`${a.key}:${action}`)} onCheckedChange={(v) => { toggle(`${a.key}:${action}`, v); if (v) toggle(a.key, true); }} aria-label={`${ACTION_LABELS[action]} — ${a.label}`} /></label>)}</div>
+            </section>
           ))}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button onClick={save} disabled={saving}>{saving ? "Salvando…" : "Salvar acessos"}</Button>
+          <Button onClick={save} disabled={saving || isLoading}>{saving ? "Salvando…" : "Salvar acessos"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

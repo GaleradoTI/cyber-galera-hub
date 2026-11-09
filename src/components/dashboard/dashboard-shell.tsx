@@ -39,7 +39,7 @@ import {
   Ticket,
 } from "lucide-react";
 import { useSiteModules } from "@/lib/modules";
-import { useAmbassadorAreas } from "@/lib/ambassador-areas";
+import { useAmbassadorAreas, hasAreaAccess, hasActionAccess } from "@/lib/ambassador-areas";
 import { Input } from "@/components/ui/input";
 import { Search, ChevronDown, BellRing } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,7 +111,7 @@ export function RoleBadge({ role }: { role: string }) {
 export function useAmbassadorCan() {
   const { user, isAmbassador, isAdmin, rolesReady } = useDashboardRoles();
   const { areas, ready } = useAmbassadorAreas(user?.id, isAmbassador && !isAdmin);
-  return { areas, ready: rolesReady && ready, can: (area: string) => isAdmin || (isAmbassador && areas.includes(area)) };
+  return { areas, ready: rolesReady && ready, can: (area: string, action?: string) => isAdmin || (isAmbassador && (action ? hasActionAccess(areas, area, action) : hasAreaAccess(areas, area))) };
 }
 
 type NavItem = { to: string; label: string; icon: any; show: boolean };

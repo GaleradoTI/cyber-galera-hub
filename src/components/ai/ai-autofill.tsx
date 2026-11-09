@@ -10,7 +10,7 @@ export function AiAutofill<T extends Record<string, unknown>>({
   run,
   onFill,
 }: {
-  kind: "evento" | "vaga";
+  kind: "evento" | "vaga" | "notícia";
   run: (text: string) => Promise<T>;
   onFill: (values: Partial<T>) => void;
 }) {
@@ -41,12 +41,12 @@ export function AiAutofill<T extends Record<string, unknown>>({
 
   return (
     <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
-      <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2 text-left" aria-expanded={open}>
+      <Button variant="ghost" type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-2 text-left h-auto" aria-expanded={open}>
         <Sparkles className="h-4 w-4 text-primary shrink-0" />
         <span className="text-sm font-semibold flex-1">Preencher com IA</span>
         <span className="text-xs text-muted-foreground hidden sm:inline">Cole o texto da {kind === "evento" ? "divulgação" : "vaga"}</span>
         <ChevronDown className={`h-4 w-4 transition ${open ? "rotate-180" : ""}`} />
-      </button>
+      </Button>
       {open && (
         <div className="mt-3 space-y-2">
           <Textarea
@@ -55,7 +55,7 @@ export function AiAutofill<T extends Record<string, unknown>>({
             onChange={(e) => setText(e.target.value)}
             placeholder={kind === "evento"
               ? "Cole aqui o post, e-mail ou mensagem do evento (data, horário, local, palestrantes, programação…)"
-              : "Cole aqui a descrição da vaga (empresa, requisitos, stack, modalidade, link…)"}
+              : kind === "notícia" ? "Cole o texto, comunicado ou material da notícia…" : "Cole aqui a descrição da vaga (empresa, requisitos, stack, modalidade, link…)"}
           />
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] text-muted-foreground">Só os campos encontrados serão preenchidos. Nada é salvo até você clicar em Salvar.</p>
