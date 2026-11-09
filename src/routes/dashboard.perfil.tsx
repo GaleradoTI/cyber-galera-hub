@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle, ArrowLeft } from "lucide-react";
 import { ProfileSocial } from "@/components/dashboard/profile-social";
+import { MemberTickets } from "@/components/events/member-tickets";
 
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +18,7 @@ import { ImageUploader } from "@/components/ui/image-uploader";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BRAZIL_STATES, GENDER_OPTIONS, getRegionByState } from "@/lib/profile-demographics";
 
-export const Route = createFileRoute("/dashboard/perfil")({ component: PerfilPage });
+export const Route = createFileRoute("/dashboard/perfil")({ head: () => ({ meta: [{ title: "Meu perfil e ingressos — Galera do TI" }, { name: "description", content: "Seu perfil, conexões e ingressos de eventos da Galera do TI." }, { property: "og:title", content: "Meu perfil e ingressos — Galera do TI" }, { property: "og:description", content: "Perfil e ingressos pessoais da comunidade." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: PerfilPage });
 
 const profileSchema = z.object({
   display_name: z.string().trim().min(2, "Nome muito curto").max(80),
@@ -346,7 +347,7 @@ function PerfilPage() {
       {!user || !rolesReady || isLoading ? (
         <div className="text-muted-foreground">Carregando…</div>
       ) : mode === "profile" ? (
-        <ProfileSocial userId={user.id} profile={{ ...profile, ...form }} onOpenSettings={() => setMode("settings")} />
+        <><MemberTickets userId={user.id} /><ProfileSocial userId={user.id} profile={{ ...profile, ...form }} onOpenSettings={() => setMode("settings")} /></>
       ) : (
         <div className="grid gap-5">
           <div className="flex items-center justify-between gap-2">

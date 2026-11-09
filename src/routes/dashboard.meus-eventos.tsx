@@ -9,8 +9,9 @@ import { formatDateOnly } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { QrCode } from "@/components/events/qr-code";
 import { REG_STATUS, hhmm, type RegistrationStatus } from "@/lib/events";
+import { MemberTickets } from "@/components/events/member-tickets";
 
-export const Route = createFileRoute("/dashboard/meus-eventos")({ component: MeusEventosPage });
+export const Route = createFileRoute("/dashboard/meus-eventos")({ head: () => ({ meta: [{ title: "Meus eventos e ingressos — Galera do TI" }, { name: "description", content: "Acompanhe inscrições e ingressos dos eventos da Galera do TI." }, { property: "og:title", content: "Meus eventos e ingressos — Galera do TI" }, { property: "og:description", content: "Inscrições, QR Code e presença nos eventos." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }), component: MeusEventosPage });
 
 function MeusEventosPage() {
   const { user } = useDashboardRoles();
@@ -89,7 +90,7 @@ function MeusEventosPage() {
 
   return (
     <DashboardShell title="Meus Eventos" description="Seus ingressos e eventos em que você demonstrou interesse.">
-      <MyTickets userId={user?.id} />
+      <MemberTickets userId={user?.id} />
       {(!user || isLoading) && <div className="text-muted-foreground">Carregando…</div>}
       {!isLoading && data.length === 0 && (
         <div className="glass rounded-xl p-8 text-center">
