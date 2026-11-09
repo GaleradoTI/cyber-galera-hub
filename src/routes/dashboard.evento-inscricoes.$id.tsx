@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Ban, Camera, CheckCircle2, Download, IdCard, Search, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
+import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,7 +16,7 @@ import { formatDateOnly } from "@/lib/utils";
 import { REG_STATUS, type RegistrationStatus } from "@/lib/events";
 
 export const Route = createFileRoute("/dashboard/evento-inscricoes/$id")({
-  head: () => ({ meta: [{ title: "Inscrições do evento — GALERA DO T.I." }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Inscrições e check-in — Galera do TI" }, { name: "description", content: "Controle de inscrições e presença dos eventos da Galera do TI." }, { property: "og:title", content: "Inscrições e check-in — Galera do TI" }, { property: "og:description", content: "Gestão dos participantes e leitura de ingressos." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: InscricoesPage,
 });
 
@@ -25,6 +25,9 @@ type Reg = { id: string; user_id: string; status: RegistrationStatus; ticket_cod
 function InscricoesPage() {
   const { id } = Route.useParams();
   const { isAdmin } = useDashboardRoles();
+  const { can } = useAmbassadorCan();
+  const canDecide = can("eventos", "inscricoes");
+  const canScan = can("eventos", "checkin");
   const qc = useQueryClient();
   const [filter, setFilter] = useState<string>("all");
   const [q, setQ] = useState("");
@@ -81,7 +84,7 @@ function InscricoesPage() {
       status: REG_STATUS[r.status].label, codigo: r.ticket_code, inscrito_em: r.created_at, checkin: r.checked_in_at ?? "",
     })));
 
-  if (!isAdmin) return <DashboardShell title="Inscrições"><p className="text-muted-foreground">Acesso restrito a administradores.</p></DashboardShell>;
+  if (!isAdmin && !canDecide && !canScan) return <DashboardShell title="Inscrições"><p className="text-muted-foreground">Você não tem acesso às inscrições ou ao check-in deste evento.</p></DashboardShell>;
 
   return (
     <DashboardShell title={ev?.name ?? "Inscrições"} description={ev ? `${formatDateOnly(ev.event_date)} · inscrições, check-in e crachás` : undefined}>
@@ -94,10 +97,10 @@ function InscricoesPage() {
         <Stat label="Presentes" value={`${counts.checked} / ${counts.approved ?? 0}`} />
       </div>
 
-      <Tabs defaultValue="list">
+      <Tabs defaultValue={canDecide ? "list" : "checkin"}>
         <TabsList className="mb-4">
           <TabsTrigger value="list">Inscrições</TabsTrigger>
-          <TabsTrigger value="checkin">Check-in</TabsTrigger>
+          {canScan && <TabsTrigger value="checkin">Check-in · Ler QR Code</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="list" className="space-y-3">
@@ -110,8 +113,8 @@ function InscricoesPage() {
                 {(Object.keys(REG_STATUS) as RegistrationStatus[]).map((s) => <SelectItem key={s} value={s}>{REG_STATUS[s].label} ({counts[s] ?? 0})</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-1" /> CSV</Button>
-            <Link to="/dashboard/evento-crachas/$id" params={{ id }}><Button variant="outline" className="w-full"><IdCard className="h-4 w-4 mr-1" /> Crachás</Button></Link>
+            {canDecide && <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-1" /> CSV</Button>}
+            {canDecide && <Link to="/dashboard/evento-crachas/$id" params={{ id }}><Button variant="outline" className="w-full"><IdCard className="h-4 w-4 mr-1" /> Crachás</Button></Link>}
           </div>
 
           {sel.size > 0 && (
@@ -128,7 +131,7 @@ function InscricoesPage() {
             {list.map((r) => (
               <div key={r.id} className="glass rounded-xl p-3 border border-border/40 flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <Checkbox checked={sel.has(r.id)} onCheckedChange={(v) => { const n = new Set(sel); v ? n.add(r.id) : n.delete(r.id); setSel(n); }} />
+                  {canDecide && <Checkbox checked={sel.has(r.id)} onCheckedChange={(v) => { const n = new Set(sel); v ? n.add(r.id) : n.delete(r.id); setSel(n); }} />}
                   {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" /> : <div className="h-10 w-10 rounded-full bg-muted" />}
                   <div className="min-w-0">
                     <div className="font-medium truncate">{r.profile?.display_name ?? "Usuário"}</div>
@@ -138,15 +141,15 @@ function InscricoesPage() {
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                   <Badge variant={REG_STATUS[r.status].variant}>{REG_STATUS[r.status].label}</Badge>
                   {r.checked_in_at && <Badge><UserCheck className="h-3 w-3 mr-1" /> Presente</Badge>}
-                  {r.status !== "approved" && r.status !== "cancelled" && <Button size="sm" variant="outline" onClick={() => decide([r.id], "approved")}>Aprovar</Button>}
-                  {r.status !== "rejected" && r.status !== "cancelled" && !r.checked_in_at && <Button size="sm" variant="ghost" onClick={() => decide([r.id], "rejected")}>Recusar</Button>}
+                  {canDecide && r.status !== "approved" && r.status !== "cancelled" && !r.checked_in_at && <Button size="sm" variant="outline" onClick={() => decide([r.id], "approved")}>Aprovar</Button>}
+                  {canDecide && r.status !== "rejected" && r.status !== "cancelled" && !r.checked_in_at && <Button size="sm" variant="ghost" onClick={() => decide([r.id], "rejected")}>Recusar</Button>}
                 </div>
               </div>
             ))}
           </div>
         </TabsContent>
 
-        <TabsContent value="checkin"><CheckinPanel eventId={id} onDone={() => qc.invalidateQueries({ queryKey: ["event-regs", id] })} /></TabsContent>
+        {canScan && <TabsContent value="checkin"><h2 className="font-bold mb-4">Entrada · {ev?.name}</h2><CheckinPanel eventId={id} onDone={() => { qc.invalidateQueries({ queryKey: ["event-regs", id] }); qc.invalidateQueries({ queryKey: ["my-registrations"] }); }} /></TabsContent>}
       </Tabs>
     </DashboardShell>
   );
@@ -162,15 +165,22 @@ function CheckinPanel({ eventId, onDone }: { eventId: string; onDone: () => void
   const [scanning, setScanning] = useState(false);
   const scannerRef = useRef<any>(null);
   const lastRef = useRef<string>("");
+  const busyRef = useRef(false);
+  const [busy, setBusy] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const check = async (raw: string) => {
     const c = raw.trim().toUpperCase();
-    if (!c) return;
-    const { data, error } = await supabase.rpc("checkin_by_code" as any, { _code: c, _event_id: eventId });
-    if (error) return toast.error(error.message);
-    setResult({ ...(data as any), code: c });
-    setCode("");
-    onDone();
+    if (!c || busyRef.current) return;
+    if (!/^GTI-[A-Z0-9]+-[A-Z0-9]+$/.test(c)) { setErrorMessage("Este QR Code não é um ingresso GTI. Confira o código do participante."); return; }
+    busyRef.current = true; setBusy(true); setErrorMessage("");
+    try {
+      const { data, error } = await supabase.rpc("checkin_by_code", { _code: c, _event_id: eventId });
+      if (error) throw error;
+      setResult({ ...(data as any), code: c }); setCode("");
+      setScanning(false); onDone();
+    } catch (error) { setErrorMessage(error instanceof Error ? error.message : "Não foi possível confirmar. Tente novamente."); }
+    finally { busyRef.current = false; setBusy(false); }
   };
 
   useEffect(() => {
@@ -201,16 +211,17 @@ function CheckinPanel({ eventId, onDone }: { eventId: string; onDone: () => void
   return (
     <div className="grid md:grid-cols-2 gap-4">
       <div className="glass rounded-xl p-4 border border-border/40 space-y-3">
-        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); check(code); }}>
-          <Input placeholder="GTI-XXXX-XX" className="font-mono uppercase" value={code} onChange={(e) => setCode(e.target.value)} autoFocus />
-          <Button type="submit">Confirmar</Button>
+        <form className="flex flex-col sm:flex-row gap-2" onSubmit={(e) => { e.preventDefault(); check(code); }}>
+          <Input aria-label="Código do ingresso" placeholder="GTI-XXXX-XX" className="font-mono uppercase" value={code} onChange={(e) => setCode(e.target.value)} />
+          <Button type="submit" disabled={busy || !code.trim()}>{busy ? "Confirmando…" : "Confirmar presença"}</Button>
         </form>
         <Button variant={scanning ? "destructive" : "outline"} className="w-full" onClick={() => setScanning((v) => !v)}>
           <Camera className="h-4 w-4 mr-2" /> {scanning ? "Parar câmera" : "Ler QR Code com a câmera"}
         </Button>
-        {scanning && <div id="qr-reader" className="w-full rounded-lg overflow-hidden" />}
+        {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
+        {scanning && <div id="qr-reader" className="w-full min-h-64 rounded-lg overflow-hidden" />}
       </div>
-      <div className={`rounded-xl p-6 border-2 min-h-[200px] flex flex-col items-center justify-center text-center ${result ? R[result.result]?.cls : "border-dashed border-border"}`}>
+      <div role="status" aria-live="polite" className={`rounded-lg p-6 border-2 min-h-[200px] flex flex-col items-center justify-center text-center ${result ? R[result.result]?.cls : "border-dashed border-border"}`}>
         {!result ? <p className="text-muted-foreground text-sm">Leia um QR Code ou digite o código do ingresso.</p> : (
           <>
             {result.avatar_url && <img src={result.avatar_url} alt="" className="h-20 w-20 rounded-full object-cover mb-3" />}
@@ -218,6 +229,8 @@ function CheckinPanel({ eventId, onDone }: { eventId: string; onDone: () => void
             {result.name && <div className="text-lg mt-1">{result.name}</div>}
             {result.work_area && <div className="text-sm text-muted-foreground">{result.work_area}</div>}
             <div className="font-mono text-xs text-muted-foreground mt-2">{result.code}</div>
+            {result.checked_in_at && <p className="text-sm mt-2">{new Date(result.checked_in_at).toLocaleString("pt-BR")}</p>}
+            <Button className="mt-5" variant="outline" onClick={() => { setResult(null); setErrorMessage(""); lastRef.current = ""; setScanning(true); }}>Ler próximo ingresso</Button>
           </>
         )}
       </div>
