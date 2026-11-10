@@ -5,16 +5,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { QrCode } from "@/components/events/qr-code";
 import { formatDateOnly } from "@/lib/utils";
+import { useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 
 export const Route = createFileRoute("/dashboard/evento-crachas/$id")({
-  head: () => ({ meta: [{ title: "Crachás do evento — GALERA DO T.I." }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Crachás do evento — Galera do TI" }, { name: "description", content: "Crachás com QR Code dos participantes aprovados." }, { property: "og:title", content: "Crachás do evento — Galera do TI" }, { property: "og:description", content: "Crachás imprimíveis dos participantes." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: CrachasPage,
 });
 
 function CrachasPage() {
   const { id } = Route.useParams();
+  const { can, ready } = useAmbassadorCan();
+  const allowed = can("eventos", "inscricoes");
   const { data } = useQuery({
-    queryKey: ["event-badges", id],
+    queryKey: ["event-badges", id], enabled: ready && allowed,
     queryFn: async () => {
       const { data: ev } = await supabase.from("events").select("name, event_date, theme").eq("id", id).maybeSingle();
       const { data: regs } = await (supabase.from("event_registrations" as any) as any).select("user_id, ticket_code").eq("event_id", id).eq("status", "approved");
@@ -26,6 +29,7 @@ function CrachasPage() {
     },
   });
 
+  if (ready && !allowed) return <p className="p-6 text-muted-foreground">Você não tem acesso aos crachás deste evento.</p>;
   return (
     <div className="min-h-screen bg-background p-4 print:p-0 print:bg-card">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4 print:hidden">

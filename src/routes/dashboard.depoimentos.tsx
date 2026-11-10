@@ -205,7 +205,7 @@ function DepoimentosPage() {
                   <p className="text-xs text-destructive mt-2">Nota do moderador: {t.moderator_note}</p>
                 )}
                 <div className="flex gap-1 mt-3">
-                  {t.status === "pending" && (
+                  {t.status === "pending" && can("depoimentos", "aprovar") && (
                     <Button size="sm" variant="ghost" onClick={() => setEditing(t)}>
                       <Pencil className="h-3 w-3 mr-1" /> Editar
                     </Button>
