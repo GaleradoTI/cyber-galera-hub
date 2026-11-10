@@ -134,11 +134,11 @@ function DenunciasAdminPage() {
                     {r.resolution_note && <div className="text-[10px] text-muted-foreground mt-1">{r.resolution_note}</div>}
                   </TableCell>
                   <TableCell className="text-right space-x-1 whitespace-nowrap">
-                    {r.status === "open" ? (
+                    {r.status === "open" && can("denuncias", "aprovar") ? (
                       <>
                         <Button size="sm" variant="ghost" title="Resolver" onClick={() => { setActing({ report: r, action: "resolved" }); setNote(""); }}><Check className="h-3 w-3 text-primary" /></Button>
                         <Button size="sm" variant="ghost" title="Improcedente" onClick={() => { setActing({ report: r, action: "dismissed" }); setNote(""); }}><Ban className="h-3 w-3" /></Button>
-                        <Button size="sm" variant="ghost" title="Despublicar" onClick={() => { setActing({ report: r, action: "unpublished" }); setNote(""); }}><EyeOff className="h-3 w-3 text-destructive" /></Button>
+                        {can(r.entity_type === "job" ? "vagas" : "eventos", "publicar") && <Button size="sm" variant="ghost" title="Despublicar" onClick={() => { setActing({ report: r, action: "unpublished" }); setNote(""); }}><EyeOff className="h-3 w-3 text-destructive" /></Button>}
                       </>
                     ) : (
                       <span className="text-[10px] text-muted-foreground">—</span>

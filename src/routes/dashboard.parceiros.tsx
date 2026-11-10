@@ -40,7 +40,7 @@ function ParceirosAdminPage() {
   const [removing, setRemoving] = useState<Partner | null>(null);
 
   useEffect(() => { if (rolesReady && areasReady && !isAdmin && !isAmbassadorArea) navigate({ to: "/dashboard" }); }, [rolesReady, isAdmin, isAmbassadorArea, navigate]);
-  const readOnly = !isAdmin;
+  const readOnly = !can("parceiros", "editar");
 
   const { data: partners = [], isLoading } = useQuery({
     queryKey: ["admin-partners"],
@@ -92,7 +92,7 @@ function ParceirosAdminPage() {
   return (
     <DashboardShell title="Parceiros" description="Gerencie a vitrine de parceiros exibida na home.">
       <div className="flex justify-end mb-4">
-        {!readOnly && <Button onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo parceiro</Button>}
+        {can("parceiros", "criar") && <Button onClick={() => setEditing({ ...empty })}><Plus className="h-4 w-4 mr-1" /> Novo parceiro</Button>}
       </div>
       <div className="glass rounded-xl border border-primary/20 overflow-x-auto">
         <Table>
@@ -119,7 +119,7 @@ function ParceirosAdminPage() {
                 <TableCell className="text-right space-x-1 whitespace-nowrap">
                   {readOnly ? <span className="text-xs text-muted-foreground">Somente leitura</span> : (<>
                     <Button size="sm" variant="ghost" onClick={() => setEditing({ ...p, social_links: normalizeLinks(p.social_links) })}><Pencil className="h-3 w-3" /></Button>
-                    <Button size="sm" variant="ghost" onClick={() => setRemoving(p)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                    {can("parceiros", "remover") && <Button size="sm" variant="ghost" onClick={() => setRemoving(p)}><Trash2 className="h-3 w-3 text-destructive" /></Button>}
                   </>)}
                 </TableCell>
               </TableRow>

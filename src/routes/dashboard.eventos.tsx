@@ -200,11 +200,11 @@ function EventosAdminPage() {
                       <Button size="sm" variant="ghost" onClick={() => moderate(ev, "rejected")} title="Rejeitar"><Ban className="h-3 w-3 text-destructive" /></Button>
                     </>
                   )}
-                  <Link to="/dashboard/evento-inscricoes/$id" params={{ id: ev.id }}><Button size="sm" variant="ghost" title="Inscrições, check-in e crachás"><Ticket className="h-3 w-3" /></Button></Link>
+                  {(can("eventos", "inscricoes") || can("eventos", "checkin")) && <Link to="/dashboard/evento-inscricoes/$id" params={{ id: ev.id }}><Button size="sm" variant="ghost" title="Inscrições, check-in e crachás"><Ticket className="h-3 w-3" /></Button></Link>}
                   <Button size="sm" variant="ghost" onClick={() => setMetricsFor(ev)} title="Métricas e participantes"><BarChart3 className="h-3 w-3" /></Button>
                   <Button size="sm" variant="ghost" title="Visualizar" onClick={() => setViewing(ev)}><Eye className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(ev)}><Pencil className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" title="Remover" onClick={() => setRemoving(ev)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
+                  {can("eventos", "editar") && <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(ev)}><Pencil className="h-3 w-3" /></Button>}
+                  {can("eventos", "remover") && <Button size="sm" variant="ghost" title="Remover" onClick={() => setRemoving(ev)}><Trash2 className="h-3 w-3 text-destructive" /></Button>}
                 </TableCell>
               </TableRow>
             ))}
@@ -251,7 +251,7 @@ function EventosAdminPage() {
               </div>
               <div>
                 <Label>Aprovação</Label>
-                <Select value={editing.approval_status ?? "approved"} onValueChange={(v) => setEditing({ ...editing, approval_status: v })}>
+                <Select disabled={!can("eventos", "aprovar")} value={editing.approval_status ?? "approved"} onValueChange={(v) => setEditing({ ...editing, approval_status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="approved">Aprovado</SelectItem>
@@ -287,7 +287,7 @@ function EventosAdminPage() {
               <div className="sm:col-span-2"><Label>Descrição * (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={8} /></div>
               <div>
                 <Label>Status</Label>
-                <Select value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
+                <Select disabled={!can("eventos", "publicar")} value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="rascunho">Rascunho</SelectItem>
