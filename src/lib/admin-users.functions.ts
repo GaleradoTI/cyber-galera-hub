@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
 function getAdminClient() {
-  const url = process.env.SUPABASE_URL!;
+  const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL)!;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
   if (!url || !serviceKey) throw new Error("Servidor sem credenciais Supabase");
   return createClient<Database>(url, serviceKey, {
