@@ -174,7 +174,7 @@ function CommunityProfilesAdminPage() {
                   {canManageAll && (
                     <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-3 w-3" /></Button>
                   )}
-                  <Button size="sm" variant="ghost" asChild className="ml-auto"><a href={p.profile_type === "ambassador" ? "/embaixadores" : "/administradores"} target="_blank" rel="noreferrer"><ExternalLink className="h-3 w-3" /></a></Button>
+                  <Button size="sm" variant="ghost" asChild className="ml-auto"><a href={p.profile_type === "ambassador" ? "/comunidade?aba=embaixadores" : "/comunidade?aba=administradores"} target="_blank" rel="noreferrer"><ExternalLink className="h-3 w-3" /></a></Button>
                 </div>
               </div>
             </div>

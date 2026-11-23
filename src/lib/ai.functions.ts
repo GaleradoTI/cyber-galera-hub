@@ -2,35 +2,26 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-2.5-flash";
-
-async function callGateway(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) throw new Error("AI indisponível: LOVABLE_API_KEY ausente.");
-  const res = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.7,
-    }),
-  });
-  if (res.status === 429) throw new Error("Limite de requisições atingido. Tente em alguns segundos.");
-  if (res.status === 402) throw new Error("Créditos de IA esgotados no workspace.");
-  if (!res.ok) {
-    const t = await res.text().catch(() => "");
-    throw new Error(`AI falhou (${res.status}): ${t.slice(0, 200)}`);
+async function callGateway(systemPrompt: string, userPrompt: string, json = false): Promise<string> {
+  // Mesmo cliente das notícias (autentica sozinho no gateway); evita depender de LOVABLE_API_KEY.
+  const { generateResponse } = await import("@lovable.dev/ai-gateway");
+  let response;
+  try {
+    response = await generateResponse({
+      model: "openai/gpt-6-astra",
+      instructions: systemPrompt,
+      input: userPrompt,
+      ...(json ? { text: { format: { type: "json_object" as const } } } : {}),
+    });
+  } catch (e: any) {
+    const msg = String(e?.message ?? e);
+    if (/429/.test(msg)) throw new Error("Limite de requisições atingido. Tente em alguns segundos.");
+    if (/402/.test(msg)) throw new Error("Créditos de IA esgotados no workspace.");
+    throw new Error(`A IA não respondeu agora: ${msg.slice(0, 200)}`);
   }
-  const json: any = await res.json();
-  return json?.choices?.[0]?.message?.content ?? "";
+  return response.output
+    .flatMap((item) => (item.type === "message" ? item.content.flatMap((part) => (part.type === "output_text" ? [part.text] : [])) : []))
+    .join("");
 }
 
 const JobInput = z.object({
@@ -93,10 +84,23 @@ export const suggestTechTags = createServerFn({ method: "POST" })
   });
 function parseJsonLoose(raw: string): Record<string, unknown> {
   const cleaned = raw.replace(/```json|```/g, "").trim();
-  const start = cleaned.indexOf("{");
-  const end = cleaned.lastIndexOf("}");
-  if (start < 0 || end < 0) throw new Error("A IA não conseguiu entender o texto. Tente colar mais detalhes.");
-  return JSON.parse(cleaned.slice(start, end + 1));
+  const tryParse = (t: string): unknown => { try { return JSON.parse(t); } catch { return undefined; } };
+  let parsed = tryParse(cleaned);
+  if (parsed === undefined) {
+    // Texto ao redor ou vários objetos colados: usa o primeiro objeto balanceado.
+    const start = cleaned.indexOf("{");
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; start >= 0 && i < cleaned.length; i++) {
+      const c = cleaned[i];
+      if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false; continue; }
+      if (c === '"') inStr = true;
+      else if (c === "{") depth++;
+      else if (c === "}" && --depth === 0) { parsed = tryParse(cleaned.slice(start, i + 1)); break; }
+    }
+  }
+  if (Array.isArray(parsed)) parsed = parsed[0];
+  if (!parsed || typeof parsed !== "object") throw new Error("A IA não conseguiu entender o texto. Tente colar um item por vez, com mais detalhes.");
+  return parsed as Record<string, unknown>;
 }
 
 const ExtractInput = z.object({ text: z.string().trim().min(20, "Cole um texto com pelo menos 20 caracteres.").max(15000) });
@@ -115,7 +119,7 @@ export const extractEventFromText = createServerFn({ method: "POST" })
     const sys = `Você extrai dados de eventos de tecnologia a partir de textos livres em pt-BR. Hoje é ${today}. Responda APENAS um JSON com as chaves:
 name, theme, description (markdown organizado: resumo, para quem é, o que vai rolar), category (Workshop|Palestra|Meetup|Hackathon|Live|Outro), event_date (YYYY-MM-DD), event_time (HH:MM), end_time (HH:MM), modality (online|presencial|hibrido), address (endereço físico completo), online_link (link de transmissão), location_or_link (página oficial/inscrição), max_attendees (número), speakers ([{name, topic}]), schedule ([{time: "HH:MM", end: "HH:MM", title, speaker?, room?}]). Para cada item da grade, preencha "end" com o horário de término; se não estiver explícito, use o início do próximo item; no último item use o término do evento (end_time). end_time = término do último item da grade quando não informado.
 Use null quando não houver a informação. Nunca invente datas, links ou endereços.`;
-    const raw = await callGateway(sys, data.text);
+    const raw = await callGateway(sys, data.text, true);
     const j = parseJsonLoose(raw);
     const speakers = Array.isArray(j.speakers)
       ? (j.speakers as any[]).map((s) => ({ name: str(s?.name, 120), topic: str(s?.topic, 200) })).filter((s) => s.name).slice(0, 12)
@@ -147,7 +151,7 @@ export const extractJobFromText = createServerFn({ method: "POST" })
     const sys = `Você extrai dados de vagas de tecnologia a partir de textos livres em pt-BR. Responda APENAS um JSON com as chaves:
 title, company, location, seniority (estagio|junior|pleno|senior|especialista), modality (remoto|hibrido|presencial), apply_url (link ou mailto), technologies (array de até 15 strings curtas), short_description (1-2 frases), description (markdown com seções: Sobre a vaga, Responsabilidades, Requisitos, Diferenciais, Benefícios — só com o que estiver no texto).
 Use null quando não houver a informação. Nunca invente empresa, links ou salários.`;
-    const raw = await callGateway(sys, data.text);
+    const raw = await callGateway(sys, data.text, true);
     const j = parseJsonLoose(raw);
     const apply = typeof j.apply_url === "string" && /^(https?:\/\/|mailto:)/i.test(j.apply_url.trim()) ? j.apply_url.trim().slice(0, 500) : undefined;
     return {

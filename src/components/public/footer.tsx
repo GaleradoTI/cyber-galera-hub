@@ -48,8 +48,7 @@ export function Footer() {
             </h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/sobre" className="text-muted-foreground hover:text-secondary transition-colors">Sobre</Link></li>
-              <li><Link to="/embaixadores" className="text-muted-foreground hover:text-secondary transition-colors">Embaixadores</Link></li>
-              <li><Link to="/administradores" className="text-muted-foreground hover:text-secondary transition-colors">Administradores</Link></li>
+              <li><Link to="/comunidade" className="text-muted-foreground hover:text-secondary transition-colors">Comunidade</Link></li>
               <li><Link to="/canais" className="text-muted-foreground hover:text-secondary transition-colors">Canais</Link></li>
               <li><Link to="/vagas" className="text-muted-foreground hover:text-secondary transition-colors">Vagas</Link></li>
               <li><Link to="/eventos" className="text-muted-foreground hover:text-secondary transition-colors">Eventos</Link></li>

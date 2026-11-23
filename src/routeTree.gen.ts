@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdministradoresRouteImport } from './routes/administradores'
 import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as CanaisRouteImport } from './routes/canais'
+import { Route as ComunidadeRouteImport } from './routes/comunidade'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DropsRouteImport } from './routes/drops'
 import { Route as EmbaixadoresRouteImport } from './routes/embaixadores'
@@ -83,6 +84,11 @@ const CadastroRoute = CadastroRouteImport.update({
 const CanaisRoute = CanaisRouteImport.update({
   id: '/canais',
   path: '/canais',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComunidadeRoute = ComunidadeRouteImport.update({
+  id: '/comunidade',
+  path: '/comunidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -350,6 +356,7 @@ export interface FileRoutesByFullPath {
   '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
+  '/comunidade': typeof ComunidadeRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
@@ -407,6 +414,7 @@ export interface FileRoutesByTo {
   '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
+  '/comunidade': typeof ComunidadeRoute
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
   '/faq': typeof FaqRoute
@@ -464,6 +472,7 @@ export interface FileRoutesById {
   '/administradores': typeof AdministradoresRoute
   '/cadastro': typeof CadastroRoute
   '/canais': typeof CanaisRoute
+  '/comunidade': typeof ComunidadeRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/drops': typeof DropsRoute
   '/embaixadores': typeof EmbaixadoresRoute
@@ -523,6 +532,7 @@ export interface FileRouteTypes {
     | '/administradores'
     | '/cadastro'
     | '/canais'
+    | '/comunidade'
     | '/dashboard'
     | '/drops'
     | '/embaixadores'
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/administradores'
     | '/cadastro'
     | '/canais'
+    | '/comunidade'
     | '/drops'
     | '/embaixadores'
     | '/faq'
@@ -636,6 +647,7 @@ export interface FileRouteTypes {
     | '/administradores'
     | '/cadastro'
     | '/canais'
+    | '/comunidade'
     | '/dashboard'
     | '/drops'
     | '/embaixadores'
@@ -694,6 +706,7 @@ export interface RootRouteChildren {
   AdministradoresRoute: typeof AdministradoresRoute
   CadastroRoute: typeof CadastroRoute
   CanaisRoute: typeof CanaisRoute
+  ComunidadeRoute: typeof ComunidadeRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DropsRoute: typeof DropsRoute
   EmbaixadoresRoute: typeof EmbaixadoresRoute
@@ -744,6 +757,13 @@ declare module '@tanstack/react-router' {
       path: '/canais'
       fullPath: '/canais'
       preLoaderRoute: typeof CanaisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comunidade': {
+      id: '/comunidade'
+      path: '/comunidade'
+      fullPath: '/comunidade'
+      preLoaderRoute: typeof ComunidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -1183,6 +1203,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdministradoresRoute: AdministradoresRoute,
   CadastroRoute: CadastroRoute,
   CanaisRoute: CanaisRoute,
+  ComunidadeRoute: ComunidadeRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DropsRoute: DropsRoute,
   EmbaixadoresRoute: EmbaixadoresRoute,

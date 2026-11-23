@@ -72,7 +72,7 @@ function UsuariosPage() {
     if (rolesReady && !isAdmin) navigate({ to: "/dashboard" });
   }, [rolesReady, isAdmin, navigate]);
 
-  const { data: profiles = [], isLoading } = useQuery({
+  const { data: profiles = [], isLoading, error: loadError, refetch } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => (await listProfilesFn()) as ProfileRow[],
   });
@@ -506,7 +506,14 @@ function UsuariosPage() {
           {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-xl" />)}
         </div>
       )}
-      {!isLoading && filtered.length === 0 && (
+      {loadError && (
+        <div className="glass rounded-xl border border-destructive/40 p-6 text-center text-sm">
+          <p className="text-destructive font-medium">Não foi possível carregar os usuários.</p>
+          <p className="text-muted-foreground mt-1">{(loadError as Error).message}</p>
+          <Button size="sm" variant="outline" className="mt-3" onClick={() => refetch()}>Tentar novamente</Button>
+        </div>
+      )}
+      {!isLoading && !loadError && filtered.length === 0 && (
         <div className="glass rounded-xl p-8 text-center text-muted-foreground">Nenhum usuário encontrado.</div>
       )}
 

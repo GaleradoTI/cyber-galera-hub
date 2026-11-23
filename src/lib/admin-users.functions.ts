@@ -124,12 +124,21 @@ export const listAdminProfiles = createServerFn({ method: "GET" })
     const admin = getAdminClient();
     // O e-mail de profiles é mantido em dia pelo trigger sync_profile_email,
     // então não precisamos paginar a lista de contas do Auth (era o gargalo).
-    const { data: profiles, error } = await admin
-      .from("admin_users_overview" as "profiles")
-      .select("id,user_id,display_name,email,avatar_url,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region,address_city,work_area,roles,badges" as "*")
-      .order("created_at", { ascending: false })
-      .limit(5000);
-    if (error) throw new Error(error.message);
+    // PostgREST limita cada resposta (padrão 1000 linhas), então lemos em blocos
+    // com ordem estável até acabar — .limit(5000) sozinho truncava a lista.
+    const PAGE = 1000;
+    const profiles: any[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await admin
+        .from("admin_users_overview" as "profiles")
+        .select("id,user_id,display_name,email,avatar_url,is_blocked,created_at,is_verified_recruiter,gender,birth_date,address_state,address_region,address_city,work_area,roles,badges" as "*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, from + PAGE - 1);
+      if (error) throw new Error(error.message);
+      profiles.push(...(data ?? []));
+      if (!data || data.length < PAGE) break;
+    }
 
-    return profiles ?? [];
+    return profiles;
   });

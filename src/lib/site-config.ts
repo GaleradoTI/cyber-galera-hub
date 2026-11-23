@@ -18,14 +18,7 @@ export type NavItem = { label: string; to?: string; children?: NavChild[] };
 export const NAV_LINKS: NavItem[] = [
   { to: "/", label: "Início" },
   { to: "/sobre", label: "Sobre" },
-  {
-    label: "Comunidade",
-    children: [
-      { to: "/embaixadores", label: "Embaixadores", description: "Quem representa a galera" },
-      { to: "/administradores", label: "Administradores", description: "Time que mantém tudo de pé" },
-      { to: "/parceiros", label: "Parceiros", description: "Marcas que caminham com a gente" },
-    ],
-  },
+  { to: "/comunidade", label: "Comunidade" },
   {
     label: "Oportunidades",
     children: [
