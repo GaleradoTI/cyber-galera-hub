@@ -623,11 +623,13 @@ function ParticipationCard({ userId }: { userId: string }) {
   const { data } = useQuery({
     queryKey: ["my-participation", userId],
     queryFn: async () => {
-      const [ci, it] = await Promise.all([
+      const [ci, legacy, regs] = await Promise.all([
         supabase.from("event_checkins").select("event_id", { count: "exact", head: true }).eq("user_id", userId),
-        supabase.from("user_event_interests").select("event_id", { count: "exact", head: true }).eq("user_id", userId),
+        supabase.from("user_event_interests").select("event_id").eq("user_id", userId),
+        supabase.from("event_registrations").select("event_id").eq("user_id", userId).in("status", ["pending", "approved"]),
       ]);
-      return { checkins: ci.count ?? 0, interests: it.count ?? 0 };
+      const events = new Set([...(legacy.data ?? []), ...(regs.data ?? [])].map((r) => r.event_id));
+      return { checkins: ci.count ?? 0, interests: events.size };
     },
   });
   const checkins = data?.checkins ?? 0;
@@ -648,7 +650,7 @@ function ParticipationCard({ userId }: { userId: string }) {
           <div className="text-2xl font-black text-gradient-neon flex items-center gap-1"><CheckCircle2 className="h-5 w-5" /> {checkins}</div>
         </div>
         <div className="glass rounded-lg p-3 border border-border/40">
-          <div className="text-[10px] tracking-[0.2em] text-muted-foreground">INTERESSES</div>
+          <div className="text-[10px] tracking-[0.2em] text-muted-foreground">INSCRIÇÕES</div>
           <div className="text-2xl font-black flex items-center gap-1"><Heart className="h-5 w-5 text-primary" /> {interests}</div>
         </div>
         <div className="glass rounded-lg p-3 border border-border/40">

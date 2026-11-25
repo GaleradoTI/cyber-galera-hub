@@ -92,7 +92,9 @@ function CandidaturasPage() {
                     <Button size="sm" variant="outline"><ExternalLink className="h-3 w-3" /></Button>
                   </a>
                 )}
-                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => cancel(a.id)}><X className="h-3 w-3" /></Button>
+                {(a.status === "enviada" || a.status === "em_analise") && (
+                  <Button size="sm" variant="ghost" className="text-destructive" aria-label="Cancelar candidatura" onClick={() => cancel(a.id)}><X className="h-3 w-3" /></Button>
+                )}
               </div>
             </div>
           );

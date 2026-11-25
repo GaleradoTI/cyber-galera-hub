@@ -57,6 +57,9 @@ function MinhasVagasPage() {
                 <div className="text-xs text-muted-foreground">{j.company} • {j.location ?? "Remoto"} • {j.modality} • {j.seniority}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                {j.status === "publicado" && (
+                  <Button asChild size="sm"><Link to="/vagas" search={{ vaga: j.id }}>Ver vaga</Link></Button>
+                )}
                 {j.application_type !== "interna" && j.apply_url && (
                   <a href={j.apply_url} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline"><ExternalLink className="h-3 w-3 mr-1" /> Aplicar</Button>

@@ -2,7 +2,7 @@ import { PublishPreview } from "@/components/dashboard/publish-preview";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Switch } from "@/components/ui/switch";
 import { ScheduleEditor } from "@/components/events/schedule";
-import { eventLinks, mapsUrl, safeEventUrl, type ScheduleItem } from "@/lib/events";
+import { eventLinks, mapsUrl, safeEventUrl, EVENT_COLUMNS, type ScheduleItem } from "@/lib/events";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Eye, Users, BarChart3, Mail, Phone, X, Check, Ban, Download, Ticket, ExternalLink, Navigation } from "lucide-react";
@@ -65,7 +65,7 @@ function EventosAdminPage() {
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("events").select("*").order("event_date", { ascending: false });
+      const { data, error } = await supabase.from("events").select(EVENT_COLUMNS).order("event_date", { ascending: false });
       if (error) throw error;
       return (data ?? []).map((e: any) => ({ ...e, speakers: Array.isArray(e.speakers) ? e.speakers : [], schedule: Array.isArray(e.schedule) ? e.schedule : [] })) as Evt[];
     },
@@ -80,18 +80,28 @@ function EventosAdminPage() {
   const { data: counts = {} } = useQuery({
     queryKey: ["admin-event-counts"],
     queryFn: async () => {
-      const [{ data: ci }, { data: it }] = await Promise.all([
+      const [{ data: ci }, { data: legacy }, { data: regs }] = await Promise.all([
         supabase.from("event_checkins").select("event_id"),
-        supabase.from("user_event_interests").select("event_id"),
+        supabase.from("user_event_interests").select("event_id,user_id"),
+        supabase.from("event_registrations").select("event_id,user_id").in("status", ["pending", "approved"]),
       ]);
+      // Inscrições atuais + histórico de "interesse", sem contar a mesma pessoa duas vezes.
+      const it = Array.from(new Map([...(legacy ?? []), ...(regs ?? [])].map((r) => [`${r.event_id}:${r.user_id}`, r])).values());
       const map: Record<string, { checkins: number; interests: number }> = {};
       (ci ?? []).forEach((r: any) => { map[r.event_id] = map[r.event_id] ?? { checkins: 0, interests: 0 }; map[r.event_id].checkins++; });
-      (it ?? []).forEach((r: any) => { map[r.event_id] = map[r.event_id] ?? { checkins: 0, interests: 0 }; map[r.event_id].interests++; });
+      it.forEach((r: any) => { map[r.event_id] = map[r.event_id] ?? { checkins: 0, interests: 0 }; map[r.event_id].interests++; });
       return map;
     },
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-events"] });
+
+  // O link não vem na listagem. Sem carregá-lo, salvar o formulário apagaria o link atual.
+  const openWithLink = async (ev: Evt, open: (value: Evt) => void) => {
+    const { data, error } = await (supabase as any).rpc("get_event_online_link", { _event_id: ev.id });
+    if (error) return toast.error("Não foi possível carregar o link do evento: " + error.message);
+    open({ ...ev, online_link: data ?? "" });
+  };
 
   const save = async () => {
     if (!editing) return;
@@ -191,7 +201,7 @@ function EventosAdminPage() {
                     {ev.approval_status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-xs">{counts[ev.id]?.checkins ?? 0} / {counts[ev.id]?.interests ?? 0} int.</TableCell>
+                <TableCell className="text-xs">{counts[ev.id]?.checkins ?? 0} / {counts[ev.id]?.interests ?? 0} inscr.</TableCell>
                 <TableCell><Badge variant={ev.status === "publicado" ? "default" : "secondary"}>{ev.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-1 whitespace-nowrap">
                   {can("eventos", "aprovar") && ev.approval_status === "pending" && (
@@ -202,8 +212,8 @@ function EventosAdminPage() {
                   )}
                   {(can("eventos", "inscricoes") || can("eventos", "checkin")) && <Link to="/dashboard/evento-inscricoes/$id" params={{ id: ev.id }}><Button size="sm" variant="ghost" title="Inscrições, check-in e crachás"><Ticket className="h-3 w-3" /></Button></Link>}
                   <Button size="sm" variant="ghost" onClick={() => setMetricsFor(ev)} title="Métricas e participantes"><BarChart3 className="h-3 w-3" /></Button>
-                  <Button size="sm" variant="ghost" title="Visualizar" onClick={() => setViewing(ev)}><Eye className="h-3 w-3" /></Button>
-                  {can("eventos", "editar") && <Button size="sm" variant="ghost" title="Editar" onClick={() => setEditing(ev)}><Pencil className="h-3 w-3" /></Button>}
+                  <Button size="sm" variant="ghost" title="Visualizar" onClick={() => openWithLink(ev, setViewing)}><Eye className="h-3 w-3" /></Button>
+                  {can("eventos", "editar") && <Button size="sm" variant="ghost" title="Editar" onClick={() => openWithLink(ev, setEditing)}><Pencil className="h-3 w-3" /></Button>}
                   {can("eventos", "remover") && <Button size="sm" variant="ghost" title="Remover" onClick={() => setRemoving(ev)}><Trash2 className="h-3 w-3 text-destructive" /></Button>}
                 </TableCell>
               </TableRow>
@@ -383,11 +393,16 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
     queryKey: ["event-metrics", event?.id],
     enabled: !!event?.id,
     queryFn: async () => {
-      const [ci, it] = await Promise.all([
+      const [ci, legacy, regs, oldWl] = await Promise.all([
         supabase.from("event_checkins").select("user_id, checked_in_at").eq("event_id", event!.id),
         supabase.from("user_event_interests").select("user_id, created_at").eq("event_id", event!.id),
+        supabase.from("event_registrations").select("user_id, status, created_at").eq("event_id", event!.id).order("created_at"),
+        (supabase as any).from("event_waitlist").select("user_id, position, created_at").eq("event_id", event!.id).order("position"),
       ]);
-      const wl: any = await (supabase as any).from("event_waitlist").select("user_id, position, created_at").eq("event_id", event!.id).order("position");
+      const current = regs.data ?? [];
+      const it = { data: Array.from(new Map([...(legacy.data ?? []), ...current.filter((r) => r.status === "pending" || r.status === "approved")].map((r: any) => [r.user_id, r])).values()) };
+      const waiting = current.filter((r) => r.status === "waitlist").map((r, i) => ({ user_id: r.user_id, position: i + 1 }));
+      const wl: any = { data: [...waiting, ...((oldWl.data ?? []) as any[]).filter((o) => !waiting.some((w) => w.user_id === o.user_id))] };
       const ids = Array.from(new Set([
         ...(ci.data ?? []).map((r: any) => r.user_id),
         ...(it.data ?? []).map((r: any) => r.user_id),
@@ -416,7 +431,7 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
         interested: interestedSet.has(id),
         waitlist_position: wlMap.get(id) ?? null,
       }));
-      return { rows, checkins: ci.data?.length ?? 0, interests: it.data?.length ?? 0, waitlist: (wl.data ?? []).length };
+      return { rows, checkins: ci.data?.length ?? 0, interests: it.data.length, waitlist: (wl.data ?? []).length };
     },
   });
   const conv = useMemo(() => {
@@ -453,7 +468,7 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
           ><Download className="h-3 w-3 mr-1" /> Exportar CSV</Button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Interesses</div><div className="text-2xl font-black text-gradient-neon">{data?.interests ?? "…"}</div></div>
+          <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Inscritos</div><div className="text-2xl font-black text-gradient-neon">{data?.interests ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Check-ins</div><div className="text-2xl font-black text-gradient-neon">{data?.checkins ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Lista de espera</div><div className="text-2xl font-black text-gradient-neon">{data?.waitlist ?? "…"}</div></div>
           <div className="glass rounded-lg p-4 border border-primary/20"><div className="text-xs text-muted-foreground">Conversão</div><div className="text-2xl font-black text-gradient-neon">{conv}%</div></div>
