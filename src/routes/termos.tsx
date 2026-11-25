@@ -1,3 +1,5 @@
+import { FileText } from "lucide-react";
+import { PageHero } from "@/components/brand/ui-kit";
 import { createFileRoute } from "@tanstack/react-router";
 import { PublicLayout } from "@/components/public/public-layout";
 import { SITE_CONFIG } from "@/lib/site-config";
@@ -16,8 +18,7 @@ function TermosPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16 max-w-3xl">
-        <h1 className="text-4xl font-black tracking-tight">Termos de Uso</h1>
-        <p className="text-sm text-muted-foreground mt-2">Versão {SITE_CONFIG.legal.termsVersion}</p>
+        <PageHero icon={FileText} eyebrow="DOCUMENTO" title="Termos de Uso" description={<>Versão {SITE_CONFIG.legal.termsVersion}</>} />
         <div className="prose prose-invert max-w-none mt-8 space-y-4 text-muted-foreground">
           <p>Ao utilizar a plataforma {SITE_CONFIG.name} você concorda com estes Termos de Uso.</p>
           <h2 className="text-xl font-bold text-foreground">1. Conduta da comunidade</h2>

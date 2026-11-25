@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -107,8 +108,8 @@ function ParceirosAdminPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>}
-            {!isLoading && partners.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhum parceiro cadastrado.</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={6}><LoadingState compact /></TableCell></TableRow>}
+            {!isLoading && partners.length === 0 && <TableRow><TableCell colSpan={6}><EmptyState compact title="Nenhum parceiro cadastrado" /></TableCell></TableRow>}
             {partners.map((p) => (
               <TableRow key={p.id}>
                 <TableCell>{p.logo_url ? <img src={p.logo_url} alt={p.name} className="h-10 w-auto object-contain" /> : <div className="h-10 w-10 bg-muted rounded" />}</TableCell>

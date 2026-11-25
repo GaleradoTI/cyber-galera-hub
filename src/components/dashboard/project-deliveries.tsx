@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/brand/ui-kit";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, Plus, Trash2, Package } from "lucide-react";
@@ -84,7 +85,7 @@ export function ProjectDeliveries({
       </div>
       <div className="space-y-2">
         {links.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-2">Nenhuma entrega ainda.</p>
+          <EmptyState compact title="Nenhuma entrega ainda" />
         )}
         {links.map((l) => {
           const author = profileById.get(l.user_id);

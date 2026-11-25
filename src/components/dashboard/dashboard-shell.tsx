@@ -1,3 +1,4 @@
+import { IconTile, Eyebrow } from "@/components/brand/ui-kit";
 import { toast } from "sonner";
 import { AppPermissionsBanner } from "@/components/pwa/app-permissions-banner";
 import { ReactNode, useEffect, useState } from "react";
@@ -61,6 +62,11 @@ const ROLE_META: Record<string, { label: string; icon: any; className: string }>
 };
 
 export type DashRoles = string[];
+
+/** Telas que não têm item próprio no menu. */
+const EXTRA_PAGES = [
+  { prefix: "/dashboard/evento-inscricoes", icon: Ticket, heading: "EVENTOS" },
+];
 
 export function useDashboardRoles() {
   const { user } = useAuth();
@@ -126,7 +132,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const palette = useCommandPalette();
-  const { rafflesEnabled } = useSiteModules();
+  const { rafflesEnabled, dropsEnabled, projectsEnabled } = useSiteModules();
   const { can } = useAmbassadorCan();
   const ambOnly = isAmbassador && !isAdmin;
   const [query, setQuery] = useState("");
@@ -171,9 +177,9 @@ export function DashboardShell({ children, title, description }: { children: Rea
     {
       heading: "COMUNIDADE",
       items: [
-        { to: "/dashboard/meus-projetos", label: "Meus Projetos", icon: FolderKanban, show: true },
-        { to: "/dashboard/explorar-projetos", label: "Explorar Projetos", icon: Globe, show: true },
-        { to: "/drops", label: "Drops", icon: ShoppingBag, show: true },
+        { to: "/dashboard/meus-projetos", label: "Meus Projetos", icon: FolderKanban, show: projectsEnabled },
+        { to: "/dashboard/explorar-projetos", label: "Explorar Projetos", icon: Globe, show: projectsEnabled },
+        { to: "/drops", label: "Drops", icon: ShoppingBag, show: dropsEnabled },
         { to: "/dashboard/depoimentos", label: "Depoimentos", icon: MessageSquareQuote, show: true },
         { to: "/dashboard/rifas", label: "Rifas", icon: Ticket, show: rafflesEnabled },
       ],
@@ -214,12 +220,12 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/dashboard/usuarios", label: "Usuários", icon: Users, show: isAdmin },
         { to: "/dashboard/vagas", label: "Vagas", icon: Briefcase, show: isAdmin },
         { to: "/dashboard/eventos", label: "Eventos", icon: Calendar, show: isAdmin },
-        { to: "/dashboard/projetos", label: "Projetos / Squads", icon: FolderKanban, show: isAdmin },
+        { to: "/dashboard/projetos", label: "Projetos / Squads", icon: FolderKanban, show: isAdmin && projectsEnabled },
         { to: "/dashboard/parceiros", label: "Parceiros", icon: Handshake, show: isAdmin },
         { to: "/dashboard/comunidade-perfis", label: "Embaixadores/Admins", icon: IdCard, show: isAdmin },
         { to: "/dashboard/denuncias", label: "Denúncias", icon: Flag, show: isAdmin },
         { to: "/dashboard/configuracoes", label: "Configurações do Site", icon: Settings, show: isAdmin },
-        { to: "/dashboard/drops", label: "Drops", icon: ShoppingBag, show: isAdmin },
+        { to: "/dashboard/drops", label: "Drops", icon: ShoppingBag, show: isAdmin && dropsEnabled },
         { to: "/dashboard/financeiro", label: "Financeiro", icon: DollarSign, show: isAdmin },
         
         { to: "/dashboard/rifas-admin", label: "Rifas", icon: Ticket, show: isAdmin && rafflesEnabled },
@@ -234,6 +240,14 @@ export function DashboardShell({ children, title, description }: { children: Rea
       ],
     },
   ];
+
+  // Ícone e área do cabeçalho vêm do item de menu da rota (o mais específico e, de preferência, visível).
+  const entries = sections.flatMap((s) => s.items.map((i) => ({ ...i, heading: s.heading })));
+  const matches = entries.filter((i) => pathname === i.to || (i.to !== "/dashboard" && pathname.startsWith(i.to + "/")));
+  const current = matches.find((i) => i.show) ?? matches[0];
+  const extra = EXTRA_PAGES.find((p) => pathname.startsWith(p.prefix));
+  const pageIcon = current?.icon ?? extra?.icon ?? LayoutDashboard;
+  const pageArea = extra?.heading ?? current?.heading ?? "PAINEL";
 
   return (
     <div className="min-h-screen flex w-full bg-background">
@@ -365,18 +379,20 @@ export function DashboardShell({ children, title, description }: { children: Rea
           </Button>
         </div>
       </aside>
-      <main className="flex-1 min-w-0">
+      <main className="gti-app flex-1 min-w-0">
         <div className="container max-w-6xl mx-auto px-4 md:px-8 py-6 md:py-8">
-          <header className="mb-6 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 md:gap-4">
+          <header className="relative mb-6 flex items-center gap-3 md:gap-4 overflow-hidden rounded-2xl glass border border-primary/20 p-3 md:p-5">
+            <span aria-hidden className="absolute inset-x-0 top-0 h-0.5 bg-gradient-neon" />
             {isMobile && (
-              <Button variant="ghost" size="icon" onClick={() => setOpen(true)} aria-label="Abrir menu">
+              <Button variant="ghost" size="icon" className="shrink-0" onClick={() => setOpen(true)} aria-label="Abrir menu">
                 <Menu className="h-5 w-5" />
               </Button>
             )}
-            {!isMobile && <span />}
-            <div className="min-w-0">
+            <IconTile icon={pageIcon} className="hidden sm:inline-flex" />
+            <div className="min-w-0 flex-1">
+              <Eyebrow className="text-[10px]">{pageArea}</Eyebrow>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-gradient-neon truncate">{title}</h1>
-              {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
+              {description && <p className="text-sm text-muted-foreground mt-0.5">{description}</p>}
             </div>
             <div className="shrink-0">
               <NotificationsBell />

@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -69,13 +70,10 @@ function RafflesMemberPage() {
 
   return (
     <DashboardShell title="Rifas" description="Escolha seus números, reserve e envie o comprovante do Pix.">
-      {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+      {isLoading && <LoadingState />}
 
       {!isLoading && raffles.length === 0 && (
-        <div className="glass rounded-xl border border-primary/20 p-10 text-center">
-          <Ticket className="h-8 w-8 mx-auto text-primary/50 mb-3" />
-          <p className="text-sm text-muted-foreground">Nenhuma rifa disponível no momento.</p>
-        </div>
+        <EmptyState icon={Ticket} title="Nenhuma rifa disponível no momento" />
       )}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

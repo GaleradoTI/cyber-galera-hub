@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, MessageCircle, Pencil, Send, Trash2 } from "lucide-react";
@@ -284,11 +285,9 @@ export function FeedCommentsDialog({
 
         <div className="flex-1 overflow-y-auto px-4">
           {header && <div className="py-3 border-b border-border/30">{header}</div>}
-          {isLoading && <p className="py-6 text-sm text-muted-foreground">Carregando…</p>}
+          {isLoading && <LoadingState />}
           {!isLoading && comments.length === 0 && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Nenhum comentário ainda. Seja o primeiro a responder.
-            </p>
+            <EmptyState title="Nenhum comentário ainda. Seja o primeiro a responder" />
           )}
           <div className="py-1">{renderThread(null, 0)}</div>
         </div>

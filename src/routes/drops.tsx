@@ -1,3 +1,5 @@
+import { LoadingState, EmptyState, PageHero } from "@/components/brand/ui-kit";
+import { withModule } from "@/components/brand/module-gate";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
@@ -28,7 +30,7 @@ export const Route = createFileRoute("/drops")({
       { property: "og:description", content: "Reserve sua peça do próximo drop." },
     ],
   }),
-  component: DropsPublicPage,
+  component: withModule(DropsPublicPage, "drops", "public"),
 });
 
 type Drop = {
@@ -257,23 +259,12 @@ function DropsPublicPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
-          <div>
-            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">LANÇAMENTOS DA COMUNIDADE</div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-3">
-              <ShoppingBag className="h-9 w-9 text-primary" /> Drops
-            </h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">
-              Roupas, adesivos e produtos oficiais da Galera. Reserve seu interesse para garantir o seu.
-            </p>
-          </div>
-          <PublicMascotSpot placement="drops" className="hidden lg:flex" />
-        </div>
+        <PageHero icon={ShoppingBag} eyebrow="LANÇAMENTOS DA COMUNIDADE" title="Drops" description={<>Roupas, adesivos e produtos oficiais da Galera. Reserve seu interesse para garantir o seu.</>} aside={<PublicMascotSpot placement="drops" className="hidden lg:flex" />} />
 
         {isLoading ? (
-          <p className="text-muted-foreground mt-10">Carregando…</p>
+          <LoadingState />
         ) : drops.length === 0 ? (
-          <p className="text-muted-foreground mt-10">Nenhum drop publicado no momento.</p>
+          <div className="mt-10"><EmptyState title="Nenhum drop publicado no momento" /></div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
             {drops.map((d) => (

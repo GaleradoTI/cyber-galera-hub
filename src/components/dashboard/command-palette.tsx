@@ -1,3 +1,4 @@
+import { useSiteModules } from "@/lib/modules";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import { useDashboardRoles } from "./dashboard-shell";
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const navigate = useNavigate();
   const { isAdmin } = useDashboardRoles();
+  const { projectsEnabled } = useSiteModules();
 
   const { data: jobs = [] } = useQuery({
     queryKey: ["palette-jobs"],
@@ -30,7 +32,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
 
   const { data: projects = [] } = useQuery({
     queryKey: ["palette-projects"],
-    enabled: open,
+    enabled: open && projectsEnabled,
     staleTime: 60_000,
     queryFn: async () => {
       const { data } = await supabase.from("projects").select("id,name,slug").limit(20);
@@ -87,7 +89,7 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
           </>
         )}
 
-        {projects.length > 0 && (
+        {projectsEnabled && projects.length > 0 && (
           <>
             <CommandSeparator />
             <CommandGroup heading="Projetos">

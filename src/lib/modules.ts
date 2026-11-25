@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SiteModules = { raffles?: boolean; ai_autofill?: boolean };
+export type SiteModules = { raffles?: boolean; ai_autofill?: boolean; drops?: boolean; projects?: boolean };
 
 /** Reads the optional-modules toggle stored in public_site_settings. */
 export function useSiteModules() {
@@ -17,5 +17,7 @@ export function useSiteModules() {
       return (data?.setting_value ?? {}) as SiteModules;
     },
   });
-  return { modules: data ?? {}, rafflesEnabled: !!data?.raffles, aiAutofillEnabled: !!data?.ai_autofill, loading: isLoading };
+  return { modules: data ?? {}, rafflesEnabled: !!data?.raffles, aiAutofillEnabled: !!data?.ai_autofill,
+    // Já existiam antes do interruptor: só somem se alguém desligar. Durante o carregamento ficam ocultos.
+    dropsEnabled: !isLoading && data?.drops !== false, projectsEnabled: !isLoading && data?.projects !== false, loading: isLoading };
 }

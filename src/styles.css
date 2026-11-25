@@ -268,3 +268,12 @@
   0%   { opacity: 0; transform: translateY(16px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+/* Tabelas escritas em HTML puro dentro do painel seguem o mesmo padrão do componente Table. */
+.gti-app table thead th {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+}

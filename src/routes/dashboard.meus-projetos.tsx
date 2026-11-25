@@ -1,3 +1,5 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
+import { withModule } from "@/components/brand/module-gate";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +17,7 @@ import { PostCard } from "@/components/dashboard/post-card";
 import { MemberDetailDialog, type MemberProfile } from "@/components/profile/member-detail-dialog";
 import { ProjectDeliveries } from "@/components/dashboard/project-deliveries";
 
-export const Route = createFileRoute("/dashboard/meus-projetos")({ component: MeusProjetosPage });
+export const Route = createFileRoute("/dashboard/meus-projetos")({ component: withModule(MeusProjetosPage, "projects", "dashboard") });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string };
 type Squad = { id: string; project_id: string; name: string; description: string | null };
@@ -293,11 +295,9 @@ function MeusProjetosPage() {
 
   return (
     <DashboardShell title="Meus Projetos" description="Projetos e squads em que você participa.">
-      {(!user || isLoading) && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {(!user || isLoading) && <LoadingState />}
       {!isLoading && projects.length === 0 && (
-        <div className="glass rounded-xl p-10 text-center text-muted-foreground">
-          Você ainda não foi adicionado a nenhum squad. O SUPER ADMIN pode incluir você.
-        </div>
+        <EmptyState title="Você ainda não foi adicionado a nenhum squad. O SUPER ADMIN pode incluir você" />
       )}
 
       <div className="space-y-6">
@@ -539,7 +539,7 @@ function MeusProjetosPage() {
                       />
                     );
                   })}
-                  {projectPosts.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhum post ainda.</p>}
+                  {projectPosts.length === 0 && <EmptyState compact title="Nenhum post ainda" />}
                 </div>
               </div>
             </div>
@@ -581,7 +581,7 @@ function MeusProjetosPage() {
                   CHECKLIST — {openGoal.tasks.filter((t) => t.done).length}/{openGoal.tasks.length}
                 </div>
                 {openGoal.tasks.length === 0 ? (
-                  <p className="text-xs italic text-muted-foreground/70">Nenhuma task cadastrada.</p>
+                  <EmptyState compact title="Nenhuma task cadastrada" />
                 ) : (
                   <ul className="space-y-1">
                     {openGoal.tasks.map((t) => {

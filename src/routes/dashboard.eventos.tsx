@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { PublishPreview } from "@/components/dashboard/publish-preview";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Switch } from "@/components/ui/switch";
@@ -188,8 +189,8 @@ function EventosAdminPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>}
-            {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum evento.</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={8}><LoadingState compact /></TableCell></TableRow>}
+            {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={8}><EmptyState compact title="Nenhum evento" /></TableCell></TableRow>}
             {filtered.map((ev) => (
               <TableRow key={ev.id}>
                 <TableCell className="font-medium">{ev.name}</TableCell>
@@ -319,7 +320,7 @@ function EventosAdminPage() {
                   <Label>Palestrantes</Label>
                   <Button type="button" size="sm" variant="outline" onClick={addSpeaker}><Plus className="h-3 w-3 mr-1" /> Adicionar</Button>
                 </div>
-                {(editing.speakers ?? []).length === 0 && <p className="text-xs text-muted-foreground">Nenhum palestrante cadastrado.</p>}
+                {(editing.speakers ?? []).length === 0 && <EmptyState compact title="Nenhum palestrante cadastrado" />}
                 {(editing.speakers ?? []).map((sp, i) => (
                   <div key={i} className="grid sm:grid-cols-[1fr_1fr_auto] gap-2 items-start glass p-3 rounded-lg border border-border/40">
                     <Input placeholder="Nome *" value={sp.name ?? ""} onChange={(e) => setSpeaker(i, { name: e.target.value })} />
@@ -485,8 +486,8 @@ function MetricsDialog({ event, onClose }: { event: Evt | null; onClose: () => v
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Carregando…</TableCell></TableRow>}
-              {!isLoading && (data?.rows.length ?? 0) === 0 && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground py-6">Ninguém ainda.</TableCell></TableRow>}
+              {isLoading && <TableRow><TableCell colSpan={4}><LoadingState compact /></TableCell></TableRow>}
+              {!isLoading && (data?.rows.length ?? 0) === 0 && <TableRow><TableCell colSpan={4}><EmptyState compact title="Ninguém ainda" /></TableCell></TableRow>}
               {data?.rows.map((r: any) => (
                 <TableRow key={r.user_id}>
                   <TableCell>

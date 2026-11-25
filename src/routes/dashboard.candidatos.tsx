@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -142,7 +143,7 @@ function CandidatosPage() {
         <div className="text-xs text-muted-foreground ml-auto">{filtered.length} candidato(s)</div>
       </div>
 
-      {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {isLoading && <LoadingState />}
 
       {!isLoading && filtered.length === 0 && <EmptyState icon={UserSearch} title="Nenhum candidato encontrado" text="Ajuste a busca ou os filtros." />}
 

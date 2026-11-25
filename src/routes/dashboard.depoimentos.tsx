@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -182,11 +183,9 @@ function DepoimentosPage() {
               <Plus className="h-4 w-4 mr-1" /> Novo depoimento
             </Button>
           </div>
-          {loadingMine && <p className="text-sm text-muted-foreground">Carregando…</p>}
+          {loadingMine && <LoadingState />}
           {!loadingMine && mine.length === 0 && (
-            <div className="glass rounded-xl p-8 text-center text-muted-foreground text-sm">
-              Você ainda não escreveu nenhum depoimento.
-            </div>
+            <EmptyState title="Você ainda não escreveu nenhum depoimento" />
           )}
           <div className="grid sm:grid-cols-2 gap-3">
             {mine.map((t) => (
@@ -221,11 +220,9 @@ function DepoimentosPage() {
 
         {isAdmin && (
           <TabsContent value="moderar" className="mt-5 space-y-3">
-            {loadingQueue && <p className="text-sm text-muted-foreground">Carregando…</p>}
+            {loadingQueue && <LoadingState />}
             {!loadingQueue && queue.length === 0 && (
-              <div className="glass rounded-xl p-8 text-center text-muted-foreground text-sm">
-                Nenhum depoimento ainda.
-              </div>
+              <EmptyState title="Nenhum depoimento ainda" />
             )}
             {queue.map((t) => {
               const a = profById.get(t.user_id);

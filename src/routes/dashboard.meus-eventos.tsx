@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, ExternalLink, Trash2, CheckCircle2, MapPin, Clock } from "lucide-react";
@@ -91,7 +92,7 @@ function MeusEventosPage() {
   return (
     <DashboardShell title="Meus Eventos" description="Seus ingressos e eventos em que você demonstrou interesse.">
       <MemberTickets userId={user?.id} />
-      {(!user || isLoading) && <div className="text-muted-foreground">Carregando…</div>}
+      {(!user || isLoading) && <LoadingState />}
       {!isLoading && data.length > 0 && <h2 className="font-bold text-sm mb-3">Interesses antigos</h2>}
       {!isLoading && data.length === 0 && (
         <div className="glass rounded-xl p-8 text-center">

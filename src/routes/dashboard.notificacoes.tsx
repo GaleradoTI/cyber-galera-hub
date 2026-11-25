@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -116,7 +117,7 @@ function NotificacoesPage() {
           <div className="divide-y divide-border/30">
             {isLoading && Array.from({ length: 5 }).map((_, i) => <div key={i} className="p-3 flex gap-3"><Skeleton className="h-9 w-9 rounded-full" /><div className="flex-1 space-y-2"><Skeleton className="h-4 w-2/3" /><Skeleton className="h-3 w-1/2" /></div></div>)}
             {!isLoading && shown.length === 0 && (
-              <div className="p-10 text-center"><BellRing className="h-10 w-10 mx-auto text-muted-foreground/40" /><p className="mt-2 text-sm text-muted-foreground">Nenhum aviso aqui.</p></div>
+              <EmptyState icon={BellRing} title="Nenhum aviso aqui" />
             )}
             {shown.map((n) => <NotificationRow key={n.id} n={n} onClick={() => open(n)} />)}
           </div>

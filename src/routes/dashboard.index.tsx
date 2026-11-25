@@ -1,3 +1,4 @@
+import { useSiteModules } from "@/lib/modules";
 import { RecruiterHome } from "@/components/jobs/recruiter-home";
 import { todayBR } from "@/lib/events";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -204,6 +205,7 @@ function MemberHome({ userId, techTags, role }: { userId: string; techTags: stri
 /* ===================== ADMIN ===================== */
 
 function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+  const { projectsEnabled } = useSiteModules();
   const [region, setRegion] = useState<string | null>(null);
   const [gender, setGender] = useState<string | null>(null);
   const [age, setAge] = useState<string | null>(null);
@@ -266,7 +268,7 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         <Stat icon={Users} label={activeFilters ? `Usuários (filtrado de ${stats?.totalUsers})` : "Usuários ativos"} value={stats?.users ?? "…"} />
         <Stat icon={Briefcase} label="Vagas publicadas" value={stats?.jobs ?? "…"} />
         <Stat icon={Calendar} label="Eventos próximos" value={stats?.events ?? "…"} />
-        <Stat icon={FolderKanban} label="Projetos ativos" value={stats?.projects ?? "…"} />
+        {projectsEnabled && <Stat icon={FolderKanban} label="Projetos ativos" value={stats?.projects ?? "…"} />}
         <Stat icon={CheckCircle2} label="Check-ins totais" value={stats?.checkins ?? "…"} />
       </div>
 
@@ -275,7 +277,7 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           <QuickAction to="/dashboard/usuarios" icon={Users} title="Usuários" desc="Gerenciar membros e papéis." accent={isSuperAdmin} />
           <QuickAction to="/dashboard/vagas" icon={Briefcase} title="Vagas" desc="Criar, editar e publicar." />
           <QuickAction to="/dashboard/eventos" icon={Calendar} title="Eventos" desc="Agenda da comunidade." />
-          <QuickAction to="/dashboard/projetos" icon={FolderKanban} title="Projetos / Squads" desc="Vitrine e equipes." />
+          {projectsEnabled && <QuickAction to="/dashboard/projetos" icon={FolderKanban} title="Projetos / Squads" desc="Vitrine e equipes." />}
           <QuickAction to="/dashboard/configuracoes" icon={ShieldCheck} title="Site" desc="Conteúdo público." accent />
           {isSuperAdmin && <QuickAction to="/dashboard/cargos" icon={Heart} title="Cargos / Badges" desc="Distinções de membros." />}
         </div>

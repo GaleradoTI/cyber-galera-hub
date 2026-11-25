@@ -1,5 +1,6 @@
+import { PageHero } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Handshake, ShieldCheck, Sparkles } from "lucide-react";
+import { Handshake, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { PublicLayout } from "@/components/public/public-layout";
 import { PublicMascotSpot } from "@/components/public/public-mascot-spot";
 import { CommunityProfilesSection, PartnersSection } from "@/components/public/community-sections";
@@ -40,14 +41,7 @@ function ComunidadePage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="grid lg:grid-cols-[1fr_260px] gap-8 items-center">
-          <div>
-            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">{c.eyebrow}</div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight">{c.title}</h1>
-            <p className="text-muted-foreground mt-3 max-w-2xl">{c.description}</p>
-          </div>
-          <PublicMascotSpot placement={c.placement} className="hidden lg:flex" />
-        </div>
+        <PageHero icon={Users} eyebrow={c.eyebrow} title={c.title} description={c.description} aside={<PublicMascotSpot placement={c.placement} className="hidden lg:flex" />} />
 
         <Tabs value={aba} onValueChange={(v) => navigate({ search: { aba: v as Aba }, replace: true })} className="mt-8">
           <TabsList>

@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -60,11 +61,9 @@ function CandidaturasPage() {
 
   return (
     <DashboardShell title="Minhas Candidaturas" description="Histórico das vagas para as quais você se candidatou.">
-      {(!user || isLoading) && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {(!user || isLoading) && <LoadingState />}
       {!isLoading && apps.length === 0 && (
-        <div className="glass rounded-xl p-10 text-center text-muted-foreground">
-          Você ainda não se candidatou a nenhuma vaga.
-        </div>
+        <EmptyState title="Você ainda não se candidatou a nenhuma vaga" />
       )}
       <div className="space-y-3">
         {apps.map((a) => {
