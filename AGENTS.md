@@ -10,3 +10,5 @@
 - Jobs have `application_type`: recruiters = `interna`, plain members = `externa` + pending approval (DB trigger). Candidate resume data lives in `candidate_profiles` + private `resumes` bucket; contact/resume access only via `can_view_candidate_contact` — why: personal data goes only to the job owner, admins, or recruiters the member opted into.
 - Blocked users lose all access (restrictive RLS, role helpers, Auth ban). New tables with RLS need the "Bloqueado sem acesso" restrictive policy.
 - Read events with `EVENT_COLUMNS` (never `select("*")`); `online_link` only via `get_event_online_link` — why: only approved attendees and staff may see it. Event registrations are `event_registrations`; `user_event_interests` is history only.
+- AI autofill is off unless `public_site_settings.modules.ai_autofill` is true (admin toggle); server functions enforce it with `assertAiEnabled` — why: the AI is not fully working yet.
+- Job/event `content_status` is rascunho | publicado | pausado | encerrado (there is no "arquivado").

@@ -302,7 +302,8 @@ function EventosAdminPage() {
                   <SelectContent>
                     <SelectItem value="rascunho">Rascunho</SelectItem>
                     <SelectItem value="publicado">Publicado</SelectItem>
-                    <SelectItem value="arquivado">Arquivado</SelectItem>
+                    <SelectItem value="pausado">Pausado</SelectItem>
+                    <SelectItem value="encerrado">Encerrado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

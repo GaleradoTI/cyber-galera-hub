@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAiEnabled } from "@/lib/ai-guard";
 
 async function callGateway(systemPrompt: string, userPrompt: string, json = false): Promise<string> {
   // Mesmo cliente das notícias (autentica sozinho no gateway); evita depender de LOVABLE_API_KEY.
@@ -35,7 +36,8 @@ const JobInput = z.object({
 export const generateJobDescription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => JobInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAiEnabled(context.supabase);
     const sys =
       "Você é um redator de vagas de tecnologia em pt-BR. Gere uma descrição clara, objetiva, sem exageros, com tom profissional e acolhedor. Estruture em seções curtas: Sobre a vaga, Responsabilidades, Requisitos, Diferenciais. Retorne apenas o texto markdown da descrição.";
     const user = `Crie a descrição para a vaga abaixo:
@@ -56,7 +58,8 @@ const TagsInput = z.object({
 export const suggestTechTags = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => TagsInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAiEnabled(context.supabase);
     const sys =
       "Você extrai tech tags de um texto livre em pt-BR. Retorne APENAS um JSON com a chave 'tags' contendo um array de no máximo 12 strings curtas (1-2 palavras cada), em minúsculo, sem duplicatas, focado em linguagens, frameworks, bancos, cloud e ferramentas. Sem texto adicional.";
     const user = `Área: ${data.work_area ?? "-"}\nBio: ${data.bio}`;
@@ -114,7 +117,8 @@ const urlStr = (v: unknown) => (typeof v === "string" && /^https?:\/\//i.test(v.
 export const extractEventFromText = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ExtractInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAiEnabled(context.supabase);
     const today = new Date().toISOString().slice(0, 10);
     const sys = `Você extrai dados de eventos de tecnologia a partir de textos livres em pt-BR. Hoje é ${today}. Responda APENAS um JSON com as chaves:
 name, theme, description (markdown organizado: resumo, para quem é, o que vai rolar), category (Workshop|Palestra|Meetup|Hackathon|Live|Outro), event_date (YYYY-MM-DD), event_time (HH:MM), end_time (HH:MM), modality (online|presencial|hibrido), address (endereço físico completo), online_link (link de transmissão), location_or_link (página oficial/inscrição), max_attendees (número), speakers ([{name, topic}]), schedule ([{time: "HH:MM", end: "HH:MM", title, speaker?, room?}]). Para cada item da grade, preencha "end" com o horário de término; se não estiver explícito, use o início do próximo item; no último item use o término do evento (end_time). end_time = término do último item da grade quando não informado.
@@ -147,7 +151,8 @@ Use null quando não houver a informação. Nunca invente datas, links ou endere
 export const extractJobFromText = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => ExtractInput.parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    await assertAiEnabled(context.supabase);
     const sys = `Você extrai dados de vagas de tecnologia a partir de textos livres em pt-BR. Responda APENAS um JSON com as chaves:
 title, company, location, seniority (estagio|junior|pleno|senior|especialista), modality (remoto|hibrido|presencial), apply_url (link ou mailto), technologies (array de até 15 strings curtas), short_description (1-2 frases), description (markdown com seções: Sobre a vaga, Responsabilidades, Requisitos, Diferenciais, Benefícios — só com o que estiver no texto).
 Use null quando não houver a informação. Nunca invente empresa, links ou salários.`;

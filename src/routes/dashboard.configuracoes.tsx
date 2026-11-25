@@ -909,6 +909,7 @@ function HistoryCard({ onReverted }: { onReverted: () => void }) {
 function ModulesCard({ setting, onSaved }: { setting: Setting; onSaved: () => void }) {
   const [draft, setDraft] = useState<Record<string, any>>(setting.setting_value ?? {});
   const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
 
   const save = async () => {
     setSaving(true);
@@ -916,10 +917,16 @@ function ModulesCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Módulos atualizados.");
+    qc.invalidateQueries({ queryKey: ["site-modules"] });
     onSaved();
   };
 
   const MODULES: { key: string; label: string; description: string }[] = [
+    {
+      key: "ai_autofill",
+      label: "Preencher com IA",
+      description: "Mostra o preenchimento automático em vagas, eventos e notícias. Antes de ligar, configure a chave LOVABLE_API_KEY no servidor e faça um teste.",
+    },
     {
       key: "raffles",
       label: "Rifas",
@@ -942,7 +949,7 @@ function ModulesCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
               <div className="text-sm font-bold">{m.label}</div>
               <p className="text-xs text-muted-foreground">{m.description}</p>
             </div>
-            <Switch checked={!!draft[m.key]} onCheckedChange={(v) => setDraft({ ...draft, [m.key]: v })} />
+            <Switch aria-label={m.label} checked={!!draft[m.key]} onCheckedChange={(v) => setDraft({ ...draft, [m.key]: v })} />
           </div>
         ))}
       </div>

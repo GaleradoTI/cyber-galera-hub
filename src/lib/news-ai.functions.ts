@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertAiEnabled } from "@/lib/ai-guard";
 
 const newsOutput = z.object({
   title: z.string().trim().min(2).max(160),
@@ -11,6 +12,7 @@ export const extractNewsFromText = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((v: unknown) => z.object({ text: z.string().trim().min(20).max(15000) }).parse(v))
   .handler(async ({ data, context }) => {
+    await assertAiEnabled(context.supabase);
     const [admin, create, edit] = await Promise.all([
       context.supabase.rpc("is_admin_or_super", { _user_id: context.userId }),
       context.supabase.rpc("has_ambassador_permission", { _user_id: context.userId, _area: "noticias:criar" }),

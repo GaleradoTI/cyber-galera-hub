@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type SiteModules = { raffles?: boolean };
+export type SiteModules = { raffles?: boolean; ai_autofill?: boolean };
 
 /** Reads the optional-modules toggle stored in public_site_settings. */
 export function useSiteModules() {
@@ -17,5 +17,5 @@ export function useSiteModules() {
       return (data?.setting_value ?? {}) as SiteModules;
     },
   });
-  return { modules: data ?? {}, rafflesEnabled: !!data?.raffles, loading: isLoading };
+  return { modules: data ?? {}, rafflesEnabled: !!data?.raffles, aiAutofillEnabled: !!data?.ai_autofill, loading: isLoading };
 }

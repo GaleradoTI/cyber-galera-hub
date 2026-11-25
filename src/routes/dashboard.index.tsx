@@ -1,3 +1,4 @@
+import { RecruiterHome } from "@/components/jobs/recruiter-home";
 import { todayBR } from "@/lib/events";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -199,67 +200,6 @@ function MemberHome({ userId, techTags, role }: { userId: string; techTags: stri
 }
 
 /* ===================== RECRUITER ===================== */
-
-function RecruiterHome({ userId }: { userId: string }) {
-  const { data: jobs = [] } = useQuery({
-    queryKey: ["rec-jobs", userId],
-    queryFn: async () => {
-      const { data } = await supabase.from("jobs").select("id,title,status").eq("created_by", userId);
-      return data ?? [];
-    },
-  });
-  const jobIds = jobs.map((j: any) => j.id);
-
-  const { data: apps = [] } = useQuery({
-    queryKey: ["rec-apps", jobIds.join(",")],
-    enabled: jobIds.length > 0,
-    queryFn: async () => {
-      const { data } = await supabase.from("job_applications").select("id,status,job_id,created_at").in("job_id", jobIds);
-      return data ?? [];
-    },
-  });
-
-  const funnel = useMemo(() => {
-    const buckets = { enviada: 0, em_analise: 0, contratado: 0, rejeitada: 0 } as Record<string, number>;
-    apps.forEach((a: any) => { buckets[a.status] = (buckets[a.status] ?? 0) + 1; });
-    return buckets;
-  }, [apps]);
-
-  const oneWeekAgo = useMemo(() => Date.now() - 7 * 24 * 60 * 60 * 1000, []);
-  const newThisWeek = apps.filter((a: any) => new Date(a.created_at).getTime() > oneWeekAgo).length;
-
-  return (
-    <>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat icon={Inbox} label="Enviadas" value={funnel.enviada ?? 0} />
-        <Stat icon={ClipboardList} label="Em análise" value={funnel.em_analise ?? 0} />
-        <Stat icon={CheckCheck} label="Contratado" value={funnel.contratado ?? 0} />
-        <Stat icon={X} label="Rejeitada" value={funnel.rejeitada ?? 0} />
-      </div>
-
-      <Section title="Resumo da semana">
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div className="glass rounded-xl p-5 border border-primary/20">
-            <UserPlus className="h-5 w-5 text-primary" />
-            <div className="text-2xl font-black text-gradient-neon mt-2">{newThisWeek}</div>
-            <div className="text-xs text-muted-foreground">Candidaturas novas nos últimos 7 dias</div>
-          </div>
-          <div className="glass rounded-xl p-5 border border-secondary/20">
-            <Briefcase className="h-5 w-5 text-secondary" />
-            <div className="text-2xl font-black text-gradient-neon mt-2">{jobs.filter((j: any) => j.status === "publicado").length}</div>
-            <div className="text-xs text-muted-foreground">Suas vagas publicadas (de {jobs.length})</div>
-          </div>
-        </div>
-      </Section>
-
-      <div className="grid sm:grid-cols-3 gap-3 mt-6">
-        <QuickAction to="/dashboard/vagas" icon={Plus} title="Nova vaga" desc="Publique uma oportunidade." />
-        <QuickAction to="/dashboard/candidatos" icon={Users} title="Candidatos" desc="Veja quem está em busca." />
-        <QuickAction to="/dashboard/mensagens" icon={Inbox} title="Mensagens" desc="Fale direto com talentos." />
-      </div>
-    </>
-  );
-}
 
 /* ===================== ADMIN ===================== */
 

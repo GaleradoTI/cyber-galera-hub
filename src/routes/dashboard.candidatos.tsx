@@ -1,12 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, MessageSquare, Download } from "lucide-react";
+import { Briefcase, Download, Eye, Inbox, MessageSquare, Search, UserSearch } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
@@ -14,12 +13,17 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CandidateDialog } from "@/components/jobs/candidate-dialog";
 import { ApplicantsPanel } from "@/components/jobs/applicants-panel";
+import { EmptyState, PersonAvatar, TagList } from "@/components/jobs/shared";
 
-export const Route = createFileRoute("/dashboard/candidatos")({ component: CandidatosPage });
+export const Route = createFileRoute("/dashboard/candidatos")({
+  validateSearch: (s: Record<string, unknown>): { vaga?: string } => (typeof s.vaga === "string" ? { vaga: s.vaga } : {}),
+  component: CandidatosPage,
+});
 
 type Candidate = {
   user_id: string;
   display_name: string;
+  avatar_url?: string | null;
   bio: string | null;
   work_area: string | null;
   looking_for_job: boolean;
@@ -36,6 +40,8 @@ function CandidatosPage() {
   const [tech, setTech] = useState("all");
   const [viewing, setViewing] = useState<string | null>(null);
   const seesApplications = isAdmin || isRecruiter;
+  const { vaga } = Route.useSearch();
+  const setVaga = (id: string) => navigate({ to: "/dashboard/candidatos", search: id === "all" ? {} : { vaga: id }, replace: true });
 
   useEffect(() => {
     if (rolesReady && areasReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
@@ -84,11 +90,11 @@ function CandidatosPage() {
       <Tabs key={seesApplications ? "com-candidaturas" : "so-talentos"} defaultValue={seesApplications ? "candidaturas" : "talentos"}>
         {seesApplications && (
           <TabsList className="mb-4">
-            <TabsTrigger value="candidaturas">Candidaturas recebidas</TabsTrigger>
-            <TabsTrigger value="talentos">Banco de talentos</TabsTrigger>
+            <TabsTrigger value="candidaturas" className="gap-1.5"><Inbox className="h-4 w-4" /> Candidaturas recebidas</TabsTrigger>
+            <TabsTrigger value="talentos" className="gap-1.5"><UserSearch className="h-4 w-4" /> Banco de talentos</TabsTrigger>
           </TabsList>
         )}
-        {seesApplications && <TabsContent value="candidaturas"><ApplicantsPanel /></TabsContent>}
+        {seesApplications && <TabsContent value="candidaturas"><ApplicantsPanel job={vaga ?? "all"} onJobChange={setVaga} /></TabsContent>}
         <TabsContent value="talentos">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[220px] max-w-md">
@@ -138,44 +144,28 @@ function CandidatosPage() {
 
       {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
 
-      <div className="grid md:grid-cols-2 gap-4">
+      {!isLoading && filtered.length === 0 && <EmptyState icon={UserSearch} title="Nenhum candidato encontrado" text="Ajuste a busca ou os filtros." />}
+
+      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {filtered.map((c) => (
-          <div key={c.user_id} className="glass rounded-xl p-5 border border-primary/20">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-black text-background">
-                  {c.display_name?.slice(0, 1).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-bold truncate">{c.display_name}</div>
-                  {c.work_area && <div className="text-xs text-muted-foreground truncate">{c.work_area}</div>}
-                </div>
+          <article key={c.user_id} className="glass rounded-xl p-4 border border-primary/20 flex flex-col gap-3 hover:border-primary/50 transition">
+            <div className="flex items-center gap-3 min-w-0">
+              <PersonAvatar name={c.display_name ?? "?"} url={c.avatar_url} />
+              <div className="min-w-0">
+                <h3 className="font-bold truncate">{c.display_name}</h3>
+                <p className="flex items-center gap-1 text-xs text-muted-foreground truncate"><Briefcase className="h-3 w-3 shrink-0" /> {c.work_area || "Área não informada"}</p>
               </div>
-              <Badge variant="outline" className="border-primary/40 text-primary text-[10px]">EM BUSCA</Badge>
             </div>
-            {c.bio && <p className="text-sm text-muted-foreground mt-3 line-clamp-3">{c.bio}</p>}
-
-            {(c.tech_tags ?? []).length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-3">
-                {c.tech_tags!.map((t) => (
-                  <span key={t} className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary border border-primary/30">{t}</span>
-                ))}
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2 mt-4">
-              <Button size="sm" onClick={() => setViewing(c.user_id)}>Ver perfil completo</Button>
+            {c.bio && <p className="text-sm text-muted-foreground line-clamp-3">{c.bio}</p>}
+            <TagList tags={c.tech_tags} max={6} />
+            <div className="mt-auto flex gap-2 border-t border-border/40 pt-3">
+              <Button size="sm" className="flex-1" onClick={() => setViewing(c.user_id)}><Eye className="h-3.5 w-3.5 mr-1" /> Ver perfil</Button>
               <Button asChild size="sm" variant="secondary">
-                <Link to="/dashboard/mensagens" search={{ to: c.user_id }}>
-                  <MessageSquare className="h-3 w-3 mr-1" /> Mensagem
-                </Link>
+                <Link to="/dashboard/mensagens" search={{ to: c.user_id }}><MessageSquare className="h-3.5 w-3.5 mr-1" /> Mensagem</Link>
               </Button>
             </div>
-          </div>
+          </article>
         ))}
-        {!isLoading && filtered.length === 0 && (
-          <p className="text-sm text-muted-foreground col-span-2 text-center py-8">Nenhum candidato encontrado.</p>
-        )}
       </div>
         </TabsContent>
       </Tabs>
