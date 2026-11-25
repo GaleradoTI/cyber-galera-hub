@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -48,7 +49,7 @@ function SettingsPage() {
 
   return (
     <DashboardShell title="Configurações do Site" description="Gerencie SEO, favicon, hero, contatos e demais textos públicos.">
-      {isLoading && <div className="text-muted-foreground">Carregando…</div>}
+      {isLoading && <LoadingState />}
       {!isLoading && (
         <Tabs defaultValue="seo" className="w-full">
           <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/40 p-1">
@@ -825,9 +826,9 @@ function HistoryCard({ onReverted }: { onReverted: () => void }) {
         </div>
       </div>
 
-      {isLoading && <p className="text-xs text-muted-foreground">Carregando…</p>}
+      {isLoading && <LoadingState compact />}
       {!isLoading && rows.length === 0 && (
-        <p className="text-xs text-muted-foreground text-center py-6">Nenhuma versão anterior ainda. Salve uma alteração para começar a gerar histórico.</p>
+        <EmptyState compact title="Nenhuma versão anterior ainda. Salve uma alteração para começar a gerar histórico" />
       )}
       {!isLoading && rows.length > 0 && (
         <div className="space-y-2">
@@ -921,7 +922,19 @@ function ModulesCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
     onSaved();
   };
 
-  const MODULES: { key: string; label: string; description: string }[] = [
+  const MODULES: { key: string; label: string; description: string; defaultOn?: boolean }[] = [
+    {
+      key: "drops",
+      label: "Drops",
+      description: "Página pública de Drops, o menu e a gestão de lançamentos.",
+      defaultOn: true,
+    },
+    {
+      key: "projects",
+      label: "Projetos e Squads",
+      description: "Vitrine pública de projetos, Meus Projetos, Explorar Projetos e a gestão de squads.",
+      defaultOn: true,
+    },
     {
       key: "ai_autofill",
       label: "Preencher com IA",
@@ -949,7 +962,7 @@ function ModulesCard({ setting, onSaved }: { setting: Setting; onSaved: () => vo
               <div className="text-sm font-bold">{m.label}</div>
               <p className="text-xs text-muted-foreground">{m.description}</p>
             </div>
-            <Switch aria-label={m.label} checked={!!draft[m.key]} onCheckedChange={(v) => setDraft({ ...draft, [m.key]: v })} />
+            <Switch aria-label={m.label} checked={draft[m.key] ?? !!m.defaultOn} onCheckedChange={(v) => setDraft({ ...draft, [m.key]: v })} />
           </div>
         ))}
       </div>

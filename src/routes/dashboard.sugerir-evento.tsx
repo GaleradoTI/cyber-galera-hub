@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -85,7 +86,7 @@ function SugerirEventoPage() {
 
   return (
     <DashboardShell title="Sugerir evento" description="Envie um evento para a comunidade. Um administrador irá revisar antes de publicar.">
-      {!user || !rolesReady ? <div className="text-muted-foreground">Carregando…</div> : (
+      {!user || !rolesReady ? <LoadingState /> : (
         <div className="grid gap-6">
           <section className="glass rounded-xl p-5 border border-primary/20">
             <div className="grid sm:grid-cols-2 gap-3">

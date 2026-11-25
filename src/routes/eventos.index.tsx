@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState, PageHero } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -9,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { X, CalendarDays } from "lucide-react";
 import { EVENT_COLUMNS, todayBR } from "@/lib/events";
 
 export const Route = createFileRoute("/eventos/")({
@@ -69,14 +70,7 @@ function EventosPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16">
-        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
-          <div>
-            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2">AGENDA</div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight">Próximos eventos</h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">Encontros, lives e workshops abertos para a comunidade.</p>
-          </div>
-          <PublicMascotSpot placement="events" className="hidden lg:flex" />
-        </div>
+        <PageHero icon={CalendarDays} eyebrow="AGENDA" title="Próximos eventos" description="Encontros, lives e workshops abertos para a comunidade." aside={<PublicMascotSpot placement="events" className="hidden lg:flex" />} />
 
         <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-4 gap-2">
           <Input className="md:col-span-2 lg:col-span-1" placeholder="Buscar evento..." value={q} onChange={(e) => setQ(e.target.value)} />
@@ -113,9 +107,9 @@ function EventosPage() {
         </div>
 
         {isLoading ? (
-          <p className="text-muted-foreground mt-10">Carregando...</p>
+          <LoadingState />
         ) : filtered.length === 0 ? (
-          <p className="text-muted-foreground mt-10">Nenhum evento encontrado.</p>
+          <div className="mt-10"><EmptyState title="Nenhum evento encontrado" /></div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
             {filtered.map((e: any) => <EventCard key={e.id} event={e} />)}

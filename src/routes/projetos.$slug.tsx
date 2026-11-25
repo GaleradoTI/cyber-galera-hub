@@ -1,3 +1,4 @@
+import { withModule } from "@/components/brand/module-gate";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -12,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/projetos/$slug")({
-  component: PublicProjectPage,
+  component: withModule(PublicProjectPage, "projects", "public"),
   head: ({ params }) => ({
     meta: [
       { title: `Projeto ${params.slug} — Galera do T.I.` },

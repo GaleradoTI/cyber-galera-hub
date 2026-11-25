@@ -19,6 +19,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         const SUPABASE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
         let baseUrl = FALLBACK_URL;
+        let showProjects = true;
         const dynamicEntries: SitemapEntry[] = [];
 
         if (SUPABASE_URL && SUPABASE_KEY) {
@@ -26,14 +27,14 @@ export const Route = createFileRoute("/sitemap.xml")({
           const { data: settings } = await supabase
             .from("public_site_settings")
             .select("setting_key, setting_value")
-            .in("setting_key", ["seo"]);
+            .in("setting_key", ["seo", "modules"]);
+          showProjects = (settings?.find((s: any) => s.setting_key === "modules")?.setting_value as { projects?: boolean } | undefined)?.projects !== false;
           const seo = (settings?.find((s: any) => s.setting_key === "seo")?.setting_value ?? {}) as Record<string, string>;
           if (seo.site_url) baseUrl = seo.site_url.replace(/\/$/, "");
 
-          const { data: projects } = await supabase
-            .from("projects")
-            .select("slug, updated_at")
-            .eq("is_public", true);
+          const { data: projects } = showProjects
+            ? await supabase.from("projects").select("slug, updated_at").eq("is_public", true)
+            : { data: [] };
           for (const p of projects ?? []) {
             dynamicEntries.push({
               path: `/projetos/${p.slug}`,
@@ -59,7 +60,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/cadastro", changefreq: "yearly", priority: "0.5" },
         ];
 
-        const all = [...staticEntries, ...dynamicEntries];
+        const all = [...staticEntries.filter((e) => showProjects || e.path !== "/projetos"), ...dynamicEntries];
         const urls = all.map((e) =>
           [
             `  <url>`,

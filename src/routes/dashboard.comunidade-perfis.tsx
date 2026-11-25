@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -152,7 +153,7 @@ function CommunityProfilesAdminPage() {
         )}
       </div>
 
-      {isLoading ? <p className="text-muted-foreground text-sm">Carregando…</p> : (
+      {isLoading ? <LoadingState /> : (
         <>
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
           {rows.map((p) => (
@@ -328,7 +329,7 @@ function ProfileDetailDialog({
                   <div className="text-xs text-muted-foreground">{linked.email}</div>
                 </div>
               ) : (
-                <div className="text-xs text-muted-foreground italic">Nenhum usuário vinculado.</div>
+                <EmptyState compact title="Nenhum usuário vinculado" />
               )}
 
               {canManage && (
@@ -344,7 +345,7 @@ function ProfileDetailDialog({
                           <div className="text-muted-foreground">{p.email}</div>
                         </button>
                       ))}
-                      {results.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">Nenhum usuário</p>}
+                      {results.length === 0 && <EmptyState compact title="Nenhum usuário" />}
                     </div>
                   )}
                 </div>

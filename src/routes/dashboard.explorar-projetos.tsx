@@ -1,3 +1,4 @@
+import { withModule } from "@/components/brand/module-gate";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
-export const Route = createFileRoute("/dashboard/explorar-projetos")({ component: ExplorarProjetosPage });
+export const Route = createFileRoute("/dashboard/explorar-projetos")({ component: withModule(ExplorarProjetosPage, "projects", "dashboard") });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; status: string; tech_stack: string[] | null };
 type Squad = { id: string; project_id: string; name: string; description: string | null; recruiting_status: "open" | "closed" | "waitlist" };

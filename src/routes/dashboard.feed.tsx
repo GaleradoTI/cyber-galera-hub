@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -228,7 +229,7 @@ function FeedPage() {
       </section>
 
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Carregando…</p>
+        <LoadingState />
       ) : (
         <div className="space-y-3">
           {posts.map((post) => (
@@ -245,7 +246,7 @@ function FeedPage() {
             />
           ))}
           {posts.length === 0 && (
-            <div className="glass rounded-xl p-8 text-center text-muted-foreground">Nenhum post ainda.</div>
+            <EmptyState title="Nenhum post ainda" />
           )}
         </div>
       )}

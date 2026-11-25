@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -125,8 +126,8 @@ function InscricoesPage() {
             </div>
           )}
 
-          {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
-          {!isLoading && list.length === 0 && <p className="text-muted-foreground text-sm py-8 text-center">Nenhuma inscrição.</p>}
+          {isLoading && <LoadingState />}
+          {!isLoading && list.length === 0 && <EmptyState title="Nenhuma inscrição" />}
           <div className="grid gap-2">
             {list.map((r) => (
               <div key={r.id} className="glass rounded-xl p-3 border border-border/40 flex flex-col sm:flex-row sm:items-center gap-3">

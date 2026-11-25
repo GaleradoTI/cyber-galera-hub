@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, ExternalLink, Trash2 } from "lucide-react";
@@ -36,15 +37,11 @@ function MinhasVagasPage() {
 
   return (
     <DashboardShell title="Vagas Salvas" description="Sua coleção pessoal de oportunidades.">
-      {(!user || isLoading) && <div className="text-muted-foreground">Carregando…</div>}
+      {(!user || isLoading) && <LoadingState />}
       {!isLoading && data.length === 0 && (
-        <div className="glass rounded-xl p-8 text-center">
-          <Heart className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">Você ainda não salvou nenhuma vaga.</p>
-          <Link to="/vagas" className="inline-block mt-4">
-            <Button>Ver vagas disponíveis</Button>
-          </Link>
-        </div>
+        <EmptyState icon={Heart} title="Você ainda não salvou nenhuma vaga">
+          <Button asChild><Link to="/vagas">Ver vagas disponíveis</Link></Button>
+        </EmptyState>
       )}
       <div className="grid gap-3">
         {data.map((row: any) => {

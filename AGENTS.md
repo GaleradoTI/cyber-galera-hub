@@ -12,3 +12,5 @@
 - Read events with `EVENT_COLUMNS` (never `select("*")`); `online_link` only via `get_event_online_link` — why: only approved attendees and staff may see it. Event registrations are `event_registrations`; `user_event_interests` is history only.
 - AI autofill is off unless `public_site_settings.modules.ai_autofill` is true (admin toggle); server functions enforce it with `assertAiEnabled` — why: the AI is not fully working yet.
 - Job/event `content_status` is rascunho | publicado | pausado | encerrado (there is no "arquivado").
+- Shared visual identity lives in `src/components/brand/ui-kit.tsx` (PageHero, IconTile, StatTile, EmptyState, LoadingState); dashboard headers take icon/area from the sidebar item.
+- Drops and Projects are on unless `modules.drops`/`modules.projects` is false; wrap their routes with `withModule` and hide their links. This is UI gating only (data rules unchanged).

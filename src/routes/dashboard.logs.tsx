@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { Fragment, useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -213,8 +214,8 @@ function LogsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Carregando…</TableCell></TableRow>}
-            {!isLoading && logs.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">Nenhum log com esses filtros.</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={6}><LoadingState compact /></TableCell></TableRow>}
+            {!isLoading && logs.length === 0 && <TableRow><TableCell colSpan={6}><EmptyState compact title="Nenhum log com esses filtros" /></TableCell></TableRow>}
             {logs.map((l) => (
               <TableRow key={l.id}>
                 <TableCell className="text-xs text-muted-foreground">{new Date(l.created_at).toLocaleString("pt-BR")}</TableCell>

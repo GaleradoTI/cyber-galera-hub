@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Pencil, Save, X } from "lucide-react";
@@ -97,7 +98,7 @@ export function DropVariantsDialog({
         {!editing && (
           <>
             <div className="flex justify-end"><Button size="sm" onClick={startNew}><Plus className="h-3 w-3 mr-1" /> Nova variante</Button></div>
-            {isLoading && <p className="text-xs text-muted-foreground">Carregando…</p>}
+            {isLoading && <LoadingState compact />}
             <div className="space-y-2">
               {variants.map((v) => (
                 <div key={v.id} className="rounded-md border border-border/40 p-3 bg-muted/10 flex items-start gap-3">
@@ -118,7 +119,7 @@ export function DropVariantsDialog({
                 </div>
               ))}
               {!isLoading && variants.length === 0 && (
-                <p className="text-xs text-muted-foreground text-center py-6">Nenhuma variante ainda. O drop usará os tamanhos definidos no cadastro principal.</p>
+                <EmptyState compact title="Nenhuma variante ainda. O drop usará os tamanhos definidos no cadastro principal" />
               )}
             </div>
           </>

@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -94,7 +95,7 @@ function EventPage() {
     refresh();
   };
 
-  if (isLoading) return <PublicLayout><div className="container mx-auto px-4 py-20 text-muted-foreground">Carregando…</div></PublicLayout>;
+  if (isLoading) return <PublicLayout><LoadingState /></PublicLayout>;
   if (!ev || ev.status !== "publicado") {
     return (
       <PublicLayout>

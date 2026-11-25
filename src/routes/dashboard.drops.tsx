@@ -1,3 +1,5 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
+import { withModule } from "@/components/brand/module-gate";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,7 +22,7 @@ import { DateField } from "@/components/ui/date-field";
 import { SizeManager } from "@/components/dashboard/size-manager";
 import { DropVariantsDialog } from "@/components/dashboard/drop-variants-editor";
 
-export const Route = createFileRoute("/dashboard/drops")({ component: DropsAdminPage });
+export const Route = createFileRoute("/dashboard/drops")({ component: withModule(DropsAdminPage, "drops", "dashboard") });
 
 type Drop = {
   id: string;
@@ -187,7 +189,7 @@ function DropsAdminPage() {
         <Button onClick={startNew}><Plus className="h-4 w-4 mr-1" /> Novo drop</Button>
       </div>
 
-      {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {isLoading && <LoadingState />}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {drops.map((d) => (
@@ -359,7 +361,7 @@ function DropsAdminPage() {
                 <div className="text-[10px] text-muted-foreground/70 mt-1">{new Date(i.created_at).toLocaleString("pt-BR")}</div>
               </div>
             ))}
-            {(interests as any[]).length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhum interessado ainda.</p>}
+            {(interests as any[]).length === 0 && <EmptyState compact title="Nenhum interessado ainda" />}
           </div>
         </DialogContent>
       </Dialog>

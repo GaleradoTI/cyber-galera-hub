@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -140,12 +141,12 @@ function NoticiasPage() {
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Carregando…</TableCell>
+                <TableCell colSpan={5}><LoadingState compact /></TableCell>
               </TableRow>
             )}
             {!isLoading && news.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">Nenhuma notícia ainda.</TableCell>
+                <TableCell colSpan={5}><EmptyState compact title="Nenhuma notícia ainda" /></TableCell>
               </TableRow>
             )}
             {news.filter((n) => (filter === "all" || n.status === filter) && `${n.title} ${n.content}`.toLowerCase().includes(search.toLowerCase())).map((n) => {

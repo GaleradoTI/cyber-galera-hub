@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/brand/ui-kit";
 import { AmbassadorAccessDialog } from "@/components/admin/ambassador-access-dialog";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -514,7 +515,7 @@ function UsuariosPage() {
         </div>
       )}
       {!isLoading && !loadError && filtered.length === 0 && (
-        <div className="glass rounded-xl p-8 text-center text-muted-foreground">Nenhum usuário encontrado.</div>
+        <EmptyState title="Nenhum usuário encontrado" />
       )}
 
       {/* Mobile: cards */}

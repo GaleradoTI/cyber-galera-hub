@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -111,8 +112,8 @@ function DenunciasAdminPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Carregando…</TableCell></TableRow>}
-            {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">Nenhuma denúncia.</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={6}><LoadingState compact /></TableCell></TableRow>}
+            {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={6}><EmptyState compact title="Nenhuma denúncia" /></TableCell></TableRow>}
             {filtered.map((r) => {
               const ent = entityMap[`${r.entity_type}:${r.entity_id}`];
               const rep = reporters[r.reporter_id];

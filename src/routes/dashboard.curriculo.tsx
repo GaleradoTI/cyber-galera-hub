@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/brand/ui-kit";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -169,7 +170,7 @@ function CurriculoPage() {
   return (
     <DashboardShell title="Meu Currículo" description="Essas informações são enviadas ao recrutador quando você se candidata a uma vaga interna.">
       {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
-      {!form && !error && <p className="text-sm text-muted-foreground">Carregando…</p>}
+      {!form && !error && <LoadingState />}
       {form && (
         <div className="grid gap-5 max-w-3xl">
           {missing.length > 0 && (

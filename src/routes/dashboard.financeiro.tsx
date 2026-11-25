@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -233,8 +234,8 @@ function EntriesTab() {
             </tr>
           </thead>
           <tbody>
-            {isLoading && <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">Carregando…</td></tr>}
-            {!isLoading && filtered.length === 0 && <tr><td colSpan={9} className="p-4 text-center text-muted-foreground">Nenhum lançamento encontrado.</td></tr>}
+            {isLoading && <tr><td colSpan={9}><LoadingState compact /></td></tr>}
+            {!isLoading && filtered.length === 0 && <tr><td colSpan={9}><EmptyState compact title="Nenhum lançamento encontrado" /></td></tr>}
             {filtered.map((e) => {
               const km = KIND_META[e.kind];
               const sm = STATUS_META[e.status] ?? STATUS_META.pending;
@@ -518,7 +519,7 @@ function EntryFormDialog({ entry, categories, tags, onClose, onSaved }: {
                         <b>{p.display_name ?? "(sem nome)"}</b> · <span className="text-muted-foreground">{p.email}</span>
                       </button>
                     ))}
-                    {userResults.length === 0 && <div className="p-2 text-xs text-muted-foreground text-center">Nenhum</div>}
+                    {userResults.length === 0 && <EmptyState compact title="Nenhum" />}
                   </div>
                 )}
               </div>
@@ -682,7 +683,7 @@ function TaxonomyTab() {
               <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={() => setDeleteCat(c)}><Trash2 className="h-3 w-3" /></Button>
             </div>
           ))}
-          {categories.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhuma categoria</p>}
+          {categories.length === 0 && <EmptyState compact title="Nenhuma categoria" />}
         </div>
       </div>
 
@@ -707,7 +708,7 @@ function TaxonomyTab() {
               <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" onClick={() => setDeleteTag(t)}><Trash2 className="h-3 w-3" /></Button>
             </div>
           ))}
-          {tags.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhuma tag</p>}
+          {tags.length === 0 && <EmptyState compact title="Nenhuma tag" />}
         </div>
       </div>
 

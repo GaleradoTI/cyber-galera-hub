@@ -1,3 +1,5 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
+import { withModule } from "@/components/brand/module-gate";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +19,7 @@ import { ImageUploader } from "@/components/ui/image-uploader";
 import { DateField } from "@/components/ui/date-field";
 import { formatDateOnly } from "@/lib/utils";
 
-export const Route = createFileRoute("/dashboard/projetos")({ component: ProjetosAdminPage });
+export const Route = createFileRoute("/dashboard/projetos")({ component: withModule(ProjetosAdminPage, "projects", "dashboard") });
 
 type Project = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; banner_url: string | null; status: string; created_at: string; is_public: boolean; tech_stack: string[] };
 type Squad = { id: string; project_id: string; name: string; description: string | null; recruiting_status: "open" | "closed" | "waitlist" };
@@ -343,7 +345,7 @@ function ProjetosAdminPage() {
         </Button>
       </div>
 
-      {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {isLoading && <LoadingState />}
 
       <div className="space-y-4">
         {projects.map((p) => {
@@ -430,14 +432,14 @@ function ProjetosAdminPage() {
                       </Button>
                     </div>
                   ))}
-                  {squads.length === 0 && <p className="text-xs text-muted-foreground col-span-2">Nenhum squad neste projeto ainda.</p>}
+                  {squads.length === 0 && <div className="col-span-2"><EmptyState compact title="Nenhum squad neste projeto ainda" /></div>}
                 </div>
               </div>
             </div>
           );
         })}
         {!isLoading && projects.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum projeto criado ainda.</p>
+          <EmptyState title="Nenhum projeto criado ainda" />
         )}
       </div>
 
@@ -600,7 +602,7 @@ function ProjetosAdminPage() {
                     const q = memberSearch.toLowerCase().trim();
                     return p.display_name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q);
                   }).length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-3">Nenhum usuário encontrado.</p>
+                    <EmptyState compact title="Nenhum usuário encontrado" />
                   )}
                 </div>
               )}
@@ -643,7 +645,7 @@ function ProjetosAdminPage() {
                 </div>
               );
             })}
-            {squadMembers.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Nenhum membro ainda.</p>}
+            {squadMembers.length === 0 && <EmptyState compact title="Nenhum membro ainda" />}
           </div>
         </DialogContent>
       </Dialog>
@@ -673,7 +675,7 @@ function ProjetosAdminPage() {
                 </div>
               </div>
             ))}
-            {goalsForProject.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhuma meta ainda.</p>}
+            {goalsForProject.length === 0 && <EmptyState compact title="Nenhuma meta ainda" />}
           </div>
 
           <div className="border-t border-border/40 pt-3 space-y-2">

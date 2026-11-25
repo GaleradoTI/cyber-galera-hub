@@ -1,3 +1,5 @@
+import { ShieldCheck } from "lucide-react";
+import { PageHero } from "@/components/brand/ui-kit";
 import { createFileRoute } from "@tanstack/react-router";
 import { PublicLayout } from "@/components/public/public-layout";
 import { SITE_CONFIG } from "@/lib/site-config";
@@ -16,8 +18,7 @@ function PrivPage() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-16 max-w-3xl">
-        <h1 className="text-4xl font-black tracking-tight">Política de Privacidade</h1>
-        <p className="text-sm text-muted-foreground mt-2">Versão {SITE_CONFIG.legal.privacyVersion} · Compatível com a LGPD (Lei nº 13.709/2018)</p>
+        <PageHero icon={ShieldCheck} eyebrow="DOCUMENTO" title="Política de Privacidade" description={<>Versão {SITE_CONFIG.legal.privacyVersion} · Compatível com a LGPD (Lei nº 13.709/2018)</>} />
         <div className="prose prose-invert max-w-none mt-8 space-y-4 text-muted-foreground">
           <h2 className="text-xl font-bold text-foreground">1. Dados coletados</h2>
           <p>Coletamos nome de exibição, email, e dados de uso necessários para a operação da plataforma.</p>

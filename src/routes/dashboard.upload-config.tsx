@@ -1,3 +1,4 @@
+import { LoadingState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -99,7 +100,7 @@ function UploadConfigPage() {
         </div>
       </div>
 
-      {isLoading && <p className="text-muted-foreground text-sm">Carregando…</p>}
+      {isLoading && <LoadingState />}
 
       <div className="space-y-4">
         {CONTEXTS.map((ctx) => {

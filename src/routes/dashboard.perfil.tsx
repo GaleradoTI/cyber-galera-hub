@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -345,7 +346,7 @@ function PerfilPage() {
   return (
     <DashboardShell title="Meu Perfil" description="Seu espaço na comunidade: publicações, mídias e conexões.">
       {!user || !rolesReady || isLoading ? (
-        <div className="text-muted-foreground">Carregando…</div>
+        <LoadingState />
       ) : mode === "profile" ? (
         <><MemberTickets userId={user.id} /><ProfileSocial userId={user.id} profile={{ ...profile, ...form }} onOpenSettings={() => setMode("settings")} /></>
       ) : (
@@ -535,7 +536,7 @@ function PerfilPage() {
                   </button>
                 </span>
               ))}
-              {form.tech_tags.length === 0 && <p className="text-xs text-muted-foreground">Nenhuma tag ainda.</p>}
+              {form.tech_tags.length === 0 && <EmptyState compact title="Nenhuma tag ainda" />}
             </div>
           </section>
 

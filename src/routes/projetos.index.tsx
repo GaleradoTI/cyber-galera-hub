@@ -1,3 +1,5 @@
+import { EmptyState, PageHero } from "@/components/brand/ui-kit";
+import { withModule } from "@/components/brand/module-gate";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -18,7 +20,7 @@ export const Route = createFileRoute("/projetos/")({
       { property: "og:description", content: "Conheça os projetos abertos da comunidade GALERA DO T.I." },
     ],
   }),
-  component: ProjetosIndex,
+  component: withModule(ProjetosIndex, "projects", "public"),
 });
 
 type PublicProject = { id: string; name: string; slug: string; description: string | null; cover_url: string | null; tech_stack: string[]; status: string };
@@ -79,18 +81,9 @@ function ProjetosIndex() {
   return (
     <PublicLayout>
       <section className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid lg:grid-cols-[1fr_220px] gap-8 items-center">
-          <div>
-            <div className="text-xs font-bold tracking-[0.3em] text-secondary mb-2 flex items-center gap-2">
-              <Globe className="h-3 w-3" /> COMUNIDADE
-            </div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight">Projetos da galera</h1>
-            <p className="text-muted-foreground mt-3 max-w-2xl">
-              Iniciativas abertas mantidas por squads da comunidade. Veja quem está construindo o quê e quais tecnologias estão sendo usadas.
-            </p>
-          </div>
-          <PublicMascotSpot placement="projects" className="hidden lg:flex" />
-        </div>
+        <PageHero icon={FolderKanban} eyebrow="COMUNIDADE" title="Projetos da galera"
+          description="Iniciativas abertas mantidas por squads da comunidade. Veja quem está construindo o quê e quais tecnologias estão sendo usadas."
+          aside={<PublicMascotSpot placement="projects" className="hidden lg:flex" />} />
 
         <div className="mt-6 grid md:grid-cols-3 gap-2 max-w-3xl">
           <Input className="md:col-span-2" placeholder="Buscar projeto..." value={q} onChange={(e) => setQ(e.target.value)} />
@@ -109,10 +102,7 @@ function ProjetosIndex() {
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-12 glass rounded-xl p-10 text-center">
-            <FolderKanban className="h-10 w-10 mx-auto text-muted-foreground" />
-            <p className="text-muted-foreground mt-3">Nenhum projeto público no momento. Volte em breve.</p>
-          </div>
+          <div className="mt-12"><EmptyState icon={FolderKanban} title="Nenhum projeto público no momento" text="Volte em breve." /></div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
             {filtered.map((p) => (

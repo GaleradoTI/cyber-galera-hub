@@ -1,3 +1,4 @@
+import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -123,7 +124,7 @@ function RafflesAdminPage() {
         <Button onClick={startNew}><Plus className="h-4 w-4 mr-1" /> Nova rifa</Button>
       </div>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+      {isLoading && <LoadingState />}
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {raffles.map((r) => {
@@ -349,7 +350,7 @@ function PrizesDialog({ raffle, userId, onClose }: { raffle: Raffle | null; user
               <Button size="sm" variant="ghost" className="text-destructive" onClick={() => remove(p.id)}><Trash2 className="h-3 w-3" /></Button>
             </div>
           ))}
-          {prizes.length === 0 && <p className="text-xs text-muted-foreground text-center py-4">Nenhum prêmio cadastrado ainda.</p>}
+          {prizes.length === 0 && <EmptyState compact title="Nenhum prêmio cadastrado ainda" />}
         </div>
 
         {draft ? (

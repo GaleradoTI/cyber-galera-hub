@@ -1,3 +1,4 @@
+import { EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -126,7 +127,7 @@ function CargosPage() {
             </div>
           );
         })}
-        {filtered.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">Nenhum cargo encontrado.</p>}
+        {filtered.length === 0 && <EmptyState title="Nenhum cargo encontrado" />}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

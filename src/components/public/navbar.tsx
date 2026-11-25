@@ -1,3 +1,4 @@
+import { useSiteModules } from "@/lib/modules";
 import { useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Menu, X, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
@@ -17,6 +18,9 @@ export function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { isAuthenticated, loading } = useAuth();
+  const { dropsEnabled, projectsEnabled } = useSiteModules();
+  const hidden = [!dropsEnabled && "/drops", !projectsEnabled && "/projetos"];
+  const links = NAV_LINKS.map((l) => (l.children ? { ...l, children: l.children.filter((c) => !hidden.includes(c.to)) } : l));
 
   useEffect(() => { setOpen(false); }, [pathname]);
 
@@ -26,7 +30,7 @@ export function Navbar() {
         <div className="shrink-0"><Logo /></div>
 
         <nav className="hidden md:flex items-center justify-center gap-0.5 lg:gap-1 min-w-0">
-          {NAV_LINKS.map((link) => {
+          {links.map((link) => {
             if (link.children?.length) {
               const active = link.children.some((c) => pathname === c.to);
               return (
@@ -111,7 +115,7 @@ export function Navbar() {
       {open && (
         <div className="md:hidden border-t border-border/40 bg-background/95 backdrop-blur-xl max-h-[calc(100vh-4rem)] overflow-y-auto">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-1">
-            {NAV_LINKS.map((link) => {
+            {links.map((link) => {
               if (link.children?.length) {
                 return (
                   <div key={link.label} className="py-1">
