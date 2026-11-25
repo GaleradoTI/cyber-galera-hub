@@ -175,6 +175,8 @@ export function DashboardShell({ children, title, description }: { children: Rea
         { to: "/vagas", label: "Explorar Vagas", icon: BriefcaseIcon, show: !isAdmin && !isRecruiter },
         { to: "/dashboard/minhas-vagas", label: "Vagas Salvas", icon: Heart, show: !isAdmin && !isRecruiter },
         { to: "/dashboard/candidaturas", label: "Minhas Candidaturas", icon: ClipboardList, show: !isAdmin && !isRecruiter },
+        { to: "/dashboard/curriculo", label: "Meu Currículo", icon: FileText, show: !isAdmin && !isRecruiter },
+        { to: "/dashboard/vagas", label: "Indicar Vaga", icon: Briefcase, show: !isAdmin && !isRecruiter && !(ambOnly && can("vagas")) },
         { to: "/dashboard/meus-eventos", label: "Meus Eventos", icon: Calendar, show: !isAdmin },
         { to: "/dashboard/sugerir-evento", label: "Sugerir Evento", icon: Calendar, show: !isAdmin },
       ],

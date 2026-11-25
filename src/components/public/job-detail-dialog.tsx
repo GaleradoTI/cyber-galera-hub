@@ -8,12 +8,18 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ReportButton } from "@/components/dashboard/report-button";
 import { MarkdownView } from "@/components/ui/markdown-editor";
+import { Textarea } from "@/components/ui/textarea";
+import { db, safeLink, MISSING_FIELD_LABEL } from "@/lib/resume";
 
 export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
   const [saved, setSaved] = useState(false);
   const [applied, setApplied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [missing, setMissing] = useState<string[]>([]);
+
+  useEffect(() => { setMissing([]); setMessage(""); }, [job?.id, open]);
 
   useEffect(() => {
     if (!job || !user) { setSaved(false); setApplied(false); return; }
@@ -38,10 +44,17 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
     setBusy(false);
   };
 
+  const external = job.application_type === "externa";
+  const externalUrl = external ? safeLink(job.apply_url) : null;
+  const ownJob = !!user && job.created_by === user.id;
+
   const apply = async () => {
     if (!user) return;
     setBusy(true);
-    const { error } = await supabase.from("job_applications").insert({ user_id: user.id, job_id: job.id });
+    const check = await db.rpc("my_missing_application_fields");
+    if (check.error) { setBusy(false); return toast.error(check.error.message); }
+    if ((check.data ?? []).length > 0) { setBusy(false); setMissing(check.data); return; }
+    const { error } = await supabase.from("job_applications").insert({ user_id: user.id, job_id: job.id, message: message.trim() || null });
     setBusy(false);
     if (error) return toast.error(error.message);
     setApplied(true);
@@ -84,8 +97,25 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
           </div>
         )}
 
+        {missing.length > 0 && (
+          <div className="rounded-lg border border-secondary/40 bg-secondary/10 p-3 text-sm">
+            <p className="font-bold">Complete seu currículo para se candidatar:</p>
+            <ul className="list-disc pl-5 my-1">{missing.map((m) => <li key={m}>{MISSING_FIELD_LABEL[m] ?? m}</li>)}</ul>
+            <Button asChild size="sm" className="mt-1"><Link to="/dashboard/curriculo">Completar ou importar currículo</Link></Button>
+          </div>
+        )}
+        {!external && isAuthenticated && !applied && !ownJob && (
+          <div>
+            <Textarea rows={2} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Mensagem para o recrutador (opcional)" />
+            <p className="text-[11px] text-muted-foreground mt-1">Ao se candidatar, seu contato e currículo são compartilhados com o responsável pela vaga e a administração.</p>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
-          {isAuthenticated && (
+          {!external && !isAuthenticated && (
+            <Button asChild variant="neon" className="flex-1 min-w-[180px]"><Link to="/login">Entrar para se candidatar</Link></Button>
+          )}
+          {!external && isAuthenticated && !ownJob && (
             applied ? (
               <Button variant="default" disabled className="flex-1 min-w-[180px]">
                 <CheckCircle2 className="h-4 w-4 mr-2" /> Candidatura enviada
@@ -96,10 +126,10 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
               </Button>
             )
           )}
-          {job.apply_url && (
-            <a href={job.apply_url} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline"><ExternalLink className="h-4 w-4 mr-2" /> Site da vaga</Button>
-            </a>
+          {externalUrl && (
+            <Button asChild variant="neon" className="flex-1 min-w-[180px]">
+              <a href={externalUrl} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Candidatar-se no site da vaga</a>
+            </Button>
           )}
           {isAuthenticated ? (
             <Button variant={saved ? "default" : "outline"} onClick={toggleSave} disabled={busy}>
