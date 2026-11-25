@@ -6,3 +6,5 @@
 - Event attendance is confirmed only through authorized `checkin_by_code`; members see tickets/QR/attendance in their profile — why: check-ins must be trustworthy.
 - Notification preferences are applied by a BEFORE INSERT trigger on notifications (muted category = row dropped; push-muted = pushed_at prefilled) using `notification_category()`, mirrored in `src/lib/notification-meta.ts` — why: one gate for bell and push.
 - Event reminders run hourly via SQL-only pg_cron (`send_event_reminders`), deduped by `event_reminders_sent`.
+
+- Jobs have `application_type`: recruiters = `interna`, plain members = `externa` + pending approval (DB trigger). Candidate resume data lives in `candidate_profiles` + private `resumes` bucket; contact/resume access only via `can_view_candidate_contact` — why: personal data goes only to the job owner, admins, or recruiters the member opted into.

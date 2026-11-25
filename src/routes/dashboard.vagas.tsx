@@ -25,10 +25,10 @@ export const Route = createFileRoute("/dashboard/vagas")({ component: VagasAdmin
 type Job = {
   id: string; title: string; company: string; description: string; short_description: string | null;
   seniority: string; modality: string; location: string | null; apply_url: string | null;
-  technologies: string[]; status: string; created_at: string;
+  technologies: string[]; status: string; created_at: string; application_type?: string;
 };
 
-const empty: Partial<Job> = { title: "", company: "", description: "", short_description: "", seniority: "pleno", modality: "remoto", location: "", apply_url: "", technologies: [], status: "rascunho" };
+const empty: Partial<Job> = { title: "", company: "", description: "", short_description: "", seniority: "pleno", modality: "remoto", location: "", apply_url: "", technologies: [], status: "rascunho", application_type: "interna" };
 
 function VagasAdminPage() {
   const navigate = useNavigate();
@@ -46,13 +46,16 @@ function VagasAdminPage() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  useEffect(() => {
-    if (rolesReady && areasReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
-  }, [rolesReady, isAdmin, isRecruiter, isAmbassadorArea, navigate]);
+  // Quem não é admin, recrutador ou embaixador de vagas só indica vagas externas.
+  const ready = rolesReady && areasReady;
+  const isMemberOnly = ready && !isAdmin && !isRecruiter && !isAmbassadorArea;
+  const canChooseType = isAdmin || isAmbassadorArea;
+  const forcedType = canChooseType ? null : isRecruiter ? "interna" : "externa";
+  const typeOf = (j: Partial<Job>) => forcedType ?? j.application_type ?? "interna";
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["admin-jobs", isAdmin ? "all" : user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && ready,
     queryFn: async () => {
       let q = supabase.from("jobs").select("*").order("created_at", { ascending: false });
       if (!isAdmin && !isAmbassadorArea && user) q = q.eq("created_by", user.id);
@@ -89,14 +92,17 @@ function VagasAdminPage() {
       title: editing.title, company: editing.company, description: editing.description,
       short_description: editing.short_description || null, seniority: editing.seniority,
       modality: editing.modality, location: editing.location || null, apply_url: editing.apply_url || null,
-      technologies: editing.technologies ?? [], status: editing.status,
+      technologies: editing.technologies ?? [], status: isMemberOnly ? "rascunho" : editing.status,
+      application_type: typeOf(editing),
     };
+    if (payload.application_type === "interna") payload.apply_url = null;
+    else if (!/^(https?:\/\/|mailto:)/i.test((payload.apply_url ?? "").trim())) return toast.error("Informe o link da vaga externa (https://… ou mailto:).");
     if (!payload.title || !payload.company || !payload.description) return toast.error("Preencha título, empresa e descrição.");
     const { error } = editing.id
       ? await supabase.from("jobs").update(payload).eq("id", editing.id)
       : await supabase.from("jobs").insert({ ...payload, created_by: user?.id });
     if (error) return toast.error(error.message);
-    toast.success("Vaga salva");
+    toast.success(isMemberOnly ? "Vaga enviada para aprovação da administração" : "Vaga salva");
     setEditing(null);
     refresh();
   };
@@ -111,7 +117,7 @@ function VagasAdminPage() {
   };
 
   return (
-    <DashboardShell title="Vagas" description="Crie, edite, visualize e remova vagas tech.">
+    <DashboardShell title={isMemberOnly ? "Indicar vaga" : "Vagas"} description={isMemberOnly ? "Indique vagas externas. Elas aparecem no site depois de aprovadas pela administração." : "Crie, edite, visualize e remova vagas tech."}>
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -135,7 +141,7 @@ function VagasAdminPage() {
             <SelectItem value="hibrido">Híbrido</SelectItem>
           </SelectContent>
         </Select>
-        {(isRecruiter || can("vagas", "criar")) && <Button onClick={() => setEditing({ ...empty })} className="ml-auto"><Plus className="h-4 w-4 mr-1" /> Nova vaga</Button>}
+        {(isRecruiter || isMemberOnly || can("vagas", "criar")) && <Button onClick={() => setEditing({ ...empty })} className="ml-auto"><Plus className="h-4 w-4 mr-1" /> Nova vaga</Button>}
       </div>
       <div className="glass rounded-xl border border-primary/20 overflow-hidden">
         <Table>
@@ -163,9 +169,9 @@ function VagasAdminPage() {
                 <TableCell><Badge variant={j.status === "publicado" ? "default" : "secondary"}>{j.status}</Badge></TableCell>
                 <TableCell className="text-right space-x-1">
                   <Button size="sm" variant="ghost" onClick={() => setViewing(j)}><Eye className="h-3 w-3" /></Button>
-                  {(isRecruiter || can("vagas", "editar")) && <Button size="sm" variant="ghost" onClick={() => setEditing(j)}><Pencil className="h-3 w-3" /></Button>}
+                  {(isRecruiter || (isMemberOnly && j.status === "rascunho") || can("vagas", "editar")) && <Button size="sm" variant="ghost" onClick={() => setEditing(j)}><Pencil className="h-3 w-3" /></Button>}
                   {can("vagas", "publicar") && <Button size="sm" variant="ghost" title={j.status === "publicado" ? "Despublicar" : "Publicar"} onClick={async () => { const { error } = await supabase.from("jobs").update({ status: j.status === "publicado" ? "rascunho" : "publicado" }).eq("id", j.id); if (error) return toast.error(error.message); refresh(); }}><Eye className="h-3 w-3" /></Button>}
-                  {(isRecruiter || can("vagas", "remover")) && <Button size="sm" variant="ghost" onClick={() => setRemoving(j)}><Trash2 className="h-3 w-3 text-destructive" /></Button>}
+                  {(isRecruiter || (isMemberOnly && j.status === "rascunho") || can("vagas", "remover")) && <Button size="sm" variant="ghost" onClick={() => setRemoving(j)}><Trash2 className="h-3 w-3 text-destructive" /></Button>}
                 </TableCell>
               </TableRow>
             ))}
@@ -220,11 +226,27 @@ function VagasAdminPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="sm:col-span-2"><Label>URL de candidatura</Label><Input value={editing.apply_url ?? ""} onChange={(e) => setEditing({ ...editing, apply_url: e.target.value })} /></div>
+              {canChooseType && (
+                <div className="sm:col-span-2">
+                  <Label>Tipo de vaga</Label>
+                  <Select value={typeOf(editing)} onValueChange={(v) => setEditing({ ...editing, application_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="interna">Interna — candidatura pela plataforma</SelectItem>
+                      <SelectItem value="externa">Externa (terceiros) — redireciona para um link</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {typeOf(editing) === "externa" ? (
+                <div className="sm:col-span-2"><Label>Link da vaga *</Label><Input placeholder="https://…" value={editing.apply_url ?? ""} onChange={(e) => setEditing({ ...editing, apply_url: e.target.value })} /></div>
+              ) : (
+                <p className="sm:col-span-2 text-xs text-muted-foreground">Vaga interna: os membros se candidatam pela plataforma e quem publicou vê os candidatos.</p>
+              )}
               <div className="sm:col-span-2"><Label>Tecnologias (separadas por vírgula)</Label><Input value={(editing.technologies ?? []).join(", ")} onChange={(e) => setEditing({ ...editing, technologies: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })} /></div>
               <div className="sm:col-span-2"><Label>Resumo</Label><Textarea rows={2} value={editing.short_description ?? ""} onChange={(e) => setEditing({ ...editing, short_description: e.target.value })} /></div>
               <div className="sm:col-span-2"><Label>Descrição completa * (Markdown)</Label><MarkdownEditor value={editing.description ?? ""} onChange={(v) => setEditing({ ...editing, description: v })} rows={8} /></div>
-              <div>
+              <div className={isMemberOnly ? "hidden" : ""}>
                 <Label>Status</Label>
                 <Select disabled={!isRecruiter && !can("vagas", "publicar")} value={editing.status} onValueChange={(v) => setEditing({ ...editing, status: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -239,7 +261,7 @@ function VagasAdminPage() {
           )}
           <DialogFooter className="gap-2">
             <Button variant="ghost" onClick={() => setEditing(null)}>Cancelar</Button>
-            {editing && <PublishPreview kind="vaga" item={editing as any} />}
+            {editing && <PublishPreview kind="vaga" item={{ ...editing, application_type: typeOf(editing) } as any} />}
             <Button onClick={save}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
@@ -255,7 +277,7 @@ function VagasAdminPage() {
             <div className="flex flex-wrap gap-1">{viewing?.technologies?.map((t) => <Badge key={t} variant="outline">{t}</Badge>)}</div>
             {viewing?.short_description && <p className="text-muted-foreground">{viewing.short_description}</p>}
             <MarkdownView>{viewing?.description ?? ""}</MarkdownView>
-            {viewing?.apply_url && <a className="text-primary underline" href={viewing.apply_url} target="_blank" rel="noreferrer">Link de candidatura</a>}
+            {viewing?.application_type === "externa" && viewing?.apply_url && <a className="text-primary underline" href={viewing.apply_url} target="_blank" rel="noreferrer">Link de candidatura</a>}
           </div>
         </DialogContent>
       </Dialog>

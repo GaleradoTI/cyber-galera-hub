@@ -11,6 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CandidateDialog } from "@/components/jobs/candidate-dialog";
+import { ApplicantsPanel } from "@/components/jobs/applicants-panel";
 
 export const Route = createFileRoute("/dashboard/candidatos")({ component: CandidatosPage });
 
@@ -31,6 +34,8 @@ function CandidatosPage() {
   const [search, setSearch] = useState("");
   const [area, setArea] = useState("all");
   const [tech, setTech] = useState("all");
+  const [viewing, setViewing] = useState<string | null>(null);
+  const seesApplications = isAdmin || isRecruiter;
 
   useEffect(() => {
     if (rolesReady && areasReady && !isAdmin && !isRecruiter && !isAmbassadorArea) navigate({ to: "/dashboard" });
@@ -75,7 +80,16 @@ function CandidatosPage() {
   const activeFilters = [area !== "all", tech !== "all"].filter(Boolean).length;
 
   return (
-    <DashboardShell title="Candidatos" description="Membros sinalizando que estão em busca de oportunidades.">
+    <DashboardShell title="Candidatos" description="Quem se candidatou às vagas e membros em busca de oportunidades.">
+      <Tabs key={seesApplications ? "com-candidaturas" : "so-talentos"} defaultValue={seesApplications ? "candidaturas" : "talentos"}>
+        {seesApplications && (
+          <TabsList className="mb-4">
+            <TabsTrigger value="candidaturas">Candidaturas recebidas</TabsTrigger>
+            <TabsTrigger value="talentos">Banco de talentos</TabsTrigger>
+          </TabsList>
+        )}
+        {seesApplications && <TabsContent value="candidaturas"><ApplicantsPanel /></TabsContent>}
+        <TabsContent value="talentos">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -150,6 +164,7 @@ function CandidatosPage() {
             )}
 
             <div className="flex flex-wrap gap-2 mt-4">
+              <Button size="sm" onClick={() => setViewing(c.user_id)}>Ver perfil completo</Button>
               <Button asChild size="sm" variant="secondary">
                 <Link to="/dashboard/mensagens" search={{ to: c.user_id }}>
                   <MessageSquare className="h-3 w-3 mr-1" /> Mensagem
@@ -162,6 +177,9 @@ function CandidatosPage() {
           <p className="text-sm text-muted-foreground col-span-2 text-center py-8">Nenhum candidato encontrado.</p>
         )}
       </div>
+        </TabsContent>
+      </Tabs>
+      <CandidateDialog userId={viewing} onClose={() => setViewing(null)} />
     </DashboardShell>
   );
 }

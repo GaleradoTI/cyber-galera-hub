@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save, Briefcase, Linkedin, Github, Globe, Instagram, Twitter, X, Tag, Phone, Plus, Youtube, MessageCircle, Trophy, CheckCircle2, Heart, Loader2, ShieldCheck, AlertCircle, ArrowLeft } from "lucide-react";
@@ -352,6 +352,7 @@ function PerfilPage() {
         <div className="grid gap-5">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-sm font-bold tracking-[0.2em] text-muted-foreground">CONFIGURAÇÕES</h2>
+            <Button asChild size="sm" className="ml-auto"><Link to="/dashboard/curriculo">Meu currículo</Link></Button>
             <Button variant="outline" size="sm" onClick={() => setMode("profile")}>
               <ArrowLeft className="h-4 w-4 mr-1" /> Voltar ao perfil
             </Button>

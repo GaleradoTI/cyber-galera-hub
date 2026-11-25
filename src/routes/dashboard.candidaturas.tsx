@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 export const Route = createFileRoute("/dashboard/candidaturas")({ component: CandidaturasPage });
 
 type App = { id: string; job_id: string; status: string; created_at: string };
-type Job = { id: string; title: string; company: string; location: string | null; apply_url: string | null; modality: string; seniority: string };
+type Job = { id: string; title: string; company: string; location: string | null; apply_url: string | null; modality: string; seniority: string; application_type?: string };
 
 const STATUS_LABEL: Record<string, string> = {
   enviada: "Enviada",
   em_analise: "Em análise",
   contratado: "Contratado",
-  rejeitada: "Rejeitada",
+  rejeitada: "Não selecionada",
 };
 
 function CandidaturasPage() {
@@ -42,9 +42,9 @@ function CandidaturasPage() {
     queryKey: ["my-application-jobs", jobIds.join(",")],
     enabled: jobIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("jobs").select("id,title,company,location,apply_url,modality,seniority").in("id", jobIds);
+      const { data, error } = await supabase.from("jobs").select("*").in("id", jobIds);
       if (error) throw error;
-      return (data ?? []) as Job[];
+      return (data ?? []) as unknown as Job[];
     },
   });
 
@@ -87,7 +87,7 @@ function CandidaturasPage() {
                 </div>
               </div>
               <div className="flex gap-1 shrink-0">
-                {j?.apply_url && (
+                {j?.application_type === "externa" && j.apply_url && (
                   <a href={j.apply_url} target="_blank" rel="noreferrer">
                     <Button size="sm" variant="outline"><ExternalLink className="h-3 w-3" /></Button>
                   </a>

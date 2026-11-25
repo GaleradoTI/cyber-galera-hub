@@ -18,7 +18,7 @@ function MinhasVagasPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("saved_jobs")
-        .select("id, created_at, jobs(id, title, company, location, modality, seniority, apply_url, status)")
+        .select("id, created_at, jobs(id, title, company, location, modality, seniority, apply_url, status, application_type)" as "*")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -57,7 +57,7 @@ function MinhasVagasPage() {
                 <div className="text-xs text-muted-foreground">{j.company} • {j.location ?? "Remoto"} • {j.modality} • {j.seniority}</div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                {j.apply_url && (
+                {j.application_type !== "interna" && j.apply_url && (
                   <a href={j.apply_url} target="_blank" rel="noopener noreferrer">
                     <Button size="sm" variant="outline"><ExternalLink className="h-3 w-3 mr-1" /> Aplicar</Button>
                   </a>
