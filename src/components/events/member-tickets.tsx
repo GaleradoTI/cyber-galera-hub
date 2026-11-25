@@ -1,3 +1,4 @@
+import { usePeople } from "@/lib/people";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -27,6 +28,7 @@ export function MemberTickets({ userId }: { userId?: string }) {
     },
   });
   const active = data.find((r) => r.id === expanded);
+  const owner = usePeople(userId ? [userId] : []).get(userId ?? "");
   return <section className="mb-8 space-y-4">
     <div className="flex items-center justify-between gap-3"><h2 className="font-bold flex items-center gap-2"><Ticket className="h-5 w-5 text-primary" /> Meus ingressos</h2><Link to="/eventos"><Button variant="outline" size="sm">Ver eventos</Button></Link></div>
     {isLoading && <Skeleton className="h-40 w-full" />}
@@ -46,6 +48,6 @@ export function MemberTickets({ userId }: { userId?: string }) {
         </div>
       </article>;
     })}</div>
-    <Dialog open={!!active} onOpenChange={(open) => { if (!open) setExpanded(null); }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{active?.events?.name}</DialogTitle><DialogDescription>Ingresso pessoal · Galera do TI</DialogDescription></DialogHeader>{active && <div className="flex flex-col items-center gap-3"><QrCode value={active.ticket_code} size={240} /><p className="font-mono text-lg font-bold">{active.ticket_code}</p><Badge>{active.checked_in_at ? "Presença registrada" : "Entrada aprovada"}</Badge><p className="text-sm text-muted-foreground">{active.events && formatDateOnly(active.events.event_date)}</p></div>}</DialogContent></Dialog>
+    <Dialog open={!!active} onOpenChange={(open) => { if (!open) setExpanded(null); }}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{active?.events?.name}</DialogTitle><DialogDescription>Ingresso pessoal · Galera do TI</DialogDescription></DialogHeader>{active && <div className="flex flex-col items-center gap-3">{owner && <div className="text-center"><p className="text-xl font-black">{owner.display_name}</p>{owner.nickname && <p className="font-bold text-secondary">@{owner.nickname}</p>}</div>}<QrCode value={active.ticket_code} size={240} /><p className="font-mono text-lg font-bold">{active.ticket_code}</p><Badge>{active.checked_in_at ? "Presença registrada" : "Entrada aprovada"}</Badge><p className="text-sm text-muted-foreground">{active.events && formatDateOnly(active.events.event_date)}</p></div>}</DialogContent></Dialog>
   </section>;
 }

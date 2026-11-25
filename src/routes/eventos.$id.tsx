@@ -1,3 +1,4 @@
+import { usePeople } from "@/lib/people";
 import { LoadingState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -73,6 +74,8 @@ function EventPage() {
       return (data ?? null) as string | null;
     },
   });
+
+  const me = usePeople(user?.id ? [user.id] : []).get(user?.id ?? "");
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["my-registration", id] });
 
@@ -238,6 +241,7 @@ function EventPage() {
                 {status === "approved" ? (
                   <div className="text-center space-y-2 rounded-xl border border-dashed border-primary/40 p-4 bg-background/40">
                     <div className="text-xs text-muted-foreground">{ev.name}</div>
+                    {me && <div><p className="text-lg font-black leading-tight">{me.display_name}</p>{me.nickname && <p className="font-bold text-secondary">@{me.nickname}</p>}</div>}
                     <QrCode value={reg.ticket_code} size={180} />
                     <button type="button" title="Copiar código" className="font-mono text-lg font-bold tracking-widest hover:text-primary" onClick={() => { navigator.clipboard?.writeText(reg.ticket_code); toast.success("Código copiado"); }}>{reg.ticket_code}</button>
                     <p className="text-xs text-muted-foreground">Apresente este QR Code ou o código na entrada. Dica: aumente o brilho da tela. Toque no código para copiar.</p>

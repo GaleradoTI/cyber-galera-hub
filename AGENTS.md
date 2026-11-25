@@ -14,3 +14,5 @@
 - Job/event `content_status` is rascunho | publicado | pausado | encerrado (there is no "arquivado").
 - Shared visual identity lives in `src/components/brand/ui-kit.tsx` (PageHero, IconTile, StatTile, EmptyState, LoadingState); dashboard headers take icon/area from the sidebar item.
 - Drops and Projects are on unless `modules.drops`/`modules.projects` is false; wrap their routes with `withModule` and hide their links. This is UI gating only (data rules unchanged).
+- Members cannot read other rows of `profiles`; get names/nick/avatar via `get_public_profiles` (`src/lib/people.ts`), and event staff via `get_event_participants`.
+- `profiles.nickname` is the unique public handle, auto-filled by trigger from the display name (never from e-mail).

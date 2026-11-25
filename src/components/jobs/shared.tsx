@@ -1,10 +1,11 @@
 import { cn } from "@/lib/utils";
 
 export function PersonAvatar({ name, url, className }: { name: string; url?: string | null; className?: string }) {
-  const base = cn("h-11 w-11 shrink-0 rounded-full ring-2 ring-primary/30", className);
-  if (url) return <img src={url} alt="" loading="lazy" className={cn(base, "object-cover")} />;
+  // className vem por último para o tamanho (inclusive do texto) pedido por quem usa prevalecer.
+  const base = "h-11 w-11 shrink-0 rounded-full ring-2 ring-primary/30";
+  if (url) return <img src={url} alt="" loading="lazy" className={cn(base, "object-cover", className)} />;
   const initials = name.trim().split(/\s+/).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
-  return <div aria-hidden className={cn(base, "flex items-center justify-center bg-gradient-to-br from-primary to-secondary text-sm font-black text-background")}>{initials}</div>;
+  return <div aria-hidden className={cn(base, "flex items-center justify-center bg-gradient-to-br from-primary to-secondary text-sm font-black text-background", className)}>{initials}</div>;
 }
 
 export function TagList({ tags, max = 4 }: { tags?: string[] | null; max?: number }) {

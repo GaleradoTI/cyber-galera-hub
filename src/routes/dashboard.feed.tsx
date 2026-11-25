@@ -1,131 +1,121 @@
-import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { X, ExternalLink, Send, Trash2, MessageCircle, Heart, Repeat2, Pin, Newspaper, SmilePlus } from "lucide-react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowUp, CheckCircle2, ExternalLink, LayoutGrid, Loader2, Newspaper, Rss, Send, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { DashboardShell, useDashboardRoles } from "@/components/dashboard/dashboard-shell";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FollowButton } from "@/components/dashboard/follow-button";
-import { RichText, prettyUrl } from "@/lib/rich-text";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ImageUploader } from "@/components/ui/image-uploader";
-import { FeedCommentsDialog, useCommentCount } from "@/components/dashboard/feed-comments";
+import { EmptyState } from "@/components/brand/ui-kit";
+import { PersonAvatar } from "@/components/jobs/shared";
+import { FeedPostCard, isPinned, type FeedPost } from "@/components/feed/feed-post";
+import { useLoadMore } from "@/hooks/use-load-more";
+import { usePeople, handle } from "@/lib/people";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/feed")({ component: FeedPage });
 
-type FeedPost = {
-  id: string;
-  author_id: string;
-  content: string;
-  title: string | null;
-  cover_url: string | null;
-  images: string[] | null;
-  links: { url: string; label?: string }[];
-  status: string;
-  created_at: string;
-  kind: "user" | "news" | "repost";
-  pinned_until: string | null;
-  reposted_from_id: string | null;
-};
+const PAGE_SIZE = 8;
+type Filter = "all" | "news" | "community";
+type Cursor = { created_at: string; id: string } | null;
 
-type Profile = { user_id: string; display_name: string | null; avatar_url: string | null; email: string | null };
+const FILTERS: { key: Filter; label: string; icon: typeof Rss }[] = [
+  { key: "all", label: "Tudo", icon: LayoutGrid },
+  { key: "news", label: "Notícias", icon: Newspaper },
+  { key: "community", label: "Da galera", icon: Users },
+];
 
 function FeedPage() {
   const qc = useQueryClient();
   const { user, isAdmin } = useDashboardRoles();
   const [content, setContent] = useState("");
   const [images, setImages] = useState<string[]>([]);
-
+  const [filter, setFilter] = useState<Filter>("all");
+  const [publishing, setPublishing] = useState(false);
   const links = useMemo(() => extractLinks(content), [content]);
 
-  const { data: myProfile = null } = useQuery({
+  const { data: me } = useQuery({
     queryKey: ["my-mini-profile", user?.id],
     enabled: !!user?.id,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,avatar_url")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      return data ?? null;
-    },
+    queryFn: async () => (await supabase.from("profiles").select("*").eq("user_id", user!.id).maybeSingle()).data as any,
   });
 
-  const { data: posts = [] as FeedPost[], isLoading } = useQuery({
-    queryKey: ["member-feed"],
+  // Notícias fixadas ficam no topo e não se repetem na rolagem.
+  const { data: pinned = [] } = useQuery({
+    queryKey: ["member-feed", "pinned"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("member_feed_posts")
-        .select("*")
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      const { data, error } = await supabase.from("member_feed_posts").select("*").eq("status", "published")
+        .gt("pinned_until", new Date().toISOString()).order("created_at", { ascending: false }).limit(5);
       if (error) throw error;
-      const rows = ((data ?? []) as unknown) as FeedPost[];
-      const now = Date.now();
-      // Ordenação: notícias fixadas > outras notícias recentes > cronológico
-      rows.sort((a, b) => {
-        const pinA = a.pinned_until && new Date(a.pinned_until).getTime() > now ? 1 : 0;
-        const pinB = b.pinned_until && new Date(b.pinned_until).getTime() > now ? 1 : 0;
-        if (pinA !== pinB) return pinB - pinA;
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      });
-      return rows;
+      return (data ?? []) as unknown as FeedPost[];
     },
   });
 
-  const authorIds = useMemo(
-    () => Array.from(new Set(posts.map((p) => p.author_id))),
-    [posts],
-  );
-  const repostSourceIds = useMemo(
-    () => posts.map((p) => p.reposted_from_id).filter((x): x is string => !!x),
-    [posts],
-  );
+  // Paginação pelo último item visto: posts novos não duplicam nem pulam itens.
+  const feed = useInfiniteQuery({
+    queryKey: ["member-feed", "pages", filter],
+    initialPageParam: null as Cursor,
+    queryFn: async ({ pageParam }) => {
+      let query = supabase.from("member_feed_posts").select("*").eq("status", "published")
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(PAGE_SIZE);
+      if (filter === "news") query = query.eq("kind", "news");
+      if (filter === "community") query = query.neq("kind", "news");
+      if (pageParam) query = query.or(`created_at.lt."${pageParam.created_at}",and(created_at.eq."${pageParam.created_at}",id.lt.${pageParam.id})`);
+      const { data, error } = await query;
+      if (error) throw error;
+      return (data ?? []) as unknown as FeedPost[];
+    },
+    getNextPageParam: (last): Cursor | undefined => (last.length < PAGE_SIZE ? undefined : { created_at: last[last.length - 1].created_at, id: last[last.length - 1].id }),
+  });
 
-  const { data: profileMap = new Map<string, Profile>() } = useQuery({
-    queryKey: ["feed-profiles", authorIds.join(",")],
-    enabled: authorIds.length > 0,
+  const posts = useMemo(() => {
+    const top = filter === "community" ? [] : pinned.filter(isPinned);
+    const ids = new Set(top.map((p) => p.id));
+    return [...top, ...(feed.data?.pages.flat() ?? []).filter((p) => !ids.has(p.id))];
+  }, [pinned, feed.data, filter]);
+
+  const sourceIds = useMemo(() => Array.from(new Set(posts.map((p) => p.reposted_from_id).filter((x): x is string => !!x))).sort(), [posts]);
+  const { data: sources = new Map<string, FeedPost>() } = useQuery({
+    queryKey: ["feed-repost-sources", sourceIds.join(",")],
+    enabled: sourceIds.length > 0,
+    placeholderData: (previous: Map<string, FeedPost> | undefined) => previous,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,avatar_url,email")
-        .in("user_id", authorIds);
-      return new Map((data ?? []).map((p: any) => [p.user_id, p as Profile]));
+      const { data } = await supabase.from("member_feed_posts").select("*").in("id", sourceIds);
+      return new Map(((data ?? []) as unknown as FeedPost[]).map((p) => [p.id, p]));
     },
   });
 
-  const { data: sourcePosts = new Map<string, FeedPost>() } = useQuery({
-    queryKey: ["feed-repost-sources", repostSourceIds.join(",")],
-    enabled: repostSourceIds.length > 0,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("member_feed_posts")
-        .select("*")
-        .in("id", repostSourceIds);
-      return new Map((((data ?? []) as unknown) as FeedPost[]).map((p) => [p.id, p]));
-    },
-  });
+  const people = usePeople([...posts.map((p) => p.author_id), ...Array.from(sources.values()).map((p) => p.author_id)]);
+
+  const canAutoLoad = !!feed.hasNextPage && !feed.isFetchingNextPage && !feed.isError;
+  const sentinel = useLoadMore(() => { feed.fetchNextPage(); }, canAutoLoad);
+
+  // Volta para a primeira página, sem recarregar tudo o que já tinha sido rolado.
+  const restart = () => {
+    qc.resetQueries({ queryKey: ["member-feed", "pages"] });
+    qc.invalidateQueries({ queryKey: ["member-feed", "pinned"] });
+  };
 
   const publish = async () => {
-    if (!user?.id) return;
+    if (!user?.id || publishing) return;
     if (content.trim().length < 2) return toast.error("Escreva algo antes de publicar.");
-    if (content.length > 2000) return toast.error("O post pode ter no máximo 2000 caracteres.");
-    const { error } = await supabase
-      .from("member_feed_posts")
+    setPublishing(true);
+    const { error } = await supabase.from("member_feed_posts")
       .insert({ author_id: user.id, content: content.trim(), links, images, status: "published", kind: "user" } as any);
+    setPublishing(false);
     if (error) return toast.error(error.message);
     toast.success("Publicado no feed.");
     setContent("");
     setImages([]);
-    qc.invalidateQueries({ queryKey: ["member-feed"] });
+    restart();
   };
 
   const remove = async (post: FeedPost) => {
+    if (!confirm("Remover este post?")) return;
     const own = post.author_id === user?.id;
     const { error } = own && !isAdmin
       ? await supabase.from("member_feed_posts").update({ status: "deleted" }).eq("id", post.id).eq("author_id", user!.id)
@@ -137,427 +127,94 @@ function FeedPage() {
 
   const repost = async (post: FeedPost) => {
     if (!user?.id) return;
-    const sourceId = post.reposted_from_id ?? post.id;
-    const { error } = await supabase.from("member_feed_posts").insert({
-      author_id: user.id,
-      content: "",
-      links: [],
-      status: "published",
-      kind: "repost",
-      reposted_from_id: sourceId,
-    });
+    const { error } = await supabase.from("member_feed_posts")
+      .insert({ author_id: user.id, content: "", links: [], status: "published", kind: "repost", reposted_from_id: post.reposted_from_id ?? post.id });
     if (error) return toast.error(error.message);
     toast.success("Repostado!");
-    qc.invalidateQueries({ queryKey: ["member-feed"] });
+    qc.invalidateQueries({ queryKey: ["feed-repost-count"] });
+    restart();
   };
 
   return (
-    <DashboardShell title="Feed da Galera" description="Compartilhe textos, links, curta, comente e reposte.">
-      <section className="glass rounded-xl border border-primary/20 p-3 sm:p-4 mb-5">
-        <div className="flex gap-3">
-          <Avatar className="h-10 w-10 shrink-0 hidden sm:block">
-            <AvatarImage src={(myProfile as any)?.avatar_url ?? undefined} alt="Seu avatar" />
-            <AvatarFallback>{((myProfile as any)?.display_name ?? "EU").slice(0, 2).toUpperCase()}</AvatarFallback>
-          </Avatar>
-
-          <div className="min-w-0 flex-1">
-            <Textarea
-              rows={2}
-              maxLength={2000}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="O que está acontecendo?"
-              className="resize-none border-0 bg-transparent px-0 text-base focus-visible:ring-0 min-h-[52px]"
-            />
-
-            {images.length > 0 && (
-              <div className={`grid gap-2 mt-2 ${images.length === 1 ? "grid-cols-1" : "grid-cols-2 sm:grid-cols-4"}`}>
-                {images.map((src) => (
-                  <div key={src} className="relative">
-                    <img src={src} alt="" className="w-full h-28 sm:h-24 object-cover rounded-xl border border-border/50" />
-                    <button
-                      type="button"
-                      aria-label="Remover imagem"
-                      onClick={() => setImages((prev) => prev.filter((i) => i !== src))}
-                      className="absolute top-1 right-1 rounded-full bg-background/90 border border-border p-1"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {links.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {links.map((l) => (
-                  <Badge key={l.url} variant="outline" className="text-[10px]">
-                    <ExternalLink className="h-3 w-3 mr-1" /> {l.url.replace(/^https?:\/\//, "").slice(0, 28)}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border/30">
-              {user?.id && images.length < 4 ? (
-                <ImageUploader
-                  compact
-                  compactLabel="Adicionar foto ao post"
-                  bucket="avatars"
-                  folder={`${user.id}/feed`}
-                  value={null}
-                  onChange={(url) => { if (url) setImages((prev) => [...prev, url].slice(0, 4)); }}
-                  label=""
-                />
-              ) : (
-                <span className="text-[11px] text-muted-foreground px-2">Máximo de 4 imagens</span>
+    <DashboardShell title="Feed da Galera" description="Compartilhe ideias, links e conquistas com a comunidade.">
+      <div className="mx-auto max-w-2xl">
+        <section className="glass rounded-2xl border border-primary/25 p-4 mb-4">
+          <div className="flex gap-3">
+            <PersonAvatar name={me?.display_name ?? "Eu"} url={me?.avatar_url} className="hidden sm:flex" />
+            <div className="min-w-0 flex-1">
+              {me?.nickname && <p className="text-[11px] text-secondary">{handle(me.nickname)}</p>}
+              <Textarea rows={2} maxLength={2000} value={content} onChange={(e) => setContent(e.target.value)} aria-label="Escrever post"
+                placeholder={`O que está rolando${me?.display_name ? `, ${me.display_name.split(" ")[0]}` : ""}?`}
+                className="resize-none border-0 bg-transparent px-0 text-base focus-visible:ring-0 min-h-[56px]" />
+              {images.length > 0 && (
+                <div className={cn("grid gap-2 mt-2", images.length > 1 && "grid-cols-2 sm:grid-cols-4")}>
+                  {images.map((src) => (
+                    <div key={src} className="relative">
+                      <img src={src} alt="" className="w-full h-28 sm:h-24 object-cover rounded-xl border border-border/50" />
+                      <button type="button" aria-label="Remover imagem" onClick={() => setImages((prev) => prev.filter((i) => i !== src))} className="absolute top-1 right-1 rounded-full bg-background/90 border border-border p-1"><X className="h-3 w-3" /></button>
+                    </div>
+                  ))}
+                </div>
               )}
-              <span className="hidden sm:inline text-[11px] text-muted-foreground tabular-nums ml-1">
-                {content.length}/2000
-              </span>
-              <Button
-                onClick={publish}
-                size="sm"
-                className="ml-auto rounded-full px-5"
-                disabled={content.trim().length < 2}
-              >
-                <Send className="h-4 w-4 mr-1" /> Publicar
-              </Button>
+              {links.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {links.map((l) => <Badge key={l.url} variant="outline" className="text-[10px]"><ExternalLink className="h-3 w-3 mr-1" /> {l.url.replace(/^https?:\/\//, "").slice(0, 28)}</Badge>)}
+                </div>
+              )}
+              <div className="flex items-center gap-2 mt-2 pt-3 border-t border-border/30">
+                {user?.id && images.length < 4
+                  ? <ImageUploader compact compactLabel="Adicionar foto ao post" bucket="avatars" folder={`${user.id}/feed`} value={null} onChange={(url) => { if (url) setImages((prev) => [...prev, url].slice(0, 4)); }} label="" />
+                  : <span className="text-[11px] text-muted-foreground">Máximo de 4 imagens</span>}
+                <span className={cn("text-[11px] tabular-nums", content.length > 1800 ? "text-secondary" : "text-muted-foreground")}>{content.length}/2000</span>
+                <Button onClick={publish} size="sm" variant="neon" className="ml-auto rounded-full px-5" disabled={content.trim().length < 2 || publishing}>
+                  {publishing ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />} Publicar
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {isLoading ? (
-        <LoadingState />
-      ) : (
-        <div className="space-y-3">
-          {posts.map((post) => (
-            <PostCard
-              key={post.id}
-              post={post}
-              source={post.reposted_from_id ? (sourcePosts as Map<string, FeedPost>).get(post.reposted_from_id) ?? null : null}
-              profileMap={profileMap as Map<string, Profile>}
-              currentUserId={user?.id ?? null}
-              isAdmin={!!isAdmin}
-              canRemove={isAdmin || post.author_id === user?.id}
-              onRemove={() => remove(post)}
-              onRepost={() => repost(post)}
-            />
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrar o feed">
+          {FILTERS.map((f) => (
+            <button key={f.key} type="button" aria-pressed={filter === f.key} onClick={() => setFilter(f.key)}
+              className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm transition", filter === f.key ? "border-primary bg-primary/15 text-foreground" : "border-border/50 text-muted-foreground hover:border-primary/50")}>
+              <f.icon className="h-4 w-4" /> {f.label}
+            </button>
           ))}
-          {posts.length === 0 && (
-            <EmptyState title="Nenhum post ainda" />
-          )}
+          <Button size="sm" variant="ghost" className="ml-auto shrink-0" onClick={() => { restart(); window.scrollTo({ top: 0, behavior: "smooth" }); }}><ArrowUp className="h-4 w-4 mr-1" /> Atualizar</Button>
         </div>
-      )}
+
+        {feed.isLoading ? (
+          <div className="space-y-3" role="status" aria-label="Carregando o feed">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}</div>
+        ) : (
+          <div className="space-y-3">
+            {posts.map((post) => (
+              <FeedPostCard key={post.id} post={post} source={post.reposted_from_id ? sources.get(post.reposted_from_id) ?? null : null}
+                people={people} currentUserId={user?.id ?? null} isAdmin={!!isAdmin} canRemove={isAdmin || post.author_id === user?.id}
+                onRemove={() => remove(post)} onRepost={() => repost(post)} />
+            ))}
+            {posts.length === 0 && !feed.isError && <EmptyState icon={Rss} title="Nada por aqui ainda" text={filter === "all" ? "Seja a primeira pessoa a publicar." : "Tente outro filtro."} />}
+          </div>
+        )}
+
+        <div ref={sentinel} className="py-6 text-center text-sm text-muted-foreground" aria-live="polite">
+          {feed.isFetchingNextPage ? (
+            <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin text-primary" /> Carregando mais…</span>
+          ) : feed.isError ? (
+            <span className="space-y-2 block"><span className="block text-destructive">Não foi possível carregar o feed.</span><Button size="sm" variant="outline" onClick={() => (posts.length ? feed.fetchNextPage() : feed.refetch())}>Tentar novamente</Button></span>
+          ) : feed.hasNextPage ? (
+            <Button size="sm" variant="outline" onClick={() => feed.fetchNextPage()}>Carregar mais</Button>
+          ) : posts.length > 0 ? (
+            <span className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Você chegou ao fim</span>
+          ) : null}
+        </div>
+      </div>
     </DashboardShell>
   );
 }
 
 function extractLinks(text: string) {
-  return Array.from(
-    new Set((text.match(/https?:\/\/[^\s]+/g) ?? []).map((url) => url.replace(/[),.;!?]+$/, ""))),
-  )
+  return Array.from(new Set((text.match(/https?:\/\/[^\s]+/g) ?? []).map((url) => url.replace(/[),.;!?]+$/, ""))))
     .slice(0, 5)
     .map((url) => ({ url }));
-}
-
-function PostCard({
-  post,
-  source,
-  profileMap,
-  currentUserId,
-  isAdmin,
-  canRemove,
-  onRemove,
-  onRepost,
-}: {
-  post: FeedPost;
-  source: FeedPost | null;
-  profileMap: Map<string, Profile>;
-  currentUserId: string | null;
-  isAdmin: boolean;
-  canRemove: boolean;
-  onRemove: () => void;
-  onRepost: () => void;
-}) {
-  const author = profileMap.get(post.author_id);
-  const name = author?.display_name || author?.email || "Membro";
-  const links = Array.isArray(post.links) ? post.links : [];
-  const isNews = post.kind === "news";
-  const isRepost = post.kind === "repost";
-  const pinned = post.pinned_until && new Date(post.pinned_until) > new Date();
-
-  return (
-    <article
-      className={`glass rounded-xl border p-4 ${
-        isNews
-          ? "border-secondary/60 shadow-[0_0_24px_hsl(var(--secondary)/0.15)]"
-          : "border-border/40"
-      }`}
-    >
-      {isNews && (
-        <div className="flex items-center gap-2 mb-2 text-[10px] font-bold tracking-[0.25em] text-secondary">
-          <Newspaper className="h-3 w-3" /> NOTÍCIA OFICIAL
-          {pinned && (
-            <span className="inline-flex items-center gap-1 text-secondary/80"><Pin className="h-3 w-3" /> FIXADA</span>
-          )}
-        </div>
-      )}
-      <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3">
-        <Avatar className="h-10 w-10 shrink-0">
-          <AvatarImage src={author?.avatar_url ?? undefined} alt={name} />
-          <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <div className="flex items-center flex-wrap gap-2">
-            <h2 className="text-sm font-bold truncate">{name}</h2>
-            <span className="text-[10px] text-muted-foreground">
-              {new Date(post.created_at).toLocaleString("pt-BR")}
-            </span>
-            {isRepost && (
-              <Badge variant="outline" className="text-[10px]"><Repeat2 className="h-3 w-3 mr-1" />Repost</Badge>
-            )}
-          </div>
-          {post.author_id !== currentUserId && !isNews && (
-            <div className="mt-1"><FollowButton userId={post.author_id} /></div>
-          )}
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          {canRemove && (
-            <Button size="icon" variant="ghost" className="text-destructive h-8 w-8" onClick={onRemove}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {isNews && post.title && <h3 className="text-lg font-black text-gradient-neon mt-3">{post.title}</h3>}
-      {isNews && post.cover_url && (
-        <img src={post.cover_url} alt={post.title ?? ""} className="rounded-lg w-full max-h-64 object-cover mt-3" />
-      )}
-
-      {post.content && (
-        <RichText text={post.content} className="text-sm text-foreground/90 mt-3" />
-      )}
-
-      {(post.images ?? []).length > 0 && (
-        <div className={`grid gap-2 mt-3 ${(post.images ?? []).length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {(post.images ?? []).map((src) => (
-            <a key={src} href={src} target="_blank" rel="noreferrer">
-              <img src={src} alt="" loading="lazy" className="rounded-lg w-full max-h-72 object-cover border border-border/40" />
-            </a>
-          ))}
-        </div>
-      )}
-
-      {isRepost && source && (
-        <RepostedInline post={source} profile={profileMap.get(source.author_id) ?? null} />
-      )}
-
-      {links.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-3">
-          {links.map((l) => (
-            <a
-              key={l.url}
-              href={l.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs inline-flex items-center gap-1 rounded-full border border-primary/30 px-3 py-1 text-primary hover:bg-primary/10 max-w-full"
-            >
-              <ExternalLink className="h-3 w-3 shrink-0" />
-              <span className="truncate">{l.label || prettyUrl(l.url)}</span>
-            </a>
-          ))}
-        </div>
-      )}
-
-      <PostActions post={post} currentUserId={currentUserId} isAdmin={isAdmin} onRepost={onRepost} />
-    </article>
-  );
-}
-
-function RepostedInline({ post, profile }: { post: FeedPost; profile: Profile | null }) {
-  const name = profile?.display_name || profile?.email || "Membro";
-  return (
-    <div className="mt-3 rounded-lg border border-border/40 p-3 bg-muted/10">
-      <div className="flex items-center gap-2 mb-1">
-        <Avatar className="h-6 w-6"><AvatarImage src={profile?.avatar_url ?? undefined} /><AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback></Avatar>
-        <span className="text-xs font-semibold">{name}</span>
-        <span className="text-[10px] text-muted-foreground">{new Date(post.created_at).toLocaleString("pt-BR")}</span>
-      </div>
-      {post.title && <div className="text-sm font-bold">{post.title}</div>}
-      <p className="text-xs whitespace-pre-wrap text-foreground/80">{post.content}</p>
-    </div>
-  );
-}
-
-type Reaction = { id: string; post_id: string; user_id: string; emoji: string };
-
-const EMOJIS = ["👍", "❤️", "🔥", "🎉", "👏", "🤯"];
-
-function PostActions({
-  post,
-  currentUserId,
-  isAdmin,
-  onRepost,
-}: {
-  post: FeedPost;
-  currentUserId: string | null;
-  isAdmin: boolean;
-  onRepost: () => void;
-}) {
-  const qc = useQueryClient();
-  const [openComments, setOpenComments] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const commentCount = useCommentCount(post.id);
-
-  const { data: reactions = [] } = useQuery({
-    queryKey: ["feed-reactions", post.id],
-    queryFn: async () => {
-      const { data } = await supabase.from("feed_post_reactions").select("*").eq("post_id", post.id);
-      return (data ?? []) as Reaction[];
-    },
-  });
-
-  const { data: repostCount = 0 } = useQuery({
-    queryKey: ["feed-repost-count", post.id],
-    queryFn: async () => {
-      const { count } = await supabase
-        .from("member_feed_posts")
-        .select("id", { count: "exact", head: true })
-        .eq("reposted_from_id", post.id)
-        .neq("status", "deleted");
-      return count ?? 0;
-    },
-  });
-
-  const myReaction = currentUserId ? reactions.find((r) => r.user_id === currentUserId) ?? null : null;
-  const grouped = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const r of reactions) map.set(r.emoji, (map.get(r.emoji) ?? 0) + 1);
-    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-  }, [reactions]);
-
-  const react = async (emoji: string) => {
-    if (!currentUserId) return toast.error("Entre para reagir.");
-    setShowPicker(false);
-    if (myReaction?.emoji === emoji) {
-      const { error } = await supabase.from("feed_post_reactions").delete().eq("id", myReaction.id);
-      if (error) return toast.error(error.message);
-    } else if (myReaction) {
-      const { error } = await supabase.from("feed_post_reactions").update({ emoji }).eq("id", myReaction.id);
-      if (error) return toast.error(error.message);
-    } else {
-      const { error } = await supabase
-        .from("feed_post_reactions")
-        .insert({ post_id: post.id, user_id: currentUserId, emoji });
-      if (error) return toast.error(error.message);
-    }
-    qc.invalidateQueries({ queryKey: ["feed-reactions", post.id] });
-  };
-
-  return (
-    <div className="mt-3 pt-2 border-t border-border/30">
-      {grouped.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 mb-2">
-          {grouped.map(([emoji, count]) => (
-            <button
-              key={emoji}
-              type="button"
-              onClick={() => react(emoji)}
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition ${
-                myReaction?.emoji === emoji
-                  ? "border-primary/70 bg-primary/15 text-primary"
-                  : "border-border/50 hover:border-primary/40"
-              }`}
-              aria-label={`Reagir com ${emoji}`}
-            >
-              <span>{emoji}</span>
-              <span className="tabular-nums">{count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div className="relative flex items-center justify-between gap-1 text-muted-foreground">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => react(myReaction?.emoji ?? "❤️")}
-          className={`h-8 flex-1 text-xs gap-1.5 ${myReaction ? "text-primary" : ""}`}
-        >
-          {myReaction ? (
-            <span className="text-sm leading-none">{myReaction.emoji}</span>
-          ) : (
-            <Heart className="h-4 w-4" />
-          )}
-          <span>{reactions.length > 0 ? reactions.length : "Curtir"}</span>
-        </Button>
-
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 shrink-0"
-          onClick={() => setShowPicker((v) => !v)}
-          aria-label="Escolher reação"
-        >
-          <SmilePlus className="h-4 w-4" />
-        </Button>
-
-        {showPicker && (
-          <div className="absolute bottom-9 left-0 z-20 flex gap-1 rounded-full border border-border/60 bg-background/95 px-2 py-1 shadow-lg backdrop-blur">
-            {EMOJIS.map((e) => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => react(e)}
-                className="text-lg leading-none transition hover:scale-125"
-                aria-label={`Reagir com ${e}`}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setOpenComments(true)}
-          className="h-8 flex-1 text-xs gap-1.5"
-        >
-          <MessageCircle className="h-4 w-4" />
-          <span>{commentCount > 0 ? commentCount : "Comentar"}</span>
-        </Button>
-
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onRepost}
-          className="h-8 flex-1 text-xs gap-1.5"
-          disabled={!currentUserId}
-        >
-          <Repeat2 className="h-4 w-4" />
-          <span>{repostCount > 0 ? repostCount : "Repostar"}</span>
-        </Button>
-      </div>
-
-      <FeedCommentsDialog
-        postId={post.id}
-        open={openComments}
-        onOpenChange={setOpenComments}
-        currentUserId={currentUserId}
-        isAdmin={isAdmin}
-        header={
-          post.content || post.title ? (
-            <div className="text-sm text-foreground/80">
-              {post.title && <div className="font-bold mb-1">{post.title}</div>}
-              <RichText text={post.content} className="text-sm" />
-            </div>
-          ) : null
-        }
-      />
-    </div>
-  );
 }

@@ -1,3 +1,4 @@
+import { fetchPeople } from "@/lib/people";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -297,11 +298,7 @@ function PeopleList({ userId, mode }: { userId: string; mode: "followers" | "fol
         .eq(mode === "followers" ? "following_id" : "follower_id", userId);
       const ids = (rows ?? []).map((r: any) => (mode === "followers" ? r.follower_id : r.following_id));
       if (ids.length === 0) return [] as MiniProfile[];
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,avatar_url,work_area")
-        .in("user_id", ids);
-      return ((data ?? []) as unknown) as MiniProfile[];
+      return (await fetchPeople(ids)) as unknown as MiniProfile[];
     },
   });
 
@@ -321,6 +318,7 @@ function PeopleList({ userId, mode }: { userId: string; mode: "followers" | "fol
             </Avatar>
             <div className="min-w-0">
               <div className="text-sm font-semibold truncate">{n}</div>
+              {(p as { nickname?: string | null }).nickname && <div className="text-xs text-secondary truncate">@{(p as { nickname?: string }).nickname}</div>}
               {p.work_area && <div className="text-xs text-muted-foreground truncate">{p.work_area}</div>}
             </div>
           </div>

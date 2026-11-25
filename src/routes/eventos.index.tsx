@@ -64,6 +64,10 @@ function EventosPage() {
     return matchSearch && matchModality && matchCategory && matchWhen;
   });
 
+  // Passados: o mais recente primeiro. Sem busca nem filtros, o próximo evento ganha destaque.
+  const ordered = when === "past" ? [...filtered].reverse() : filtered;
+  const highlight: any = when === "upcoming" && !q && modality === "all" && category === "all" ? ordered[0] : null;
+
   const activeFilters = [modality !== "all", category !== "all", when !== "upcoming"].filter(Boolean).length;
   const clearFilters = () => { setModality("all"); setCategory("all"); setWhen("upcoming"); setQ(""); };
 
@@ -111,9 +115,12 @@ function EventosPage() {
         ) : filtered.length === 0 ? (
           <div className="mt-10"><EmptyState title="Nenhum evento encontrado" /></div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 mt-10">
-            {filtered.map((e: any) => <EventCard key={e.id} event={e} />)}
-          </div>
+          <>
+            {highlight && <div className="mt-10"><EventCard event={highlight} featured /></div>}
+            <div className={`grid md:grid-cols-2 lg:grid-cols-3 gap-5 ${highlight ? "mt-5" : "mt-10"}`}>
+              {(highlight ? ordered.slice(1) : ordered).map((e: any) => <EventCard key={e.id} event={e} />)}
+            </div>
+          </>
         )}
         {!isAuthenticated && (
           <div className="mt-10 glass rounded-xl p-5 border border-primary/30 text-sm">
