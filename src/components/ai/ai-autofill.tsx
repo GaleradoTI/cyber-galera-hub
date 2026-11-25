@@ -3,6 +3,7 @@ import { Sparkles, Loader2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useSiteModules } from "@/lib/modules";
 
 /** Caixa "cole o texto e a IA preenche". Só campos encontrados são aplicados. */
 export function AiAutofill<T extends Record<string, unknown>>({
@@ -17,6 +18,7 @@ export function AiAutofill<T extends Record<string, unknown>>({
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const { aiAutofillEnabled } = useSiteModules();
 
   const go = async () => {
     if (text.trim().length < 20) return toast.error("Cole um texto com pelo menos 20 caracteres.");
@@ -38,6 +40,9 @@ export function AiAutofill<T extends Record<string, unknown>>({
       setBusy(false);
     }
   };
+
+  // Ligado por admin/super admin em Configurações do Site > Avançado > Módulos.
+  if (!aiAutofillEnabled) return null;
 
   return (
     <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
