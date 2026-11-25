@@ -1,3 +1,4 @@
+import { EVENT_COLUMNS, todayBR } from "@/lib/events";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
@@ -130,7 +131,7 @@ function Index() {
     queryFn: async () => {
       const { data } = await supabase
         .from("events")
-        .select("*")
+        .select(EVENT_COLUMNS)
         .eq("status", "publicado")
         .order("event_date", { ascending: true })
         .limit(3);

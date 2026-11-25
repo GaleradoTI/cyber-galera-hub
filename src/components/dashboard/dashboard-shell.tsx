@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { AppPermissionsBanner } from "@/components/pwa/app-permissions-banner";
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -142,6 +143,14 @@ export function DashboardShell({ children, title, description }: { children: Rea
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate({ to: "/login" });
   }, [loading, isAuthenticated, navigate]);
+
+  // Conta bloqueada: encerra a sessão (o banco já nega os dados).
+  const isBlocked = !!profile?.is_blocked;
+  useEffect(() => {
+    if (!isBlocked) return;
+    toast.error("Seu acesso foi bloqueado. Fale com a administração.", { duration: 10000 });
+    signOut().then(() => navigate({ to: "/login" }));
+  }, [isBlocked, navigate]);
 
   // Open by default on desktop, closed on mobile.
   useEffect(() => { setOpen(!isMobile); }, [isMobile]);

@@ -14,7 +14,7 @@ import { ScheduleTimeline } from "@/components/events/schedule";
 import { QrCode } from "@/components/events/qr-code";
 import { EventQA } from "@/components/public/event-qa";
 import { formatDateOnly } from "@/lib/utils";
-import { REG_STATUS, eventLinks, hhmm, mapsUrl, parseSchedule, type RegistrationStatus } from "@/lib/events";
+import { REG_STATUS, eventLinks, hhmm, mapsUrl, parseSchedule, type RegistrationStatus, EVENT_COLUMNS, todayBR } from "@/lib/events";
 
 export const Route = createFileRoute("/eventos/$id")({
   head: () => ({
@@ -41,7 +41,7 @@ function EventPage() {
   const { data: ev, isLoading } = useQuery({
     queryKey: ["event", id],
     queryFn: async () => {
-      const { data } = await supabase.from("events").select("*").eq("id", id).maybeSingle();
+      const { data } = await supabase.from("events").select(EVENT_COLUMNS).eq("id", id).maybeSingle();
       return data as any;
     },
   });
@@ -61,6 +61,15 @@ function EventPage() {
     queryFn: async () => {
       const { data } = await supabase.from("user_roles").select("role").eq("user_id", user!.id);
       return (data ?? []).some((r: any) => r.role === "ADMIN" || r.role === "SUPER_ADMIN");
+    },
+  });
+
+  // O banco só devolve o link para quem pode vê-lo (aprovado, organização ou evento de terceiros).
+  const { data: onlineLink = null } = useQuery({
+    queryKey: ["event-link", id, user?.id ?? "anon", reg?.status ?? ""],
+    queryFn: async () => {
+      const { data } = await (supabase as any).rpc("get_event_online_link", { _event_id: id });
+      return (data ?? null) as string | null;
     },
   });
 
@@ -97,13 +106,13 @@ function EventPage() {
     );
   }
 
-  const { eventUrl, onlineUrl, place } = eventLinks(ev);
+  const { eventUrl, onlineUrl, place } = eventLinks({ ...ev, online_link: onlineLink });
   const isThirdParty = ev.source === "terceiros";
   const schedule = parseSchedule(ev.schedule);
   const speakers: any[] = Array.isArray(ev.speakers) ? ev.speakers : [];
   const active = reg && !["cancelled", "rejected"].includes(reg.status);
   const status = reg?.status as RegistrationStatus | undefined;
-  const isPast = ev.event_date < new Date().toISOString().slice(0, 10);
+  const isPast = ev.event_date < todayBR();
 
   return (
     <PublicLayout>
@@ -144,7 +153,7 @@ function EventPage() {
                 </div>
               )}
               {ev.max_attendees && <InfoTile icon={<Users className="h-5 w-5" />} label="Vagas" value={`${ev.max_attendees} lugares`} />}
-              {onlineUrl && <InfoTile icon={<Video className="h-5 w-5" />} label="Transmissão" value={isThirdParty ? "Link do organizador" : isAuthenticated ? "Link disponível após aprovação" : "Entre para ver o link"} />}
+              {(onlineUrl || (!isThirdParty && ev.modality !== "presencial")) && <InfoTile icon={<Video className="h-5 w-5" />} label="Transmissão" value={isThirdParty ? "Link do organizador" : isAuthenticated ? "Link disponível após aprovação" : "Entre para ver o link"} />}
             </div>
 
             {(eventUrl || (isThirdParty && onlineUrl)) && (
@@ -203,8 +212,8 @@ function EventPage() {
                   {ev.requires_approval ? "A organização analisa os pedidos e libera o ingresso para quem for aprovado." : "Confirme e receba seu ingresso na hora."}
                 </p>
                 {status === "rejected" && <Badge variant="destructive">Pedido anterior não aprovado</Badge>}
-                <Button variant="neon" className="w-full" disabled={busy || isPast} onClick={register}>
-                  <CheckCircle2 className="h-4 w-4 mr-2" /> {isPast ? "Evento encerrado" : "Quero ir"}
+                <Button variant="neon" className="w-full" disabled={busy || isPast || status === "rejected"} onClick={register}>
+                  <CheckCircle2 className="h-4 w-4 mr-2" /> {isPast ? "Evento encerrado" : status === "rejected" ? "Pedido não aprovado" : "Quero ir"}
                 </Button>
               </>
             ) : (

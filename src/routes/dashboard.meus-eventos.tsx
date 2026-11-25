@@ -23,7 +23,7 @@ function MeusEventosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_event_interests")
-        .select("id, created_at, events(id, name, description, event_date, event_time, modality, location_or_link, online_link, address, theme, category, status)")
+        .select("id, created_at, events(id, name, description, event_date, event_time, modality, location_or_link, address, theme, category, status)")
         .eq("user_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -92,10 +92,11 @@ function MeusEventosPage() {
     <DashboardShell title="Meus Eventos" description="Seus ingressos e eventos em que você demonstrou interesse.">
       <MemberTickets userId={user?.id} />
       {(!user || isLoading) && <div className="text-muted-foreground">Carregando…</div>}
+      {!isLoading && data.length > 0 && <h2 className="font-bold text-sm mb-3">Interesses antigos</h2>}
       {!isLoading && data.length === 0 && (
         <div className="glass rounded-xl p-8 text-center">
           <Calendar className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">Nenhum evento marcado como interesse.</p>
+          <p className="text-sm text-muted-foreground">Suas inscrições aparecem em "Meus ingressos".</p>
           <Link to="/eventos" className="inline-block mt-4">
             <Button>Ver próximos eventos</Button>
           </Link>
@@ -105,13 +106,13 @@ function MeusEventosPage() {
         {data.map((row: any) => {
           const e = row.events;
           if (!e) return null;
-          const link = e.online_link || (e.location_or_link?.startsWith("http") ? e.location_or_link : null);
+          const link = e.location_or_link?.startsWith("http") ? e.location_or_link : null;
           const place = e.address || (!e.location_or_link?.startsWith("http") ? e.location_or_link : null);
           const checked = checkins.includes(e.id);
           return (
             <div key={row.id} className="glass rounded-xl p-4 border border-primary/20 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <div className="font-bold">{e.name}</div>
+                <Link to="/eventos/$id" params={{ id: e.id }} className="font-bold hover:text-primary">{e.name}</Link>
                 {e.theme && <div className="text-xs text-primary mt-0.5">{e.theme}</div>}
                 <div className="text-xs text-muted-foreground mt-1">
                   {formatDateOnly(e.event_date)}

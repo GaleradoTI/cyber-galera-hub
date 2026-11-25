@@ -12,6 +12,11 @@ export function JobCard({ job, onClick }: { job: any; onClick?: () => void }) {
         <Briefcase className="h-4 w-4 text-secondary shrink-0" />
       </div>
       <div className="flex flex-wrap gap-1.5 mt-3">
+        {job.application_type && (
+          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border border-border text-muted-foreground">
+            {job.application_type === "externa" ? "Externa" : "Candidatura na plataforma"}
+          </span>
+        )}
         <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{job.modality}</span>
         <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/30">{job.seniority}</span>
       </div>

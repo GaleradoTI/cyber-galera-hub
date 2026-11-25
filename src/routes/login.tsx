@@ -44,7 +44,7 @@ function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(/banned/i.test(error.message) ? "Seu acesso foi bloqueado. Fale com a administração." : error.message);
     toast.success("Bem-vindo de volta!");
     navigate({ to: getRedirectTo() as "/dashboard" });
   }

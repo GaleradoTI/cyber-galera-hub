@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Briefcase, ExternalLink, Heart, MapPin, CheckCircle2 } from "lucide-react";
+import { Briefcase, ExternalLink, Heart, MapPin, CheckCircle2, Share2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -138,6 +138,11 @@ export function JobDetailDialog({ job, open, onOpenChange }: { job: any | null; 
             </Button>
           ) : (
             <Link to="/login"><Button variant="outline"><Heart className="h-4 w-4 mr-2" /> Entrar para salvar</Button></Link>
+          )}
+          {job.status === "publicado" && (
+            <Button variant="outline" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/vagas?vaga=${job.id}`).then(() => toast.success("Link da vaga copiado"), () => toast.error("Não foi possível copiar"))}>
+              <Share2 className="h-4 w-4 mr-2" /> Copiar link
+            </Button>
           )}
           {isAuthenticated && <ReportButton entityType="job" entityId={job.id} />}
         </div>

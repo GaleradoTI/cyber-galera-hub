@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { EVENT_COLUMNS, todayBR } from "@/lib/events";
 
 export const Route = createFileRoute("/eventos/")({
   head: () => ({
@@ -36,7 +37,7 @@ function EventosPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("events")
-        .select("*")
+        .select(EVENT_COLUMNS)
         .eq("status", "publicado")
         .order("event_date", { ascending: true });
       return data ?? [];
@@ -49,7 +50,7 @@ function EventosPage() {
     return Array.from(set).sort();
   }, [events]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayBR();
   const filtered = events.filter((e: any) => {
     const t = q.toLowerCase();
     const matchSearch = !t || e.name?.toLowerCase().includes(t) || e.description?.toLowerCase().includes(t);

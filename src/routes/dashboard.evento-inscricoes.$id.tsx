@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { downloadCSV } from "@/lib/csv";
 import { formatDateOnly } from "@/lib/utils";
-import { REG_STATUS, type RegistrationStatus } from "@/lib/events";
+import { REG_STATUS, EVENT_COLUMNS, type RegistrationStatus } from "@/lib/events";
 
 export const Route = createFileRoute("/dashboard/evento-inscricoes/$id")({
   head: () => ({ meta: [{ title: "Inscrições e check-in — Galera do TI" }, { name: "description", content: "Controle de inscrições e presença dos eventos da Galera do TI." }, { property: "og:title", content: "Inscrições e check-in — Galera do TI" }, { property: "og:description", content: "Gestão dos participantes e leitura de ingressos." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
@@ -35,7 +35,7 @@ function InscricoesPage() {
 
   const { data: ev } = useQuery({
     queryKey: ["event", id],
-    queryFn: async () => (await supabase.from("events").select("*").eq("id", id).maybeSingle()).data as any,
+    queryFn: async () => (await supabase.from("events").select(EVENT_COLUMNS).eq("id", id).maybeSingle()).data as any,
   });
 
   const { data: regs = [], isLoading } = useQuery({

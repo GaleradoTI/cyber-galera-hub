@@ -25,7 +25,7 @@ export const Route = createFileRoute("/dashboard/vagas")({ component: VagasAdmin
 type Job = {
   id: string; title: string; company: string; description: string; short_description: string | null;
   seniority: string; modality: string; location: string | null; apply_url: string | null;
-  technologies: string[]; status: string; created_at: string; application_type?: string;
+  technologies: string[]; status: string; created_at: string; application_type?: string; created_by?: string | null;
 };
 
 const empty: Partial<Job> = { title: "", company: "", description: "", short_description: "", seniority: "pleno", modality: "remoto", location: "", apply_url: "", technologies: [], status: "rascunho", application_type: "interna" };
@@ -66,6 +66,29 @@ function VagasAdminPage() {
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-jobs"] });
+
+  const { data: applicantCount = {} } = useQuery({
+    queryKey: ["job-applicant-count", user?.id],
+    enabled: !!user?.id && (isAdmin || isRecruiter),
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_job_applicants");
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((a: any) => { map[a.job_id] = (map[a.job_id] ?? 0) + 1; });
+      return map;
+    },
+  });
+
+  // Para o admin saber quem enviou cada vaga ainda em rascunho.
+  const authorIds = Array.from(new Set(jobs.filter((j) => j.status === "rascunho" && j.created_by && j.created_by !== user?.id).map((j) => j.created_by as string))).sort();
+  const { data: authors = {} } = useQuery({
+    queryKey: ["job-authors", authorIds.join(",")],
+    enabled: isAdmin && authorIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("user_id,display_name").in("user_id", authorIds);
+      return Object.fromEntries((data ?? []).map((p) => [p.user_id, p.display_name])) as Record<string, string>;
+    },
+  });
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -163,7 +186,13 @@ function VagasAdminPage() {
             )}
             {!isLoading && paginated.map((j) => (
               <TableRow key={j.id}>
-                <TableCell className="font-medium">{j.title}</TableCell>
+                <TableCell className="font-medium">
+                  {j.title}
+                  <div className="text-[11px] font-normal text-muted-foreground">
+                    {j.application_type === "externa" ? "Externa" : `Interna${isAdmin || isRecruiter ? ` · ${applicantCount[j.id] ?? 0} candidato(s)` : ""}`}
+                    {j.status === "rascunho" && j.created_by && authors[j.created_by] ? ` · enviada por ${authors[j.created_by]}` : ""}
+                  </div>
+                </TableCell>
                 <TableCell>{j.company}</TableCell>
                 <TableCell><Badge variant="outline">{j.modality}</Badge></TableCell>
                 <TableCell><Badge variant={j.status === "publicado" ? "default" : "secondary"}>{j.status}</Badge></TableCell>

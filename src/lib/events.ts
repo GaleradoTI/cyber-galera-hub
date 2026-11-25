@@ -18,6 +18,13 @@ export function parseSchedule(raw: unknown): ScheduleItem[] {
     .sort((a, b) => a.start.localeCompare(b.start));
 }
 
+/** Colunas legíveis de events. online_link fica de fora: use get_event_online_link(). */
+export const EVENT_COLUMNS =
+  "id,name,description,category,event_date,event_time,end_time,modality,location_or_link,status,created_by,created_at,updated_at,speakers,theme,address,cover_url,max_attendees,source,approval_status,submitted_by,approval_note,approved_by,approved_at,schedule,requires_approval,source_event_id" as const;
+
+/** Data de hoje (AAAA-MM-DD) em Brasília; toISOString() viraria o dia às 21h. */
+export const todayBR = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+
 export const hhmm = (t?: string | null) => (t ? t.slice(0, 5) : "");
 
 export function mapsUrl(address: string) {

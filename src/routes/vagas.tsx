@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { PublicLayout } from "@/components/public/public-layout";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { JobDetailDialog } from "@/components/public/job-detail-dialog";
 
 export const Route = createFileRoute("/vagas")({
+  validateSearch: (s: Record<string, unknown>): { vaga?: string } => (typeof s.vaga === "string" ? { vaga: s.vaga } : {}),
   head: () => ({
     meta: [
       { title: "Vagas — GALERA DO T.I." },
@@ -27,7 +28,8 @@ function VagasPage() {
   const [seniority, setSeniority] = useState<string>("all");
   const [tech, setTech] = useState<string>("all");
   const [location, setLocation] = useState<string>("");
-  const [selected, setSelected] = useState<any | null>(null);
+  const { vaga } = Route.useSearch();
+  const navigate = useNavigate({ from: "/vagas" });
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["jobs-all"],
     queryFn: async () => {
@@ -39,6 +41,10 @@ function VagasPage() {
       return data ?? [];
     },
   });
+
+  // A vaga aberta fica na URL, então o link pode ser compartilhado.
+  const selected: any = vaga ? jobs.find((j: any) => j.id === vaga) ?? null : null;
+  const setSelected = (job: any | null) => navigate({ search: job ? { vaga: job.id } : {}, replace: true, resetScroll: false });
 
   const techOptions = useMemo(() => {
     const set = new Set<string>();

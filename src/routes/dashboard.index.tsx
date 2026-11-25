@@ -1,3 +1,4 @@
+import { todayBR } from "@/lib/events";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -56,10 +57,10 @@ function FeaturedEvent({ userId }: { userId: string }) {
   const { data: ev } = useQuery({
     queryKey: ["featured-event"],
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayBR();
       const { data } = await supabase
         .from("events")
-        .select("id,name,theme,event_date,event_time,modality,online_link,address,location_or_link,cover_url,speakers,source")
+        .select("id,name,theme,event_date,event_time,modality,address,location_or_link,cover_url,speakers,source")
         .eq("status", "publicado")
         .eq("source", "comunidade")
         .gte("event_date", today)
@@ -69,31 +70,10 @@ function FeaturedEvent({ userId }: { userId: string }) {
       return data;
     },
   });
-  const { data: checked } = useQuery({
-    queryKey: ["featured-checkin", ev?.id, userId],
-    enabled: !!ev?.id,
-    queryFn: async () => {
-      const { data } = await supabase.from("event_checkins").select("id").eq("event_id", ev!.id).eq("user_id", userId).maybeSingle();
-      return !!data;
-    },
-  });
   if (!ev) return null;
-  const link = ev.online_link || (ev.location_or_link?.startsWith("http") ? ev.location_or_link : null);
+  const link = ev.location_or_link?.startsWith("http") ? ev.location_or_link : null;
   const place = ev.address || (!ev.location_or_link?.startsWith("http") ? ev.location_or_link : null);
   const speakers = Array.isArray(ev.speakers) ? ev.speakers : [];
-
-  const checkin = async () => {
-    if (checked) {
-      const { error } = await supabase.from("event_checkins").delete().eq("event_id", ev.id).eq("user_id", userId);
-      if (error) return toast.error(error.message);
-      toast.success("Check-in cancelado");
-    } else {
-      const { error } = await supabase.from("event_checkins").insert({ event_id: ev.id, user_id: userId });
-      if (error) return toast.error(error.message);
-      toast.success("Check-in confirmado!");
-    }
-    qc.invalidateQueries({ queryKey: ["featured-checkin"] });
-  };
 
   return (
     <div className="relative overflow-hidden rounded-2xl glass border border-primary/30 p-5 sm:p-6 mb-6">
@@ -119,9 +99,7 @@ function FeaturedEvent({ userId }: { userId: string }) {
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
           {link && <a href={link} target="_blank" rel="noopener noreferrer"><Button variant="outline" size="sm"><ExternalLink className="h-3 w-3 mr-1" /> Acessar</Button></a>}
-          <Button onClick={checkin} variant={checked ? "default" : "neon"} size="sm">
-            <CheckCircle2 className="h-3 w-3 mr-1" /> {checked ? "Check-in feito" : "Fazer check-in"}
-          </Button>
+          <Button asChild variant="neon" size="sm"><Link to="/eventos/$id" params={{ id: ev.id }}><CheckCircle2 className="h-3 w-3 mr-1" /> Ver evento e confirmar presença</Link></Button>
         </div>
       </div>
     </div>
@@ -157,7 +135,7 @@ function MemberHome({ userId, techTags, role }: { userId: string; techTags: stri
   const { data: events = [], isLoading: loadingEvents } = useQuery({
     queryKey: ["dash-upcoming-events"],
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayBR();
       const { data } = await supabase.from("events").select("id,name,event_date").eq("status", "publicado").gte("event_date", today).order("event_date").limit(5);
       return data ?? [];
     },
@@ -293,7 +271,7 @@ function AdminHome({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const { data: raw } = useQuery({
     queryKey: ["admin-kpis"],
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayBR();
       const [profiles, jobs, events, projects, checkins] = await Promise.all([
         supabase
           .from("profiles")

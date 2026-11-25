@@ -67,7 +67,9 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     const callerRoles = await getRolesOf(admin, context.userId);
     const callerRole = primaryRole(callerRoles);
 
-    if (callerRole !== "ADMIN" && callerRole !== "SUPER_ADMIN") {
+    // A função do banco também recusa administradores bloqueados.
+    const { data: allowed } = await context.supabase.rpc("is_admin_or_super", { _user_id: context.userId });
+    if (!allowed || (callerRole !== "ADMIN" && callerRole !== "SUPER_ADMIN")) {
       throw new Error("Permissão negada.");
     }
 

@@ -1,6 +1,8 @@
 function escapeCell(value: unknown): string {
   if (value == null) return "";
-  const s = String(value);
+  let s = String(value);
+  // Texto de usuário que começa com estes caracteres seria executado como fórmula na planilha.
+  if (typeof value === "string" && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   if (/[",\n;]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
   return s;
 }
