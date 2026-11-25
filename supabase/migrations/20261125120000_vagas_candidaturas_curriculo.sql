@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS public.candidate_profiles (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (resume_path IS NULL OR resume_path LIKE user_id::text || '/%')
 );
+REVOKE ALL ON public.candidate_profiles FROM anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.candidate_profiles TO authenticated;
 GRANT ALL ON public.candidate_profiles TO service_role;
 ALTER TABLE public.candidate_profiles ENABLE ROW LEVEL SECURITY;
@@ -258,5 +259,12 @@ CREATE POLICY "Curriculo remocao pelo dono" ON storage.objects FOR DELETE TO aut
 DROP POLICY IF EXISTS "Curriculo leitura autorizada" ON storage.objects;
 CREATE POLICY "Curriculo leitura autorizada" ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id = 'resumes' AND public.can_view_candidate_contact((storage.foldername(name))[1]));
+
+-- Funções de gatilho/apoio não precisam ser chamáveis pela API.
+REVOKE EXECUTE ON FUNCTION public.enforce_job_application_type() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.notify_job_suggestion() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.guard_job_application() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.guard_job_application_update() FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.can_manage_all_jobs(uuid) FROM PUBLIC, anon, authenticated;
 
 COMMIT;
