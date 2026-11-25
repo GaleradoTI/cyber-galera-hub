@@ -23,6 +23,7 @@ export const Route = createFileRoute("/dashboard/perfil")({ head: () => ({ meta:
 
 const profileSchema = z.object({
   display_name: z.string().trim().min(2, "Nome muito curto").max(80),
+  nickname: z.string().regex(/^[a-z0-9._]{3,24}$/, "Use de 3 a 24 caracteres: letras sem acento, números, ponto ou _"),
   bio: z.string().trim().max(500).optional().nullable(),
   work_area: z.string().trim().max(80).optional().nullable(),
   phone: z.string().trim().max(40).optional().nullable(),
@@ -75,6 +76,7 @@ function PerfilPage() {
   const { user, rolesReady } = useDashboardRoles();
   const [form, setForm] = useState({
     display_name: "",
+    nickname: "",
     bio: "",
     work_area: "",
     phone: "",
@@ -198,6 +200,7 @@ function PerfilPage() {
     if (!profile) return;
     setForm({
       display_name: profile.display_name ?? "",
+      nickname: (profile as any).nickname ?? "",
       bio: profile.bio ?? "",
       work_area: profile.work_area ?? "",
       phone: (profile as any).phone ?? "",
@@ -276,6 +279,7 @@ function PerfilPage() {
       .from("profiles")
       .update({
         display_name: parsed.data.display_name,
+        nickname: parsed.data.nickname,
         bio: parsed.data.bio ?? null,
         work_area: parsed.data.work_area ?? null,
         phone: parsed.data.phone ?? null,
@@ -298,8 +302,13 @@ function PerfilPage() {
       } as any)
       .eq("user_id", user!.id);
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const taken = error.message.includes("profiles_nickname_unique");
+      if (taken) setErrors({ nickname: "Esse nick já está em uso." });
+      return toast.error(taken ? "Esse nick já está em uso. Escolha outro." : error.message);
+    }
     setCepValidatedAt(validatedAt);
+    qc.invalidateQueries({ queryKey: ["people"] });
     toast.success("Perfil atualizado");
     qc.invalidateQueries({ queryKey: ["my-profile"] });
     qc.invalidateQueries({ queryKey: ["profile"] });
@@ -377,6 +386,15 @@ function PerfilPage() {
                 <Label>Nome</Label>
                 <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
                 {errors.display_name && <p className="text-xs text-destructive mt-1">{errors.display_name}</p>}
+              </div>
+              <div>
+                <Label htmlFor="nickname">Nick no site</Label>
+                <div className="relative">
+                  <span aria-hidden className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">@</span>
+                  <Input id="nickname" className="pl-8" maxLength={24} value={form.nickname}
+                    onChange={(e) => setForm({ ...form, nickname: e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, "") })} />
+                </div>
+                {errors.nickname ? <p className="text-xs text-destructive mt-1">{errors.nickname}</p> : <p className="text-[11px] text-muted-foreground mt-1">Aparece no feed, no ingresso e no check-in.</p>}
               </div>
               <div>
                 <Label>E-mail</Label>

@@ -1,3 +1,4 @@
+import { fetchPeople } from "@/lib/people";
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -59,9 +60,8 @@ function MensagensPage() {
     queryKey: ["dms-profiles", partnerIds.join(",")],
     enabled: partnerIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("user_id,display_name,email,avatar_url").in("user_id", partnerIds);
-      if (error) throw error;
-      return (data ?? []) as Profile[];
+      // sem e-mail: o nick ocupa o lugar dele como identificação
+      return (await fetchPeople(partnerIds)).map((p) => ({ user_id: p.user_id, display_name: p.display_name ?? "Membro", email: p.nickname ? `@${p.nickname}` : "", avatar_url: p.avatar_url })) as Profile[];
     },
   });
   const profileById = useMemo(() => new Map(profiles.map((p) => [p.user_id, p])), [profiles]);

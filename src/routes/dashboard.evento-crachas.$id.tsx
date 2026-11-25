@@ -21,8 +21,8 @@ function CrachasPage() {
     queryFn: async () => {
       const { data: ev } = await supabase.from("events").select("name, event_date, theme").eq("id", id).maybeSingle();
       const { data: regs } = await (supabase.from("event_registrations" as any) as any).select("user_id, ticket_code").eq("event_id", id).eq("status", "approved");
-      const ids = (regs ?? []).map((r: any) => r.user_id);
-      const { data: profs } = ids.length ? await supabase.from("profiles").select("user_id, display_name, work_area, avatar_url").in("user_id", ids) : { data: [] as any[] };
+      const { data: profs, error } = await (supabase as any).rpc("get_event_participants", { _event_id: id });
+      if (error) throw error;
       const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
       const people = (regs ?? []).map((r: any) => ({ ...r, ...(map.get(r.user_id) ?? {}) })).sort((a: any, b: any) => (a.display_name ?? "").localeCompare(b.display_name ?? ""));
       return { ev: ev as any, people };
@@ -48,6 +48,7 @@ function CrachasPage() {
             <div className="flex-1 flex flex-col items-center justify-center text-center p-4 gap-2">
               {p.avatar_url && <img src={p.avatar_url} alt="" className="h-16 w-16 rounded-full object-cover" />}
               <div className="text-2xl font-black leading-tight">{p.display_name ?? "Participante"}</div>
+              {p.nickname && <div className="text-lg font-bold text-primary break-all">@{p.nickname}</div>}
               {p.work_area && <div className="text-sm text-muted-foreground">{p.work_area}</div>}
               <QrCode value={p.ticket_code} size={110} />
               <div className="font-mono text-xs tracking-widest">{p.ticket_code}</div>

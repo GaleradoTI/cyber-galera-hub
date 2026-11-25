@@ -1,8 +1,10 @@
+import { NewsCard } from "@/components/feed/news-card";
+import { useLoadMore } from "@/hooks/use-load-more";
 import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Eye, EyeOff, Pencil, Plus, Pin, Trash2 } from "lucide-react";
+import { ExternalLink, Eye, EyeOff, Newspaper, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
@@ -11,9 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RichText, extractLinks, mergeLinks, parseLinkLines, linksToLines } from "@/lib/rich-text";
 import { AiAutofill } from "@/components/ai/ai-autofill";
 import { extractNewsFromText } from "@/lib/news-ai.functions";
@@ -37,7 +37,6 @@ type News = {
 };
 
 function NoticiasPage() {
-  const navigate = useNavigate();
   const qc = useQueryClient();
   const { user, isAdmin, rolesReady } = useDashboardRoles();
   const { can, ready: areasReady } = useAmbassadorCan();
@@ -57,24 +56,43 @@ function NoticiasPage() {
     );
   };
 
-  useEffect(() => {
-    if (rolesReady && areasReady && !canManage) navigate({ to: "/dashboard" });
-  }, [rolesReady, canManage, navigate]);
-
   const { data: news = [], isLoading } = useQuery({
-    queryKey: ["news-admin"], enabled: canManage && rolesReady && areasReady,
+    queryKey: ["news-admin", canManage], enabled: rolesReady && areasReady,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("member_feed_posts")
-        .select("*")
-        .eq("kind", "news")
-        .neq("status", "deleted")
+      let query = supabase.from("member_feed_posts").select("*").eq("kind", "news");
+      // quem só lê recebe apenas o que está publicado
+      query = canManage ? query.neq("status", "deleted") : query.eq("status", "published");
+      const { data, error } = await query
         .order("pinned_until", { ascending: false, nullsFirst: false })
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as News[];
     },
   });
+
+  const visible = news.filter((n) => (filter === "all" || n.status === filter) && `${n.title} ${n.content}`.toLowerCase().includes(search.toLowerCase()));
+  // fixadas vigentes primeiro; as demais, da mais recente para a mais antiga
+  const rank = (n: News) => (n.pinned_until && new Date(n.pinned_until) > new Date() ? 1 : 0);
+  const sorted = [...visible].sort((a, b) => rank(b) - rank(a) || b.created_at.localeCompare(a.created_at));
+  const highlight = !search && filter === "all" ? sorted[0] : undefined;
+  const rest = highlight ? sorted.slice(1) : sorted;
+  const [limit, setLimit] = useState(9);
+  const more = useLoadMore(() => setLimit((v) => v + 9), rest.length > limit);
+
+  const togglePublish = async (n: News) => {
+    const { error } = await supabase.from("member_feed_posts").update({ status: n.status === "draft" ? "published" : "draft" }).eq("id", n.id);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["news-admin"] });
+    qc.invalidateQueries({ queryKey: ["member-feed"] });
+  };
+
+  const actionsFor = (n: News) => (can("noticias", "editar") || can("noticias", "publicar") || can("noticias", "remover")) ? (
+    <>
+      {can("noticias", "editar") && <Button size="icon" variant="ghost" className="h-8 w-8" aria-label="Editar notícia" title="Editar" onClick={() => openEditor(n)}><Pencil className="h-3.5 w-3.5" /></Button>}
+      {can("noticias", "publicar") && <Button size="sm" variant="outline" className="h-8" onClick={() => togglePublish(n)}>{n.status === "draft" ? <><Eye className="h-3.5 w-3.5 mr-1" /> Publicar</> : <><EyeOff className="h-3.5 w-3.5 mr-1" /> Despublicar</>}</Button>}
+      {can("noticias", "remover") && <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" aria-label="Remover notícia" title="Remover" onClick={() => remove(n)}><Trash2 className="h-3.5 w-3.5" /></Button>}
+    </>
+  ) : undefined;
 
   const save = async () => {
     if (!editing || !user?.id) return;
@@ -118,84 +136,22 @@ function NoticiasPage() {
   };
 
   return (
-    <DashboardShell title="Notícias da Comunidade">
+    <DashboardShell title="Notícias da Comunidade" description="Comunicados e novidades oficiais da Galera do TI.">
       <div className="flex flex-col sm:flex-row gap-3 justify-between mb-5">
         <Input aria-label="Buscar notícias" placeholder="Buscar título ou conteúdo…" value={search} onChange={(e) => setSearch(e.target.value)} className="sm:max-w-sm" />
         {can("noticias", "criar") && <Button onClick={() => openEditor()}>
           <Plus className="h-4 w-4 mr-1" /> Nova notícia
         </Button>}
       </div>
-      <Tabs value={filter} onValueChange={setFilter} className="mb-4"><TabsList><TabsTrigger value="all">Todas ({news.length})</TabsTrigger><TabsTrigger value="published">Publicadas</TabsTrigger><TabsTrigger value="draft">Rascunhos</TabsTrigger></TabsList></Tabs>
+      {canManage && <Tabs value={filter} onValueChange={setFilter} className="mb-4"><TabsList><TabsTrigger value="all">Todas ({news.length})</TabsTrigger><TabsTrigger value="published">Publicadas</TabsTrigger><TabsTrigger value="draft">Rascunhos</TabsTrigger></TabsList></Tabs>}
 
-      <div className="glass rounded-xl border border-primary/20 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Título</TableHead>
-              <TableHead className="hidden md:table-cell">No feed</TableHead>
-              <TableHead className="hidden md:table-cell">Publicado</TableHead>
-              <TableHead className="hidden md:table-cell">Destaque até</TableHead>
-              <TableHead className="w-[160px]">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={5}><LoadingState compact /></TableCell>
-              </TableRow>
-            )}
-            {!isLoading && news.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5}><EmptyState compact title="Nenhuma notícia ainda" /></TableCell>
-              </TableRow>
-            )}
-            {news.filter((n) => (filter === "all" || n.status === filter) && `${n.title} ${n.content}`.toLowerCase().includes(search.toLowerCase())).map((n) => {
-              const pinned = n.pinned_until && new Date(n.pinned_until) > new Date();
-              return (
-                <TableRow key={n.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {pinned && <Badge className="bg-secondary/20 text-secondary border-secondary/40"><Pin className="h-3 w-3 mr-1" />Fixada</Badge>}
-                      {n.cover_url && <img src={n.cover_url} alt="" className="h-12 w-16 rounded-md object-cover shrink-0 hidden sm:block" />}<span className="font-semibold">{n.title}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{n.content}</p>
-                    {(n.links?.length ?? 0) > 0 && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-primary mt-1">
-                        <ExternalLink className="h-3 w-3" /> {n.links?.length} link(s)
-                      </span>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {n.status === "published" ? (
-                      <Badge variant="outline" className="text-[10px] border-emerald-500/50 text-emerald-400">
-                        <Eye className="h-3 w-3 mr-1" /> Sim
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                        <EyeOff className="h-3 w-3 mr-1" /> Rascunho
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                    {new Date(n.created_at).toLocaleString("pt-BR")}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                    {n.pinned_until ? new Date(n.pinned_until).toLocaleString("pt-BR") : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" title="Visualizar notícia" onClick={() => setViewing(n)}><Eye className="h-3 w-3" /></Button>
-                      {can("noticias", "editar") && <Button size="sm" variant="ghost" title="Editar notícia" onClick={() => openEditor(n)}><Pencil className="h-3 w-3" /></Button>}
-                      {can("noticias", "publicar") && <Button size="sm" variant="ghost" title={n.status === "draft" ? "Publicar notícia" : "Despublicar notícia"} onClick={async () => { const { error } = await supabase.from("member_feed_posts").update({ status: n.status === "draft" ? "published" : "draft" }).eq("id", n.id); if (error) return toast.error(error.message); qc.invalidateQueries({ queryKey: ["news-admin"] }); qc.invalidateQueries({ queryKey: ["member-feed"] }); }}><EyeOff className="h-3 w-3" /></Button>}
-                      {can("noticias", "remover") && <Button size="sm" variant="ghost" title="Remover notícia" className="text-destructive" onClick={() => remove(n)}><Trash2 className="h-3 w-3" /></Button>}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+      {isLoading && <LoadingState />}
+      {!isLoading && sorted.length === 0 && <EmptyState icon={Newspaper} title={news.length ? "Nenhuma notícia com essa busca" : "Nenhuma notícia ainda"} />}
+      {highlight && <div className="mb-5"><NewsCard news={highlight} featured onOpen={() => setViewing(highlight)} actions={actionsFor(highlight)} /></div>}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {rest.slice(0, limit).map((n) => <NewsCard key={n.id} news={n} onOpen={() => setViewing(n)} actions={actionsFor(n)} />)}
       </div>
+      {rest.length > limit && <div ref={more} className="py-5 text-center"><Button variant="outline" size="sm" onClick={() => setLimit((v) => v + 9)}>Ver mais notícias</Button></div>}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

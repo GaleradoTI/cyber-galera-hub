@@ -302,7 +302,7 @@ export function DashboardShell({ children, title, description }: { children: Rea
               )}
               <div className="min-w-0">
                 <div className="text-sm font-bold truncate">{profile?.display_name ?? "Membro"}</div>
-                <div className="text-[10px] text-muted-foreground truncate">{user?.email}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{(profile as { nickname?: string | null } | null | undefined)?.nickname ? `@${(profile as { nickname?: string }).nickname}` : user?.email}</div>
                 <div className="mt-1"><RoleBadge role={primary} /></div>
               </div>
             </div>

@@ -269,6 +269,8 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes gti-shrink { from { width: 100%; } to { width: 0; } }
+
 /* Tabelas escritas em HTML puro dentro do painel seguem o mesmo padrão do componente Table. */
 .gti-app table thead th {
   font-size: 11px;

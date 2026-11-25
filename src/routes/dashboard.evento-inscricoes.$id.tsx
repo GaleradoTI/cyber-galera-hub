@@ -1,8 +1,9 @@
+import { CheckinPanel } from "@/components/events/checkin-panel";
 import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Ban, Camera, CheckCircle2, Download, IdCard, Search, UserCheck } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle2, Download, IdCard, Search, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardShell, useDashboardRoles, useAmbassadorCan } from "@/components/dashboard/dashboard-shell";
@@ -45,9 +46,9 @@ function InscricoesPage() {
       const { data, error } = await (supabase.from("event_registrations" as any) as any).select("*").eq("event_id", id).order("created_at");
       if (error) throw error;
       const rows = (data ?? []) as Reg[];
-      const ids = rows.map((r) => r.user_id);
-      const { data: profs } = ids.length ? await supabase.from("profiles").select("user_id, display_name, email, avatar_url, work_area, phone").in("user_id", ids) : { data: [] as any[] };
-      const map = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      const { data: profs, error: peopleError } = await (supabase as any).rpc("get_event_participants", { _event_id: id });
+      if (peopleError) throw peopleError;
+      const map = new Map(((profs ?? []) as any[]).map((p) => [p.user_id, p]));
       return rows.map((r) => ({ ...r, profile: map.get(r.user_id) }));
     },
   });
@@ -67,7 +68,7 @@ function InscricoesPage() {
   const list = regs.filter((r) => {
     if (filter !== "all" && r.status !== filter) return false;
     const t = q.toLowerCase();
-    return !t || r.profile?.display_name?.toLowerCase().includes(t) || r.profile?.email?.toLowerCase().includes(t) || r.ticket_code.toLowerCase().includes(t);
+    return !t || r.profile?.nickname?.includes(t.replace(/^@/, "")) || r.profile?.display_name?.toLowerCase().includes(t) || r.profile?.email?.toLowerCase().includes(t) || r.ticket_code.toLowerCase().includes(t);
   });
 
   const decide = async (ids: string[], status: RegistrationStatus) => {
@@ -81,7 +82,7 @@ function InscricoesPage() {
 
   const exportCsv = () =>
     downloadCSV(`inscricoes-${ev?.name ?? id}.csv`, list.map((r) => ({
-      nome: r.profile?.display_name ?? "", email: r.profile?.email ?? "", telefone: r.profile?.phone ?? "",
+      nome: r.profile?.display_name ?? "", nick: r.profile?.nickname ?? "", email: r.profile?.email ?? "", telefone: r.profile?.phone ?? "",
       status: REG_STATUS[r.status].label, codigo: r.ticket_code, inscrito_em: r.created_at, checkin: r.checked_in_at ?? "",
     })));
 
@@ -98,7 +99,7 @@ function InscricoesPage() {
         <Stat label="Presentes" value={`${counts.checked} / ${counts.approved ?? 0}`} />
       </div>
 
-      <Tabs defaultValue={canDecide ? "list" : "checkin"}>
+      <Tabs key={canDecide ? "gestao" : "portaria"} defaultValue={canDecide ? "list" : "checkin"}>
         <TabsList className="mb-4">
           <TabsTrigger value="list">Inscrições</TabsTrigger>
           {canScan && <TabsTrigger value="checkin">Check-in · Ler QR Code</TabsTrigger>}
@@ -135,8 +136,8 @@ function InscricoesPage() {
                   {canDecide && <Checkbox checked={sel.has(r.id)} onCheckedChange={(v) => { const n = new Set(sel); v ? n.add(r.id) : n.delete(r.id); setSel(n); }} />}
                   {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" /> : <div className="h-10 w-10 rounded-full bg-muted" />}
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{r.profile?.display_name ?? "Usuário"}</div>
-                    <div className="text-xs text-muted-foreground truncate">{r.profile?.email} · <span className="font-mono">{r.ticket_code}</span></div>
+                    <div className="font-medium truncate">{r.profile?.display_name ?? "Usuário"} {r.profile?.nickname && <span className="text-secondary text-sm">@{r.profile.nickname}</span>}</div>
+                    <div className="text-xs text-muted-foreground truncate">{r.profile?.email ? `${r.profile.email} · ` : ""}<span className="font-mono">{r.ticket_code}</span></div>
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -150,7 +151,7 @@ function InscricoesPage() {
           </div>
         </TabsContent>
 
-        {canScan && <TabsContent value="checkin"><h2 className="font-bold mb-4">Entrada · {ev?.name}</h2><CheckinPanel eventId={id} onDone={() => { qc.invalidateQueries({ queryKey: ["event-regs", id] }); qc.invalidateQueries({ queryKey: ["my-registrations"] }); }} /></TabsContent>}
+        {canScan && <TabsContent value="checkin"><CheckinPanel eventId={id} people={regs} onDone={() => { qc.invalidateQueries({ queryKey: ["event-regs", id] }); qc.invalidateQueries({ queryKey: ["my-registrations"] }); }} /></TabsContent>}
       </Tabs>
     </DashboardShell>
   );
@@ -158,83 +159,4 @@ function InscricoesPage() {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return <div className="glass rounded-xl p-4 border border-border/40"><div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div><div className="text-2xl font-black mt-1">{value}</div></div>;
-}
-
-function CheckinPanel({ eventId, onDone }: { eventId: string; onDone: () => void }) {
-  const [code, setCode] = useState("");
-  const [result, setResult] = useState<any>(null);
-  const [scanning, setScanning] = useState(false);
-  const scannerRef = useRef<any>(null);
-  const lastRef = useRef<string>("");
-  const busyRef = useRef(false);
-  const [busy, setBusy] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const check = async (raw: string) => {
-    const c = raw.trim().toUpperCase();
-    if (!c || busyRef.current) return;
-    if (!/^GTI-[A-Z0-9]+-[A-Z0-9]+$/.test(c)) { setErrorMessage("Este QR Code não é um ingresso GTI. Confira o código do participante."); return; }
-    busyRef.current = true; setBusy(true); setErrorMessage("");
-    try {
-      const { data, error } = await supabase.rpc("checkin_by_code", { _code: c, _event_id: eventId });
-      if (error) throw error;
-      setResult({ ...(data as any), code: c }); setCode("");
-      setScanning(false); onDone();
-    } catch (error) { setErrorMessage(error instanceof Error ? error.message : "Não foi possível confirmar. Tente novamente."); }
-    finally { busyRef.current = false; setBusy(false); }
-  };
-
-  useEffect(() => {
-    if (!scanning) return;
-    let stopped = false;
-    import("html5-qrcode").then(({ Html5Qrcode }) => {
-      if (stopped) return;
-      const s = new Html5Qrcode("qr-reader");
-      scannerRef.current = s;
-      s.start({ facingMode: "environment" }, { fps: 10, qrbox: 240 }, (text: string) => {
-        if (text === lastRef.current) return;
-        lastRef.current = text;
-        setTimeout(() => { lastRef.current = ""; }, 3000);
-        check(text);
-      }, () => {}).catch((e: any) => { toast.error("Não foi possível abrir a câmera: " + (e?.message ?? e)); setScanning(false); });
-    });
-    return () => { stopped = true; scannerRef.current?.stop?.().catch(() => {}); scannerRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scanning]);
-
-  const R: Record<string, { text: string; cls: string }> = {
-    ok: { text: "Check-in confirmado!", cls: "border-primary bg-primary/10" },
-    already: { text: "Já fez check-in", cls: "border-secondary bg-secondary/10" },
-    not_approved: { text: "Inscrição não aprovada", cls: "border-destructive bg-destructive/10" },
-    not_found: { text: "Código não encontrado neste evento", cls: "border-destructive bg-destructive/10" },
-  };
-
-  return (
-    <div className="grid md:grid-cols-2 gap-4">
-      <div className="glass rounded-xl p-4 border border-border/40 space-y-3">
-        <form className="flex flex-col sm:flex-row gap-2" onSubmit={(e) => { e.preventDefault(); check(code); }}>
-          <Input aria-label="Código do ingresso" placeholder="GTI-XXXX-XX" className="font-mono uppercase" value={code} onChange={(e) => setCode(e.target.value)} />
-          <Button type="submit" disabled={busy || !code.trim()}>{busy ? "Confirmando…" : "Confirmar presença"}</Button>
-        </form>
-        <Button variant={scanning ? "destructive" : "outline"} className="w-full" onClick={() => setScanning((v) => !v)}>
-          <Camera className="h-4 w-4 mr-2" /> {scanning ? "Parar câmera" : "Ler QR Code com a câmera"}
-        </Button>
-        {errorMessage && <p role="alert" className="text-sm text-destructive">{errorMessage}</p>}
-        {scanning && <div id="qr-reader" className="w-full min-h-64 rounded-lg overflow-hidden" />}
-      </div>
-      <div role="status" aria-live="polite" className={`rounded-lg p-6 border-2 min-h-[200px] flex flex-col items-center justify-center text-center ${result ? R[result.result]?.cls : "border-dashed border-border"}`}>
-        {!result ? <p className="text-muted-foreground text-sm">Leia um QR Code ou digite o código do ingresso.</p> : (
-          <>
-            {result.avatar_url && <img src={result.avatar_url} alt="" className="h-20 w-20 rounded-full object-cover mb-3" />}
-            <div className="text-xl font-black">{R[result.result]?.text}</div>
-            {result.name && <div className="text-lg mt-1">{result.name}</div>}
-            {result.work_area && <div className="text-sm text-muted-foreground">{result.work_area}</div>}
-            <div className="font-mono text-xs text-muted-foreground mt-2">{result.code}</div>
-            {result.checked_in_at && <p className="text-sm mt-2">{new Date(result.checked_in_at).toLocaleString("pt-BR")}</p>}
-            <Button className="mt-5" variant="outline" onClick={() => { setResult(null); setErrorMessage(""); lastRef.current = ""; setScanning(true); }}>Ler próximo ingresso</Button>
-          </>
-        )}
-      </div>
-    </div>
-  );
 }

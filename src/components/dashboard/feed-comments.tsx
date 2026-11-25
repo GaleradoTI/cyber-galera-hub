@@ -1,3 +1,4 @@
+import { fetchPeople } from "@/lib/people";
 import { LoadingState, EmptyState } from "@/components/brand/ui-kit";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +31,7 @@ type MiniProfile = {
   user_id: string;
   display_name: string | null;
   avatar_url: string | null;
-  email: string | null;
+  nickname: string | null;
 };
 
 type CommentLike = { id: string; comment_id: string; user_id: string };
@@ -110,11 +111,8 @@ export function FeedCommentsDialog({
     queryKey: ["feed-comment-profiles", userIds.join(",")],
     enabled: open && userIds.length > 0,
     queryFn: async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("user_id,display_name,avatar_url,email")
-        .in("user_id", userIds);
-      return new Map((data ?? []).map((p: any) => [p.user_id, p as MiniProfile]));
+      const data = await fetchPeople(userIds);
+      return new Map(data.map((p) => [p.user_id, p as MiniProfile]));
     },
   });
 
@@ -178,7 +176,7 @@ export function FeedCommentsDialog({
   const renderThread = (parentId: string | null, depth: number): React.ReactNode =>
     (byParent.get(parentId) ?? []).map((c) => {
       const p = profiles instanceof Map ? profiles.get(c.user_id) : undefined;
-      const name = p?.display_name || p?.email || "Membro";
+      const name = p?.display_name || "Membro";
       const mine = c.user_id === currentUserId;
       const likeList = likes.filter((l) => l.comment_id === c.id);
       const liked = !!currentUserId && likeList.some((l) => l.user_id === currentUserId);
@@ -200,6 +198,7 @@ export function FeedCommentsDialog({
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap text-xs">
                 <span className="font-bold truncate">{name}</span>
+                {p?.nickname && <span className="text-secondary truncate">@{p.nickname}</span>}
                 <span className="text-muted-foreground">
                   {timeAgo(c.created_at)}
                   {c.updated_at !== c.created_at ? " · editado" : ""}
